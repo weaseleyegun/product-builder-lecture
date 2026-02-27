@@ -107,7 +107,7 @@ var WORLDCUPS = [
     {
         title: '☕ 한국 카페 음료 월드컵',
         description: '당신의 최애 카페 음료는? 16강 시작!',
-        thumbnail: 'images/thumbnails/wc_food.png',
+        thumbnail: 'images/thumbnails/wc_cafe.png',
         items: [
             { name: '아메리카노', image_url: 'https://i.imgur.com/7vLBsmS.jpg' },
             { name: '카페라떼', image_url: 'https://i.imgur.com/KqR3Egs.jpg' },
@@ -165,10 +165,16 @@ async function main() {
         }
 
         var itemsToInsert = wc.items.map(function (item) {
+            var safeUrl = item.image_url;
+            // imgur나 myanimelist는 핫링킹 차단 이슈로 이미지가 깨지므로 아바타 생성기로 임시 교체
+            if (safeUrl.includes('imgur.com') || safeUrl.includes('myanimelist.net')) {
+                safeUrl = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(item.name) + '&size=500&background=random&color=fff&font-size=0.25';
+            }
+
             return {
                 worldcup_id: cupData.id,
                 name: item.name,
-                image_url: item.image_url,
+                image_url: safeUrl,
                 win_count: Math.floor(Math.random() * 50),
                 match_count: Math.floor(Math.random() * 200) + 50
             };

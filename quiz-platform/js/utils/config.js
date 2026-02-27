@@ -19,12 +19,12 @@ const QUIZ_META = [
 // Worldcup card metadata: keyword matching with thumbnails
 var WORLDCUP_META = [
     { keyword: '음식', gradient: 'linear-gradient(135deg, #F59F00, #FCC419)', thumbnail: 'images/thumbnails/wc_food.png' },
-    { keyword: '카페', gradient: 'linear-gradient(135deg, #F59F00, #FCC419)', thumbnail: 'images/thumbnails/wc_food.png' },
+    { keyword: '카페', gradient: 'linear-gradient(135deg, #F59F00, #FCC419)', thumbnail: 'images/thumbnails/wc_cafe.png' },
+    { keyword: '음료', gradient: 'linear-gradient(135deg, #F59F00, #FCC419)', thumbnail: 'images/thumbnails/wc_cafe.png' },
     { keyword: '강아지', gradient: 'linear-gradient(135deg, #20C997, #69DB7C)', thumbnail: 'images/thumbnails/wc_dog.png' },
-    { keyword: '멍멍', gradient: 'linear-gradient(135deg, #20C997, #69DB7C)', thumbnail: 'images/thumbnails/wc_dog.png' },
+    { keyword: '게임', gradient: 'linear-gradient(135deg, #5C7CFA, #748FFC)', thumbnail: 'images/thumbnails/wc_game.png' }, // Put this before '캐릭터' so Game Character matches this first
     { keyword: '애니', gradient: 'linear-gradient(135deg, #AE3EC9, #F06595)', thumbnail: 'images/thumbnails/wc_anime.png' },
     { keyword: '캐릭터', gradient: 'linear-gradient(135deg, #AE3EC9, #F06595)', thumbnail: 'images/thumbnails/wc_anime.png' },
-    { keyword: '게임', gradient: 'linear-gradient(135deg, #5C7CFA, #748FFC)', thumbnail: 'images/thumbnails/wc_game.png' },
 ];
 
 // Worldcup card gradient colors (fallback)
