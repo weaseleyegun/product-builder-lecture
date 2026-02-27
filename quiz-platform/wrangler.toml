@@ -1,0 +1,8 @@
+name = "quiz-platform-worker"
+main = "src/index.js"
+compatibility_date = "2024-02-23"
+
+# [vars] 아래에는 공개 가능한 환경변수만 입력합니다.
+# SUPABASE_URL과 SUPABASE_ANON_KEY는 npx wrangler secret put 명령어로 설정해야 합니다.
+# [vars]
+# SOME_PUBLIC_VAR = "value"
