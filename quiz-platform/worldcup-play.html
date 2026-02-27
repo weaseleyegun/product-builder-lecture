@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>이상형 월드컵 플레이 | QuizRank.io</title>
+    <meta name="description" content="실시간 인기 이상형 월드컵에서 당신의 취향 1위를 찾아보세요.">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        .worldcup-container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            text-align: center;
+        }
+
+        .tournament-status {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--primary-color);
+            margin-bottom: 2rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .battle-arena {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            align-items: stretch;
+            margin-bottom: 3rem;
+        }
+
+        .contender {
+            flex: 1;
+            min-width: 300px;
+            background: var(--card-bg);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 4px solid transparent;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .contender:hover {
+            transform: scale(1.02);
+            box-shadow: var(--hover-shadow);
+            border-color: var(--primary-color);
+        }
+
+        .contender-img {
+            width: 100%;
+            height: 400px;
+            object-fit: cover;
+            background-color: #333;
+        }
+
+        .contender-name {
+            padding: 1.5rem;
+            font-size: 1.5rem;
+            font-weight: 800;
+        }
+
+        .vs-badge {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            font-weight: 900;
+            font-style: italic;
+            color: var(--secondary-color);
+            text-shadow: 2px 2px 0 #fff;
+            margin: 0 -3rem;
+            z-index: 10;
+        }
+
+        #result-screen {
+            display: none;
+            margin-top: 3rem;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .winner-card {
+            display: inline-block;
+            background: var(--card-bg);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(255, 193, 7, 0.4);
+            border: 2px solid #ffc107;
+            max-width: 500px;
+        }
+
+        .winner-card img {
+            width: 100%;
+            height: 400px;
+            object-fit: cover;
+        }
+
+        .winner-card .content {
+            padding: 2rem;
+        }
+
+        .winner-card h2 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            color: #ffc107;
+        }
+
+        .winner-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .share-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .btn-share {
+            padding: 0.8rem 1.5rem;
+            border-radius: 50px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .kakao {
+            background: #FEE500;
+            color: #000;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .battle-arena {
+                flex-direction: column;
+            }
+
+            .vs-badge {
+                margin: -1rem 0;
+                font-size: 2rem;
+                text-shadow: 1px 1px 0 #fff;
+            }
+
+            .contender-img {
+                height: 250px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header class="navbar">
+        <div class="logo"><a href="index.html"
+                style="text-decoration: none; color: inherit;">QuizRank<span>.io</span></a></div>
+        <div class="actions">
+            <div class="theme-switch-wrapper">
+                <span class="theme-icon">☀️</span>
+                <label class="theme-switch" for="theme-toggle">
+                    <input type="checkbox" id="theme-toggle">
+                    <div class="slider"></div>
+                </label>
+                <span class="theme-icon">🌙</span>
+            </div>
+            <button class="btn-primary" onclick="location.href='login.html'">로그인</button>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Top Ad Placeholder -->
+        <div class="ad-placeholder top-ad" style="margin-top: 2rem;">
+            <span>Google AdSense (Top)</span>
+        </div>
+
+        <div class="content-layout">
+            <!-- Left Side Ad -->
+            <aside class="ad-placeholder side-ad left-ad">
+                <span>AdSense<br>(Left)</span>
+            </aside>
+            <div class="main-sections" style="flex: 1;">
+
+                <div id="setup-screen" class="worldcup-container"
+                    style="display: none; padding: 3rem; background: var(--card-bg); border-radius: 20px; box-shadow: var(--shadow);">
+                    <h1 class="tournament-status" id="setup-title" style="margin-bottom: 0.5rem;">월드컵 준비 중...</h1>
+                    <p style="color: var(--text-muted); margin-bottom: 2rem;">데이터를 안전하게 불러왔습니다. 진행할 라운드 수를 선택해주세요.</p>
+
+                    <div style="margin-bottom: 2rem;">
+                        <label style="display: block; font-weight: 800; font-size: 1.2rem; margin-bottom: 1rem;">진행할 강수
+                            선택</label>
+                        <select id="round-select" class="form-input"
+                            style="max-width: 300px; margin: 0 auto; display: block; padding: 1rem; font-size: 1.2rem; appearance: auto; background: var(--bg-color); color: var(--text-color);">
+                            <!-- Options injected by JS -->
+                        </select>
+                    </div>
+
+                    <button class="btn-primary large" onclick="startGame()"
+                        style="font-size: 1.5rem; padding: 1rem 3rem;">시작하기 🚀</button>
+                </div>
+
+                <div id="game-screen" class="worldcup-container" style="display: none;">
+                    <h1 id="round-status" class="tournament-status">16강 (1/8)</h1>
+
+                    <div class="battle-arena">
+                        <div class="contender" onclick="selectContender(0)">
+                            <img id="img-left" class="contender-img" src="" alt="Left Contender">
+                            <div id="name-left" class="contender-name">Loading...</div>
+                        </div>
+
+                        <div class="vs-badge">VS</div>
+
+                        <div class="contender" onclick="selectContender(1)">
+                            <img id="img-right" class="contender-img" src="" alt="Right Contender">
+                            <div id="name-right" class="contender-name">Loading...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="result-screen" class="worldcup-container">
+                    <h1 class="tournament-status" style="color: #ffc107;">🏆 최종 우승!</h1>
+
+                    <div class="winner-card">
+                        <img id="winner-img" src="" alt="Winner">
+                        <div class="content">
+                            <h2 id="winner-name">Winner Name</h2>
+                            <h3>당신의 선택이 랭킹에 반영되었습니다!</h3>
+
+                            <div class="share-buttons">
+                                <button class="btn-share kakao" onclick="shareResult()">💬 카카오톡 공유</button>
+                                <button class="btn-primary btn-share" onclick="location.reload()">🔄 다시 하기</button>
+                                <button class="btn-secondary btn-share" onclick="location.href='index.html'">🏠
+                                    홈으로</button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Result Bottom Ad Placeholder -->
+                <div class="ad-placeholder" style="max-width: 800px; height: 90px; margin: 3rem auto;">
+                    <span>Google AdSense (Result Page)</span>
+                </div>
+            </div>
+            <!-- Right Side Ad -->
+            <aside class="ad-placeholder side-ad right-ad">
+                <span>AdSense<br>(Right)</span>
+            </aside>
+        </div>
+    </main>
+
+    <script src="js/utils/config.js"></script>
+    <script src="js/utils/theme.js"></script>
+    <script src="js/worldcup.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,31 @@
+name: Daily Content Fetch Agent
+
+on:
+  schedule:
+    # 매일 자정 (한국시간 오전 9시에 UTC 00 기준이므로, KST 기준 밤 12시는 UTC 기준 오후 3시) 한국시간(KST) 매일 밤 12시 === UTC 오후 3시 (15:00)
+    - cron: '0 15 * * *'
+  workflow_dispatch: # GitHub 웹페이지 버튼으로 내가 원할 때 수동 실행 가능하게 하는 옵션
+
+jobs:
+  run-agent:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          
+      - name: Install dependencies
+        run: npm install
+
+      # 로컬 .dev.vars 대신 GitHub Secrets에 저장된 라이브 환경변수를 만들어서 매핑합니다.
+      - name: Create .dev.vars for Agent
+        run: |
+          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> .dev.vars
+          echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .dev.vars
+
+      - name: Run Daily Agent
+        run: node daily_agent.js --run-now

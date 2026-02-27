@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>월드컵/티어 만들기 | QuizRank.io</title>
+    <meta name="description" content="나만의 이상형 월드컵과 티어 리스트를 만들어 친구들과 공유해보세요.">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        .create-container {
+            max-width: 900px;
+            margin: 3rem auto;
+            padding: 2rem;
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+        }
+
+        .form-group {
+            margin-bottom: 2rem;
+            text-align: left;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            font-size: 1.2rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-color);
+            color: var(--text-color);
+            font-size: 1rem;
+            font-family: inherit;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .upload-area {
+            border: 2px dashed var(--border-color);
+            padding: 3rem;
+            text-align: center;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 2rem;
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary-color);
+            background: rgba(76, 110, 245, 0.05);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--text-muted);
+        }
+
+        .preview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .preview-item {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            height: 120px;
+            border: 1px solid var(--border-color);
+            background: #333;
+        }
+
+        .preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .delete-btn {
+            position: absolute;
+            top: 0.2rem;
+            right: 0.2rem;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        /* Tier Maker specific styling */
+        .tier-board {
+            margin-top: 3rem;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .tier-row {
+            display: flex;
+            min-height: 100px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tier-row:last-child {
+            border-bottom: none;
+        }
+
+        .tier-label {
+            width: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #000;
+        }
+
+        .row-s {
+            background-color: #FF7F7F;
+        }
+
+        .row-a {
+            background-color: #FFBF7F;
+        }
+
+        .row-b {
+            background-color: #FFDF7F;
+        }
+
+        .row-c {
+            background-color: #FFFF7F;
+        }
+
+        .row-d {
+            background-color: #BFFF7F;
+        }
+
+        .tier-content {
+            flex: 1;
+            padding: 0.5rem;
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .draggable {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            cursor: grab;
+            border-radius: 8px;
+            border: 2px solid transparent;
+        }
+
+        .draggable:active {
+            cursor: grabbing;
+            border-color: var(--primary-color);
+        }
+
+        .items-bank {
+            padding: 1rem;
+            min-height: 120px;
+            background: var(--bg-color);
+            border-radius: 8px;
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+            border: 2px dashed var(--border-color);
+        }
+    </style>
+</head>
+
+<body>
+    <header class="navbar">
+        <div class="logo"><a href="index.html"
+                style="text-decoration: none; color: inherit;">QuizRank<span>.io</span></a></div>
+        <div class="actions">
+            <div class="theme-switch-wrapper">
+                <span class="theme-icon">☀️</span>
+                <label class="theme-switch" for="theme-toggle">
+                    <input type="checkbox" id="theme-toggle">
+                    <div class="slider"></div>
+                </label>
+                <span class="theme-icon">🌙</span>
+            </div>
+            <button class="btn-primary" onclick="location.href='login.html'">로그인</button>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="create-container">
+            <h1 style="text-align: center; margin-bottom: 2rem; color: var(--primary-color);">나만의 랭킹 만들기</h1>
+
+            <div class="form-group">
+                <label class="form-label">🔥 제목</label>
+                <input type="text" id="create-title" class="form-input" placeholder="예: 2026년 1분기 애니메이션 라인업">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">📝 설명</label>
+                <textarea id="create-desc" class="form-input" rows="3" placeholder="어떤 주제로 만들었는지 설명해주세요."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">🏆 지원할 최대 강수 (월드컵용)</label>
+                <select id="create-rounds" class="form-input" style="appearance: auto;">
+                    <option value="4">4강</option>
+                    <option value="8">8강</option>
+                    <option value="16" selected>16강</option>
+                    <option value="32">32강</option>
+                    <option value="64">64강</option>
+                    <option value="128">128강</option>
+                    <option value="256">256강</option>
+                </select>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.5rem;">선택한 강수보다 더 많은 이미지를 업로드해야 정상
+                    플레이가 가능합니다.</p>
+            </div>
+
+            <!-- Image Upload area matching both worldcup & tier -->
+            <label class="form-label">📸 후보(아이템) 등록</label>
+            <div class="upload-area" onclick="document.getElementById('file-upload').click()">
+                <div class="upload-icon">📥</div>
+                <h3>여기를 클릭하여 이미지를 업로드하세요</h3>
+                <p style="color: var(--text-muted); margin-top: 0.5rem;">최대 32개, 5MB 이하 jpg/png 허용</p>
+                <input type="file" id="file-upload" multiple accept="image/*" style="display: none;"
+                    onchange="handleFileUpload(event)">
+            </div>
+
+            <div class="preview-grid" id="preview-container">
+                <!-- Uploaded preview items will show here -->
+            </div>
+
+            <!-- Tier Maker Board Preview -->
+            <div style="margin-top: 3rem; display: none;" id="tier-maker-section">
+                <label class="form-label">🏅 티어 드래그 앤 드롭</label>
+                <p style="color: var(--text-muted); margin-bottom: 1rem;">아래 아이템들을 윗쪽 티어로 그래그 앤 드롭 하세요!</p>
+
+                <div class="tier-board">
+                    <div class="tier-row">
+                        <div class="tier-label row-s">S</div>
+                        <div class="tier-content dropzone" id="tier-s"></div>
+                    </div>
+                    <div class="tier-row">
+                        <div class="tier-label row-a">A</div>
+                        <div class="tier-content dropzone" id="tier-a"></div>
+                    </div>
+                    <div class="tier-row">
+                        <div class="tier-label row-b">B</div>
+                        <div class="tier-content dropzone" id="tier-b"></div>
+                    </div>
+                    <div class="tier-row">
+                        <div class="tier-label row-c">C</div>
+                        <div class="tier-content dropzone" id="tier-c"></div>
+                    </div>
+                    <div class="tier-row">
+                        <div class="tier-label row-d">D</div>
+                        <div class="tier-content dropzone" id="tier-d"></div>
+                    </div>
+                </div>
+
+                <div class="items-bank dropzone" id="items-bank">
+                    <!-- Images go here initially for tier maker -->
+                </div>
+            </div>
+
+            <button class="btn-primary large" style="width: 100%; margin-top: 2rem;" onclick="submitCreation()">🚀 만들기
+                (저장)</button>
+        </div>
+    </main>
+
+    <script src="js/utils/config.js"></script>
+    <script src="js/utils/theme.js"></script>
+    <script src="js/create.js"></script>
+</body>
+
+</html>
