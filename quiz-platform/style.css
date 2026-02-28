@@ -214,12 +214,13 @@ input:checked+.slider:before {
 }
 
 .side-ad {
-    width: 160px;
-    min-width: 160px;
+    width: 80px;
+    min-width: 80px;
     height: 600px;
     border-radius: 8px;
     position: sticky;
     top: 100px;
+    font-size: 0.65rem;
 }
 
 /* Layout */
@@ -231,7 +232,7 @@ input:checked+.slider:before {
 
 .content-layout {
     display: flex;
-    gap: 2rem;
+    gap: 1rem;
     margin-top: 3rem;
 }
 
