@@ -16,11 +16,10 @@ var currentMode = 'multiple'; // default quiz mode
 var correctCount = 0;   // correct answers in current game
 var incorrectCount = 0; // incorrect answers in current game
 
-// Extracts the title by removing the artist part if it exists (e.g., "Ado - Usseewa" -> "Usseewa")
+// Returns the raw text. Prevsiously extracted just the title, but caused duplicated options.
 function extractTitle(text) {
     if (!text) return '';
-    var parts = text.split(' - ');
-    return parts.length > 1 ? parts.slice(1).join(' - ').trim() : text.trim();
+    return text.trim();
 }
 
 // Normalize title to ignore case and whitespaces for subjective matching
