@@ -498,3 +498,17 @@ footer {
         font-size: 0.9rem;
     }
 }
+
+/* Quiz Option States */
+.correct {
+    background-color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+    color: #ffffff !important;
+}
+
+.wrong {
+    background-color: #ef4444 !important;
+    /* 빨간색 계열 */
+    border-color: #ef4444 !important;
+    color: #ffffff !important;
+}
