@@ -4,8 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>퀴즈 & 이상형 월드컵 | 글로벌 No.1 랭킹 플랫폼</title>
-    <meta name="description" content="실시간 인기 퀴즈, J-POP 노래 맞추기, 이상형 월드컵 메이커를 즐겨보세요. 매일 업데이트 되는 AI 기반 트렌드 퀴즈 제공!">
+    <title>퀴즈 & 맞추기 전체보기 | QuizRank</title>
+    <meta name="description" content="모든 AI 기반 트렌드 퀴즈와 맞추기를 확인해보세요.">
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <!-- Google AdSense -->
@@ -43,8 +43,6 @@
     </div>
 
     <main class="container">
-
-
         <!-- Main Content Layout -->
         <div class="content-layout">
             <!-- Left Ad Placeholder -->
@@ -61,46 +59,15 @@
                         style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%); font-size: 1.5rem; pointer-events: none; opacity: 0.7;">🔍</span>
                 </div>
 
-                <!-- Section 1: 오늘의 AI 퀴즈 -->
+                <!-- Section: 맞추기 부분 전체 리스트 -->
                 <section id="quiz" class="category-section">
                     <div class="section-header">
-                        <div style="display: flex; align-items: center; gap: 0.8rem;">
-                            <h2>🎁 맞추기</h2>
-                            <span class="badge">HOT</span>
-                        </div>
-                        <a href="quiz-list.html" class="view-all">전체보기 &rarr;</a>
+                        <h2>🎵 노래 & 퀴즈 맞추기 전체보기</h2>
                     </div>
-                    <div class="card-grid" id="daily-quiz-grid">
+                    <!-- grid가 5개를 넘어갈 때 줄바꿈이 되도록, 사실 기본적으로 CSS 그리드가 알아서 wrap 해줌 -->
+                    <div class="card-grid" id="daily-quiz-grid"
+                        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1.5rem;">
                         <p style="color: var(--text-muted); padding: 1rem;">퀴즈 데이터를 불러오는 중입니다...</p>
-                    </div>
-                </section>
-
-                <!-- Section 2: 실시간 인기 월드컵 -->
-                <section id="worldcup" class="category-section">
-                    <div class="section-header">
-                        <h2>🏆 실시간 인기 월드컵</h2>
-                        <a href="worldcup-list.html" class="view-all">전체보기 &rarr;</a>
-                    </div>
-                    <div class="card-grid" id="worldcup-grid">
-                        <!-- Worldcup cards will be injected here by app.js -->
-                    </div>
-                </section>
-
-                <!-- Section 3: 최신 티어 리스트 -->
-                <section id="tier" class="category-section">
-                    <div class="section-header">
-                        <h2>🏅 최신 티어 리스트</h2>
-                        <button class="btn-create" onclick="location.href='worldcup-create.html'">나만의 티어 만들기</button>
-                    </div>
-                    <div class="card-grid">
-                        <div class="card tier-card" onclick="location.href='worldcup-create.html'">
-                            <div class="card-image" style="background: linear-gradient(135deg, #5C7CFA, #748FFC);">
-                            </div>
-                            <div class="card-content">
-                                <h3>2026년 1분기 애니 등급</h3>
-                                <p>S티어: 4개 작품</p>
-                            </div>
-                        </div>
                     </div>
                 </section>
             </div>

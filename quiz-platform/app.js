@@ -13,7 +13,12 @@ document.addEventListener('DOMContentLoaded', function () {
             var response = await fetch(API_BASE_URL + '/api/daily-quiz');
             if (response.ok) {
                 allQuizzes = await response.json();
-                renderQuizzes(grid, allQuizzes);
+
+                // If it's the home page (index.html), show only the first 5 quizzes
+                var isHomePage = window.location.pathname.endsWith('index.html') || window.location.pathname === '/';
+                var displayQuizzes = isHomePage ? allQuizzes.slice(0, 5) : allQuizzes;
+
+                renderQuizzes(grid, displayQuizzes);
             } else {
                 grid.innerHTML = '<p style="grid-column: 1 / -1; text-align: center;">퀴즈 데이터를 불러오는데 실패했습니다.</p>';
             }
@@ -31,7 +36,12 @@ document.addEventListener('DOMContentLoaded', function () {
             var response = await fetch(API_BASE_URL + '/api/worldcups');
             if (response.ok) {
                 allWorldcups = await response.json();
-                renderWorldcups(grid, allWorldcups);
+
+                // If it's the home page (index.html), show only the first 5 worldcups
+                var isHomePage = window.location.pathname.endsWith('index.html') || window.location.pathname === '/';
+                var displayWorldcups = isHomePage ? allWorldcups.slice(0, 5) : allWorldcups;
+
+                renderWorldcups(grid, displayWorldcups);
             } else {
                 grid.innerHTML = '<p style="grid-column: 1 / -1; text-align: center;">월드컵 데이터를 불러오는데 실패했습니다.</p>';
             }
@@ -100,12 +110,14 @@ document.addEventListener('DOMContentLoaded', function () {
             // # 기호를 제거하여 일반 단어로 변경 (예: #노래 -> 노래)
             var query = originalQuery.replace(/#/g, '');
 
+            var isHomePage = window.location.pathname.endsWith('index.html') || window.location.pathname === '/';
+
             if (!query) {
-                // 입력창이 비었을 때 모두 렌더링
+                // 입력창이 비었을 때
                 var grid1 = document.getElementById('daily-quiz-grid');
-                if (grid1 && allQuizzes.length > 0) renderQuizzes(grid1, allQuizzes);
+                if (grid1 && allQuizzes.length > 0) renderQuizzes(grid1, isHomePage ? allQuizzes.slice(0, 5) : allQuizzes);
                 var grid2 = document.getElementById('worldcup-grid');
-                if (grid2 && allWorldcups.length > 0) renderWorldcups(grid2, allWorldcups);
+                if (grid2 && allWorldcups.length > 0) renderWorldcups(grid2, isHomePage ? allWorldcups.slice(0, 5) : allWorldcups);
                 return;
             }
 
@@ -117,6 +129,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     return hasTagMatch || q.title.toLowerCase().includes(query) || (q.description && q.description.toLowerCase().includes(query));
                 });
                 if (filteredQuizzes.length > 0) {
+                    // 검색 결과는 5개 제한을 풀거나 그대로 제한할 수 있는데, 일단은 검색하면 다 보여주는 게 편하므로 제한 안함
                     renderQuizzes(grid1, filteredQuizzes);
                 } else {
                     grid1.innerHTML = '<p style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 2rem;">검색 결과가 없습니다.</p>';
