@@ -58,13 +58,27 @@ document.addEventListener('DOMContentLoaded', function () {
         return match || { gradient: 'linear-gradient(135deg, #868e96, #adb5bd)', tag: '퀴즈', thumbnail: '', hashtags: [] };
     }
 
+    function extractThumbnail(item) {
+        if (item.description && item.description.includes('[THUMBNAIL_URL:')) {
+            var match = item.description.match(/\[THUMBNAIL_URL:(.*?)\]/);
+            if (match) {
+                item.description = item.description.replace(match[0], '').trim();
+                return match[1].trim();
+            }
+        }
+        return null;
+    }
+
     // Render quiz cards into the grid
     // showHot: if true, first 5 shown on home page with HOT badge
     function renderQuizzes(grid, quizzes, showHot) {
         grid.innerHTML = quizzes.map(function (quiz, idx) {
             var meta = getQuizMeta(quiz.title);
-            var imageStyle = meta.thumbnail
-                ? 'background: url(\'' + meta.thumbnail + '\') center/cover no-repeat, ' + meta.gradient + ';'
+            var customThumb = extractThumbnail(quiz);
+            var thumb = customThumb || meta.thumbnail;
+
+            var imageStyle = thumb
+                ? 'background: url(\'' + thumb + '\') center/cover no-repeat, ' + meta.gradient + ';'
                 : 'background: ' + meta.gradient + ';';
             var isHot = showHot && idx < 5;
             var hotBadge = isHot ? '<span style="position:absolute;top:10px;right:10px;background:#ff4757;color:#fff;font-size:0.72rem;font-weight:800;padding:3px 10px;border-radius:20px;letter-spacing:1px;">HOT</span>' : '';
@@ -93,9 +107,12 @@ document.addEventListener('DOMContentLoaded', function () {
     function renderWorldcups(grid, worldcups) {
         grid.innerHTML = worldcups.map(function (cup, i) {
             var meta = getWorldcupMeta(cup.title);
+            var customThumb = extractThumbnail(cup);
+            var thumb = customThumb || (meta && meta.thumbnail);
+
             var gradient = meta ? meta.gradient : WORLDCUP_COLORS[i % WORLDCUP_COLORS.length];
-            var imageStyle = meta && meta.thumbnail
-                ? 'background: url(\'' + meta.thumbnail + '\') center/cover no-repeat, ' + gradient + ';'
+            var imageStyle = thumb
+                ? 'background: url(\'' + thumb + '\') center/cover no-repeat, ' + gradient + ';'
                 : 'background: ' + gradient + ';';
             return '<div class="card worldcup-card" onclick="location.href=\'worldcup-play.html?id=' + cup.id + '\'">' +
                 '<div class="card-image" style="' + imageStyle + '"></div>' +
