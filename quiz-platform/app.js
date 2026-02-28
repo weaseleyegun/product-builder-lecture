@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Get gradient, tag, and thumbnail for a quiz card based on title keyword
     function getQuizMeta(title) {
         var match = QUIZ_META.find(function (m) { return title && title.includes(m.keyword); });
-        return match || { gradient: 'linear-gradient(135deg, #868e96, #adb5bd)', tag: '퀴즈', thumbnail: '' };
+        return match || { gradient: 'linear-gradient(135deg, #868e96, #adb5bd)', tag: '퀴즈', thumbnail: '', hashtags: [] };
     }
 
     // Render quiz cards into the grid
@@ -96,12 +96,25 @@ document.addEventListener('DOMContentLoaded', function () {
     var searchInput = document.getElementById('global-search');
     if (searchInput) {
         searchInput.addEventListener('input', function (e) {
-            var query = e.target.value.toLowerCase();
+            var originalQuery = e.target.value.toLowerCase().trim();
+            // # 기호를 제거하여 일반 단어로 변경 (예: #노래 -> 노래)
+            var query = originalQuery.replace(/#/g, '');
+
+            if (!query) {
+                // 입력창이 비었을 때 모두 렌더링
+                var grid1 = document.getElementById('daily-quiz-grid');
+                if (grid1 && allQuizzes.length > 0) renderQuizzes(grid1, allQuizzes);
+                var grid2 = document.getElementById('worldcup-grid');
+                if (grid2 && allWorldcups.length > 0) renderWorldcups(grid2, allWorldcups);
+                return;
+            }
 
             var grid1 = document.getElementById('daily-quiz-grid');
             if (grid1 && allQuizzes.length > 0) {
                 var filteredQuizzes = allQuizzes.filter(function (q) {
-                    return q.title.toLowerCase().includes(query) || (q.description && q.description.toLowerCase().includes(query));
+                    var meta = getQuizMeta(q.title);
+                    var hasTagMatch = meta.hashtags && meta.hashtags.some(function (tag) { return tag.includes(query); });
+                    return hasTagMatch || q.title.toLowerCase().includes(query) || (q.description && q.description.toLowerCase().includes(query));
                 });
                 if (filteredQuizzes.length > 0) {
                     renderQuizzes(grid1, filteredQuizzes);
@@ -113,7 +126,9 @@ document.addEventListener('DOMContentLoaded', function () {
             var grid2 = document.getElementById('worldcup-grid');
             if (grid2 && allWorldcups.length > 0) {
                 var filteredWorldcups = allWorldcups.filter(function (w) {
-                    return w.title.toLowerCase().includes(query) || (w.description && w.description.toLowerCase().includes(query));
+                    var meta = getWorldcupMeta(w.title);
+                    var hasTagMatch = meta && meta.hashtags && meta.hashtags.some(function (tag) { return tag.includes(query); });
+                    return hasTagMatch || w.title.toLowerCase().includes(query) || (w.description && w.description.toLowerCase().includes(query));
                 });
                 if (filteredWorldcups.length > 0) {
                     renderWorldcups(grid2, filteredWorldcups);
