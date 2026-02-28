@@ -2,6 +2,9 @@
 
 document.addEventListener('DOMContentLoaded', function () {
 
+    let allQuizzes = [];
+    let allWorldcups = [];
+
     // Fetch quiz list from API and render cards
     async function fetchDailyQuizzes() {
         var grid = document.getElementById('daily-quiz-grid');
@@ -9,8 +12,8 @@ document.addEventListener('DOMContentLoaded', function () {
         try {
             var response = await fetch(API_BASE_URL + '/api/daily-quiz');
             if (response.ok) {
-                var quizzes = await response.json();
-                renderQuizzes(grid, quizzes);
+                allQuizzes = await response.json();
+                renderQuizzes(grid, allQuizzes);
             } else {
                 grid.innerHTML = '<p style="grid-column: 1 / -1; text-align: center;">퀴즈 데이터를 불러오는데 실패했습니다.</p>';
             }
@@ -27,8 +30,8 @@ document.addEventListener('DOMContentLoaded', function () {
         try {
             var response = await fetch(API_BASE_URL + '/api/worldcups');
             if (response.ok) {
-                var worldcups = await response.json();
-                renderWorldcups(grid, worldcups);
+                allWorldcups = await response.json();
+                renderWorldcups(grid, allWorldcups);
             } else {
                 grid.innerHTML = '<p style="grid-column: 1 / -1; text-align: center;">월드컵 데이터를 불러오는데 실패했습니다.</p>';
             }
@@ -87,6 +90,38 @@ document.addEventListener('DOMContentLoaded', function () {
     // Initialize TierMaker (placeholder)
     function initTierMaker() {
         console.log('TierMaker Drag & Drop Initialized');
+    }
+
+    // Global Search Event Listener
+    var searchInput = document.getElementById('global-search');
+    if (searchInput) {
+        searchInput.addEventListener('input', function (e) {
+            var query = e.target.value.toLowerCase();
+
+            var grid1 = document.getElementById('daily-quiz-grid');
+            if (grid1 && allQuizzes.length > 0) {
+                var filteredQuizzes = allQuizzes.filter(function (q) {
+                    return q.title.toLowerCase().includes(query) || (q.description && q.description.toLowerCase().includes(query));
+                });
+                if (filteredQuizzes.length > 0) {
+                    renderQuizzes(grid1, filteredQuizzes);
+                } else {
+                    grid1.innerHTML = '<p style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 2rem;">검색 결과가 없습니다.</p>';
+                }
+            }
+
+            var grid2 = document.getElementById('worldcup-grid');
+            if (grid2 && allWorldcups.length > 0) {
+                var filteredWorldcups = allWorldcups.filter(function (w) {
+                    return w.title.toLowerCase().includes(query) || (w.description && w.description.toLowerCase().includes(query));
+                });
+                if (filteredWorldcups.length > 0) {
+                    renderWorldcups(grid2, filteredWorldcups);
+                } else {
+                    grid2.innerHTML = '<p style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 2rem;">검색 결과가 없습니다.</p>';
+                }
+            }
+        });
     }
 
     fetchDailyQuizzes();
