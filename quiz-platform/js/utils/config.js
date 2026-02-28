@@ -14,6 +14,7 @@ const QUIZ_META = [
     { keyword: '브금', gradient: 'linear-gradient(135deg, #5C7CFA, #748FFC)', tag: '게임', thumbnail: 'images/thumbnails/game.png', hashtags: ['게임', '브금', 'bgm', '배경음악'] },
     { keyword: 'BGM', gradient: 'linear-gradient(135deg, #5C7CFA, #748FFC)', tag: '게임', thumbnail: 'images/thumbnails/game.png', hashtags: ['게임', '브금', 'bgm', '배경음악'] },
     { keyword: '게임', gradient: 'linear-gradient(135deg, #5C7CFA, #748FFC)', tag: '게임', thumbnail: 'images/thumbnails/game.png', hashtags: ['게임', '브금', 'bgm', '배경음악'] },
+    { keyword: '우타이테', gradient: 'linear-gradient(135deg, #FF007F, #7000FF)', tag: '우타이테', thumbnail: 'images/thumbnails/utaite.png', hashtags: ['얼굴없는가수', '우타이테', '유튜브가수', '일본가수', '일본노래', 'j-pop'] }
 ];
 
 // Worldcup card metadata: keyword matching with thumbnails
