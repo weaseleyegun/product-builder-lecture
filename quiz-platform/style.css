@@ -1,31 +1,33 @@
-/* CSS Variables for Dark & Light Mode */
+/* CSS Variables for Dark & Light Mode (ReactBits Inspired) */
 :root {
-    --bg-color: #f8f9fa;
-    --text-color: #212529;
-    --text-muted: #868e96;
-    --primary-color: #4c6ef5;
-    --secondary-color: #fa5252;
-    --nav-bg: rgba(255, 255, 255, 0.85);
-    --card-bg: #ffffff;
-    --border-color: #e9ecef;
-    --accent: #20c997;
-    --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    --hover-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-    --transition: 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    --bg-color: #fafafa;
+    --text-color: #09090b;
+    --text-muted: #71717a;
+    --primary-color: #0ea5e9;
+    --secondary-color: #f4f4f5;
+    --nav-bg: rgba(255, 255, 255, 0.75);
+    --card-bg: rgba(255, 255, 255, 0.9);
+    --border-color: #e4e4e7;
+    --accent: #38bdf8;
+    --shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    --hover-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    --transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    --radius: 16px;
 }
 
 [data-theme="dark"] {
-    --bg-color: #121212;
-    --text-color: #f1f3f5;
-    --text-muted: #adb5bd;
-    --primary-color: #748ffc;
-    --secondary-color: #ff8787;
-    --nav-bg: rgba(18, 18, 18, 0.85);
-    --card-bg: #1e1e1e;
-    --border-color: #343a40;
-    --accent: #38d9a9;
-    --shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-    --hover-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+    --bg-color: #060606;
+    --text-color: #ededed;
+    --text-muted: #a1a1aa;
+    --primary-color: #38bdf8;
+    --secondary-color: #27272a;
+    --nav-bg: rgba(6, 6, 6, 0.65);
+    --card-bg: rgba(24, 24, 27, 0.4);
+    --border-color: rgba(255, 255, 255, 0.08);
+    --accent: #0ea5e9;
+    --shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+    --hover-shadow: 0 0 35px rgba(56, 189, 248, 0.15);
+    /* ReactBits glow */
 }
 
 * {
@@ -40,6 +42,10 @@ body {
     color: var(--text-color);
     transition: background-color var(--transition), color var(--transition);
     line-height: 1.6;
+    background-image: radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.07), transparent 60%);
+    background-size: 100% 100vh;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
 }
 
 /* Header */
@@ -52,7 +58,8 @@ body {
     top: 0;
     z-index: 1000;
     background: var(--nav-bg);
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     border-bottom: 1px solid var(--border-color);
 }
 
@@ -329,35 +336,40 @@ input:checked+.slider:before {
     margin-bottom: 0.5rem;
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
 
 .card {
     background: var(--card-bg);
-    border-radius: 16px;
+    border-radius: var(--radius);
     overflow: hidden;
     box-shadow: var(--shadow);
     transition: var(--transition);
     border: 1px solid var(--border-color);
     cursor: pointer;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
 }
 
 .card:hover {
-    transform: translateY(-8px);
+    transform: translateY(-6px);
     box-shadow: var(--hover-shadow);
-    border-color: var(--primary-color);
+    border-color: rgba(56, 189, 248, 0.3);
 }
 
 
 
 .tag {
-    background: rgba(76, 110, 245, 0.1);
+    background: rgba(56, 189, 248, 0.1);
     color: var(--primary-color);
     padding: 0.3rem 0.8rem;
     border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 600;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    border: 1px solid rgba(56, 189, 248, 0.2);
 }
 
 /* Footer */
