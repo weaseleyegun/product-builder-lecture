@@ -112,9 +112,16 @@ window.submitCreation = async function () {
         };
     });
 
+    var desc = document.getElementById('create-desc').value;
+    var thumb = document.getElementById('create-thumbnail').value.trim();
+
+    if (thumb) {
+        desc += '\n[THUMBNAIL_URL:' + thumb + ']';
+    }
+
     var payload = {
         title: title,
-        description: document.getElementById('create-desc').value,
+        description: desc,
         maxRounds: document.getElementById('create-rounds').value,
         type: 'worldcup',
         items: items

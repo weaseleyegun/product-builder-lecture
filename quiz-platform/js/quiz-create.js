@@ -47,7 +47,12 @@ window.onload = function () {
 
 async function submitQuiz() {
     const title = document.getElementById('quiz-title').value;
-    const desc = document.getElementById('quiz-desc').value;
+    let desc = document.getElementById('quiz-desc').value;
+    const thumb = document.getElementById('quiz-thumbnail').value.trim();
+
+    if (thumb) {
+        desc += '\n[THUMBNAIL_URL:' + thumb + ']';
+    }
 
     if (!title) return alert("퀴즈 제목을 입력해주세요!");
 
