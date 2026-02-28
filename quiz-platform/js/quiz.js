@@ -13,6 +13,8 @@ var score = 0;
 var playTimer;
 var quizTitle = '';
 var currentMode = 'multiple'; // default quiz mode
+var correctCount = 0;   // correct answers in current game
+var incorrectCount = 0; // incorrect answers in current game
 
 // Extracts the title by removing the artist part if it exists (e.g., "Ado - Usseewa" -> "Usseewa")
 function extractTitle(text) {
@@ -99,6 +101,8 @@ function selectRound(count) {
     // Reset state
     currentQuestionIndex = 0;
     score = 0;
+    correctCount = 0;
+    incorrectCount = 0;
 
     // Switch views
     document.getElementById('round-select').style.display = 'none';
@@ -297,8 +301,10 @@ function handleAnswer(btnElement, isCorrect) {
 
     if (isCorrect) {
         btnElement.classList.add('correct');
+        correctCount++;
     } else {
         btnElement.classList.add('wrong');
+        incorrectCount++;
         var question = activeQuizData[currentQuestionIndex];
         var correctIdx = question.options.findIndex(function (o) { return o.isCorrect; });
         if (correctIdx !== -1) {
@@ -341,7 +347,7 @@ window.checkSubjectiveAnswer = function () {
         var normCorrectNoParens = normalizeTitle(correctTitleNoParens);
         // If it matches exactly without parens, or if the correct answer contains the user's input (length >= 2)
         if (normCorrectNoParens === normalizedUser ||
-            (normalizedUser.length >= 2 && normCorrectNoParens.includes(normalizedUser))) {
+            (normalizedUser.length >= 2 && normalizedCorrect.includes(normalizedUser))) {
             isCorrect = true;
         }
     }
@@ -352,20 +358,39 @@ window.checkSubjectiveAnswer = function () {
     if (isCorrect) {
         feedbackEl.innerText = '✅ 정답입니다!';
         feedbackEl.style.color = 'var(--accent)';
+        correctCount++;
     } else {
         feedbackEl.innerText = '❌ 아쉽습니다! 정답: ' + correctTitle;
         feedbackEl.style.color = 'var(--secondary-color)';
+        incorrectCount++;
     }
 
     showAnswerResult(isCorrect);
 };
 
-// Show final score result
+// Show final score result & send stats to backend
 function showResult() {
     document.getElementById('quiz-wrapper').style.display = 'none';
     var resultDiv = document.getElementById('quiz-result');
     resultDiv.style.display = 'block';
     document.getElementById('final-score').innerText = score;
+
+    // Show correct/incorrect summary
+    var totalAnswered = correctCount + incorrectCount;
+    var rateText = totalAnswered > 0
+        ? '정답률: ' + Math.round((correctCount / totalAnswered) * 100) + '% (' + correctCount + '/' + totalAnswered + ')'
+        : '';
+    var rateEl = document.getElementById('result-rate');
+    if (rateEl) rateEl.innerText = rateText;
+
+    // Send result to backend
+    if (quizId && totalAnswered > 0) {
+        fetch(API_BASE_URL + '/api/quiz-result', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ quizId: quizId, correctCount: correctCount, incorrectCount: incorrectCount })
+        }).catch(function (e) { console.warn('결과 전송 실패:', e); });
+    }
 }
 
 // Audio controller global functions

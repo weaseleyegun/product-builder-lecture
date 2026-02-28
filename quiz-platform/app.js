@@ -6,19 +6,20 @@ document.addEventListener('DOMContentLoaded', function () {
     let allWorldcups = [];
 
     // Fetch quiz list from API and render cards
-    async function fetchDailyQuizzes() {
+    async function fetchDailyQuizzes(sort) {
         var grid = document.getElementById('daily-quiz-grid');
         if (!grid) return;
+        var sortParam = sort || 'rank';
         try {
-            var response = await fetch(API_BASE_URL + '/api/daily-quiz');
+            var response = await fetch(API_BASE_URL + '/api/daily-quiz?sort=' + sortParam);
             if (response.ok) {
                 allQuizzes = await response.json();
 
-                // If it's the home page (index.html), show only the first 5 quizzes
+                // If it's the home page (index.html), show only the first 5 quizzes (already sorted by rank/play_count)
                 var isHomePage = window.location.pathname.endsWith('index.html') || window.location.pathname === '/';
                 var displayQuizzes = isHomePage ? allQuizzes.slice(0, 5) : allQuizzes;
 
-                renderQuizzes(grid, displayQuizzes);
+                renderQuizzes(grid, displayQuizzes, isHomePage);
             } else {
                 grid.innerHTML = '<p style="grid-column: 1 / -1; text-align: center;">퀴즈 데이터를 불러오는데 실패했습니다.</p>';
             }
@@ -58,17 +59,25 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Render quiz cards into the grid
-    function renderQuizzes(grid, quizzes) {
-        grid.innerHTML = quizzes.map(function (quiz) {
+    // showHot: if true, first 5 shown on home page with HOT badge
+    function renderQuizzes(grid, quizzes, showHot) {
+        grid.innerHTML = quizzes.map(function (quiz, idx) {
             var meta = getQuizMeta(quiz.title);
             var imageStyle = meta.thumbnail
                 ? 'background: url(\'' + meta.thumbnail + '\') center/cover no-repeat, ' + meta.gradient + ';'
                 : 'background: ' + meta.gradient + ';';
-            return '<div class="card quiz-card" data-id="' + quiz.id + '" onclick="location.href=\'quiz-play.html?id=' + quiz.id + '\'">' +
-                '<div class="card-image" style="' + imageStyle + '"></div>' +
+            var isHot = showHot && idx < 5;
+            var hotBadge = isHot ? '<span style="position:absolute;top:10px;right:10px;background:#ff4757;color:#fff;font-size:0.72rem;font-weight:800;padding:3px 10px;border-radius:20px;letter-spacing:1px;">HOT</span>' : '';
+            var statsHtml = (quiz.play_count || quiz.correct_rate) ?
+                '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.4rem;">' +
+                (quiz.play_count ? '<span style="font-size:0.75rem;color:var(--text-muted);">▶ ' + (quiz.play_count || 0) + '실행</span>' : '') +
+                (quiz.correct_rate ? '<span style="font-size:0.75rem;color:var(--accent);">✅ ' + quiz.correct_rate + '%</span>' : '') +
+                '</div>' : '';
+            return '<div class="card quiz-card" style="position:relative;" data-id="' + quiz.id + '" onclick="location.href=\'quiz-play.html?id=' + quiz.id + '\'"><div class="card-image" style="' + imageStyle + '">' + hotBadge + '</div>' +
                 '<div class="card-content">' +
                 '<h3>' + quiz.title + '</h3>' +
-                '<p>' + (quiz.description || '재밌는 AI 퀴즈를 풀어보세요!') + '</p>' +
+                '<p>' + (quiz.description || '재밋는 AI 퀴즈를 풀어보세요!') + '</p>' +
+                statsHtml +
                 '<span class="tag">#' + meta.tag + '</span>' +
                 '</div></div>';
         }).join('');
@@ -115,7 +124,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!query) {
                 // 입력창이 비었을 때
                 var grid1 = document.getElementById('daily-quiz-grid');
-                if (grid1 && allQuizzes.length > 0) renderQuizzes(grid1, isHomePage ? allQuizzes.slice(0, 5) : allQuizzes);
+                if (grid1 && allQuizzes.length > 0) renderQuizzes(grid1, isHomePage ? allQuizzes.slice(0, 5) : allQuizzes, isHomePage);
                 var grid2 = document.getElementById('worldcup-grid');
                 if (grid2 && allWorldcups.length > 0) renderWorldcups(grid2, isHomePage ? allWorldcups.slice(0, 5) : allWorldcups);
                 return;
@@ -152,9 +161,14 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    fetchDailyQuizzes();
+    fetchDailyQuizzes('rank');
     fetchWorldcups();
     initTierMaker();
+
+    // Expose sort function for quiz-list page
+    window.sortQuizzes = function (sort) {
+        fetchDailyQuizzes(sort);
+    };
 });
 
 // SEO utility
