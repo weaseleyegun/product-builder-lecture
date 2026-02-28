@@ -97,6 +97,13 @@ function selectRound(count) {
     var shuffled = allQuizQuestions.slice().sort(function () { return Math.random() - 0.5; });
     activeQuizData = shuffled.slice(0, Math.min(count, shuffled.length));
 
+    if (typeof multiplayerEnabled !== 'undefined' && multiplayerEnabled) {
+        if (typeof createMultiplayerRoom === 'function') {
+            createMultiplayerRoom(count);
+            return; // Wait for room code and lobby to be shown
+        }
+    }
+
     // Reset state
     currentQuestionIndex = 0;
     score = 0;
@@ -340,6 +347,9 @@ function handleAnswer(btnElement, isCorrect) {
         }
     }
 
+    if (typeof multiplayerSendAnswer === 'function') {
+        multiplayerSendAnswer(isCorrect);
+    }
     showAnswerResult(isCorrect);
 }
 
@@ -393,6 +403,9 @@ window.checkSubjectiveAnswer = function () {
         incorrectCount++;
     }
 
+    if (typeof multiplayerSendAnswer === 'function') {
+        multiplayerSendAnswer(isCorrect);
+    }
     showAnswerResult(isCorrect);
 };
 

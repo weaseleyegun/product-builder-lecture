@@ -199,7 +199,16 @@
                     <p id="round-quiz-title" style="color: var(--text-muted); font-size: 1.1rem; margin-bottom: 2rem;">
                         퀴즈를 불러오는 중...</p>
 
-                    <div
+                    <div style="display: flex; gap: 1rem; justify-content: center; margin-bottom: 1.5rem;">
+                        <button id="mode-single" class="btn-primary"
+                            style="flex: 1; padding: 1rem; border-radius: 12px; font-size: 1.2rem; background-color: var(--primary-color);"
+                            onclick="setGameMode('single')">👤 싱글 플레이</button>
+                        <button id="mode-multi" class="btn-primary"
+                            style="flex: 1; padding: 1rem; border-radius: 12px; font-size: 1.2rem; background-color: var(--card-bg); color: var(--text-color); border: 2px solid var(--primary-color);"
+                            onclick="setGameMode('multi')">🌐 멀티 플레이 (온라인)</button>
+                    </div>
+
+                    <div id="single-settings"
                         style="margin-bottom: 2.5rem; padding: 1.5rem; background: rgba(76, 110, 245, 0.05); border-radius: 16px; border: 1px solid var(--border-color); display: inline-block;">
                         <h2 style="font-size: 1.3rem; margin-bottom: 1rem;">✍️ 정답 입력 방식을 선택하세요</h2>
                         <div style="display: flex; justify-content: center; gap: 2rem;">
@@ -215,6 +224,17 @@
                                     style="width: 20px; height: 20px; accent-color: var(--primary-color);">
                                 주관식 직접 입력
                             </label>
+                        </div>
+                    </div>
+
+                    <div id="multi-settings"
+                        style="display: none; margin-bottom: 2.5rem; padding: 1.5rem; background: rgba(76, 110, 245, 0.05); border-radius: 16px; border: 1px solid var(--border-color);">
+                        <h2 style="font-size: 1.3rem; margin-bottom: 1rem;">친구들과 함께! 🚀</h2>
+                        <p style="color: var(--text-muted); margin-bottom: 1rem;">가장 먼저 정답을 맞힌 사람이 점수를 획득하는 스피드전 모드입니다.
+                        </p>
+                        <div style="display: flex; gap: 1rem; align-items: center; justify-content: center;">
+                            <input type="text" id="multi-nickname" placeholder="내 닉네임" value=""
+                                style="padding: 0.8rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color); font-size: 1rem; width: 150px;">
                         </div>
                     </div>
 
@@ -250,6 +270,37 @@
                     </div>
 
                     <p id="round-available" style="color: var(--text-muted); font-size: 0.9rem;"></p>
+                </div>
+
+                <!-- Multiplayer Lobby Screen -->
+                <div id="multiplayer-lobby" class="quiz-container" style="display: none;">
+                    <h1 style="font-size: 2rem; margin-bottom: 1rem; color: var(--primary-color);">매치 대기실 (멀티 플레이)</h1>
+                    <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
+                        <div
+                            style="flex: 1; min-width: 300px; background: var(--card-bg); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color);">
+                            <h2 style="font-size: 1.2rem; margin-bottom: 1rem;">매치 코드로 초대하세요: <span id="lobby-room-code"
+                                    style="color: var(--accent); letter-spacing: 2px;">0000</span></h2>
+                            <button class="btn-primary" style="width: 100%; margin-bottom: 1rem;"
+                                onclick="copyLobbyLink()">🔗 룸 링크 복사 (친구 초대)</button>
+
+                            <h3
+                                style="margin-top: 2rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                                플레이어 (<span id="player-count">1</span>/16)</h3>
+                            <ul id="player-list"
+                                style="list-style: none; padding: 0; text-align: left; max-height: 200px; overflow-y: auto;">
+                                <!-- Players injected dynamically -->
+                            </ul>
+                        </div>
+                        <div
+                            style="flex: 1; min-width: 300px; padding: 1rem; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                            <p style="color: var(--text-muted); margin-bottom: 2rem; text-align: center;">모든 친구들이 접속할
+                                때까지 기다려 주세요.<br>가장 먼저 정답을 맞춘 사람이 스코어를 획득합니다!</p>
+                            <button id="btn-start-multi" class="btn-primary large" style="width: 100%; display: none;"
+                                onclick="startMultiplayerGame()">🚀 모두 들어왔습니다! 게임 시작</button>
+                            <p id="wait-host-msg" style="color: var(--accent); font-weight: bold; display: none;">방장이
+                                게임을 시작하기를 기다리고 있습니다...</p>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Quiz Play Area (hidden until round selected) -->
@@ -306,8 +357,10 @@
 
     <!-- YouTube IFrame API -->
     <script src="https://www.youtube.com/iframe_api"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/utils/config.js"></script>
     <script src="js/utils/theme.js"></script>
+    <script src="js/multiplayer.js"></script>
     <script src="js/quiz.js?v=20260228"></script>
 </body>
 

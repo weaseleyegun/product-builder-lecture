@@ -26,6 +26,12 @@ export default {
         const path = url.pathname;
         const method = request.method;
 
+        if (path === '/api/config' && method === 'GET') {
+            return jsonResponse({
+                SUPABASE_URL: env.SUPABASE_URL,
+                SUPABASE_ANON_KEY: env.SUPABASE_ANON_KEY
+            });
+        }
         if (path === '/api/daily-quiz' && method === 'GET') {
             return handleDailyQuiz(url, supabase);
         }
