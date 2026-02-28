@@ -231,7 +231,7 @@ input:checked+.slider:before {
 }
 
 .side-ad {
-    width: 80px;
+    width: 160px;
     min-width: 80px;
     height: 600px;
     border-radius: 8px;
