@@ -232,9 +232,17 @@
                         <h2 style="font-size: 1.3rem; margin-bottom: 1rem;">친구들과 함께! 🚀</h2>
                         <p style="color: var(--text-muted); margin-bottom: 1rem;">가장 먼저 정답을 맞힌 사람이 점수를 획득하는 스피드전 모드입니다.
                         </p>
-                        <div style="display: flex; gap: 1rem; align-items: center; justify-content: center;">
+                        <div
+                            style="display: flex; gap: 1rem; align-items: center; justify-content: center; flex-wrap: wrap;">
                             <input type="text" id="multi-nickname" placeholder="내 닉네임" value=""
                                 style="padding: 0.8rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color); font-size: 1rem; width: 150px;">
+
+                            <div style="display: flex; align-items: center; gap: 0.5rem; flex: 1; max-width: 250px;">
+                                <input type="text" id="multi-room-code" placeholder="방 코드 (선택)"
+                                    style="padding: 0.8rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color); font-size: 1rem; width: 100%;">
+                                <button class="btn-primary" onclick="manualJoinRoom()"
+                                    style="padding: 0.8rem; white-space: nowrap;">방 입장</button>
+                            </div>
                         </div>
                     </div>
 
