@@ -2,7 +2,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { handleOptions, jsonResponse, errorResponse, corsHeaders } from './helpers/cors.js';
-import { handleDailyQuiz, handleQuizPlay, handleQuizResult } from './routes/quiz.js';
+import { handleDailyQuiz, handleQuizPlay, handleQuizResult, handleUserCreatedQuiz } from './routes/quiz.js';
 import { handleWorldcups, handleWorldcupPlay, handleUserCreatedContent } from './routes/worldcup.js';
 
 export default {
@@ -40,6 +40,9 @@ export default {
         }
         if (path === '/api/user-created-content' && method === 'POST') {
             return handleUserCreatedContent(request, supabase);
+        }
+        if (path === '/api/user-created-quiz' && method === 'POST') {
+            return handleUserCreatedQuiz(request, supabase);
         }
         if (path === '/api/quiz-result' && method === 'POST') {
             return handleQuizResult(request, supabase);

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>퀴즈 만들기 | QuizRank.io</title>
+    <meta name="description" content="나만의 퀴즈를 만들어 친구들과 대결해보세요.">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7525260897274073"
+        crossorigin="anonymous"></script>
+    <!-- Favicon -->
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎁</text></svg>">
+    <style>
+        .create-container {
+            max-width: 900px;
+            margin: 3rem auto;
+            padding: 2rem;
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+        }
+
+        .form-group {
+            margin-bottom: 2rem;
+            text-align: left;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            font-size: 1.2rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-color);
+            color: var(--text-color);
+            font-size: 1rem;
+            font-family: inherit;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .question-card {
+            background: rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .question-number {
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .remove-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: #ff4757;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 0.3rem 0.8rem;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="navbar">
+        <div class="logo"><a href="index.html"
+                style="text-decoration: none; color: inherit;">QuizRank<span>.io</span></a></div>
+        <div class="actions">
+            <div class="theme-switch-wrapper">
+                <span class="theme-icon">☀️</span>
+                <label class="theme-switch" for="theme-toggle">
+                    <input type="checkbox" id="theme-toggle">
+                    <div class="slider"></div>
+                </label>
+                <span class="theme-icon">🌙</span>
+            </div>
+            <button class="btn-primary" onclick="location.href='login.html'">로그인</button>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="create-container">
+            <h1 style="text-align: center; margin-bottom: 2rem; color: var(--primary-color);">나만의 퀴즈 만들기 🎁</h1>
+            <p style="text-align: center; margin-bottom: 2rem; color: var(--text-muted);">유튜브 영상 링크나 이미지 링크를 활용해 객관식 퀴즈를
+                쉽게 생성하세요!</p>
+
+            <div class="form-group">
+                <label class="form-label">🔥 퀴즈 제목</label>
+                <input type="text" id="quiz-title" class="form-input" placeholder="예: 2000년대 명곡 모음집 (어려움)">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">📝 퀴즈 설명</label>
+                <textarea id="quiz-desc" class="form-input" rows="3" placeholder="퀴즈에 대한 짧은 설명을 적어주세요."></textarea>
+            </div>
+
+            <div id="questions-container">
+                <!-- Question cards will be injected here -->
+            </div>
+
+            <button class="btn-primary"
+                style="width: 100%; margin-bottom: 1rem; background: var(--card-bg); color: var(--text-color); border: 2px dashed var(--border-color);"
+                onclick="addQuestion()">+ 문제 추가하기</button>
+
+            <button class="btn-primary large" style="width: 100%; margin-top: 2rem;" onclick="submitQuiz()">🚀 퀴즈 최종 만들기
+                (저장)</button>
+        </div>
+    </main>
+
+    <script src="js/utils/config.js"></script>
+    <script src="js/utils/theme.js"></script>
+    <script src="js/quiz-create.js"></script>
+</body>
+
+</html>

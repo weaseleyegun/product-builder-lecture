@@ -121,7 +121,7 @@ window.submitCreation = async function () {
     };
 
     try {
-        var response = await fetch(LOCAL_API_URL + '/api/user-created-content', {
+        var response = await fetch(API_BASE_URL + '/api/user-created-content', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)

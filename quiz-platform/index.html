@@ -69,7 +69,12 @@
                             <h2>🎁 맞추기</h2>
                             <span class="badge">HOT</span>
                         </div>
-                        <a href="quiz-list.html" class="view-all">전체보기 &rarr;</a>
+                        <div style="display: flex; gap: 1rem; align-items: center;">
+                            <button class="btn-primary"
+                                style="padding: 0.4rem 1rem; font-size: 0.9rem; border-radius: 8px;"
+                                onclick="location.href='quiz-create.html'">+ 퀴즈 만들기</button>
+                            <a href="quiz-list.html" class="view-all">전체보기 &rarr;</a>
+                        </div>
                     </div>
                     <div class="card-grid" id="daily-quiz-grid">
                         <p style="color: var(--text-muted); padding: 1rem;">퀴즈 데이터를 불러오는 중입니다...</p>
@@ -80,7 +85,12 @@
                 <section id="worldcup" class="category-section">
                     <div class="section-header">
                         <h2>🏆 실시간 인기 월드컵</h2>
-                        <a href="worldcup-list.html" class="view-all">전체보기 &rarr;</a>
+                        <div style="display: flex; gap: 1rem; align-items: center;">
+                            <button class="btn-primary"
+                                style="padding: 0.4rem 1rem; font-size: 0.9rem; border-radius: 8px; background-color: var(--accent);"
+                                onclick="location.href='worldcup-create.html'">+ 월드컵 만들기</button>
+                            <a href="worldcup-list.html" class="view-all">전체보기 &rarr;</a>
+                        </div>
                     </div>
                     <div class="card-grid" id="worldcup-grid">
                         <!-- Worldcup cards will be injected here by app.js -->
