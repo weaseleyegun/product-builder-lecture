@@ -1,4 +1,4 @@
-# QuizRank.io 🏆 / (https://quiz-platform-frontend.pages.dev)
+# QuizRank.io 🏆 / (https://quizrank.pages.dev)
 
 재치 있는 유튜브 구간 맞추기 퀴즈와 고퀄리티 이상형 월드컵(실시간 API 연동 및 유저 생성형 티어표)을 제공하는 인터랙티브 웹 플랫폼입니다.
 
