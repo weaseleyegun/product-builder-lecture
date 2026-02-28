@@ -196,27 +196,22 @@ function loadQuestion(index) {
 // Handle YouTube player errors (embed blocked, deleted, etc.)
 function onPlayerError(event) {
     var errorCode = event.data;
-    var errorMessages = {
-        2: '잘못된 영상 ID입니다.',
-        5: '이 영상은 HTML5 플레이어를 지원하지 않습니다.',
-        100: '이 영상은 삭제되었거나 비공개입니다.',
-        101: '이 영상은 외부 재생이 차단되어 있습니다.',
-        150: '이 영상은 외부 재생이 차단되어 있습니다.'
-    };
-    var msg = errorMessages[errorCode] || '알 수 없는 재생 오류입니다.';
-    console.warn('⚠️ YouTube 에러 (코드: ' + errorCode + '):', msg);
+    console.warn('⚠️ YouTube 외부 재생 차단 또는 삭제됨 (코드: ' + errorCode + '). 스킵 처리합니다.');
 
-    // Show error message and auto-skip to next question after 2 seconds
-    document.getElementById('question-title').innerText = '⚠️ ' + msg + ' 다음 문제로 넘어갑니다...';
+    // 사용자 화면에 에러를 띄우지 않고, 몰래 현재 문제를 배열에서 삭제한 뒤 다음 문제를 즉시 불러옵니다.
+    activeQuizData.splice(currentQuestionIndex, 1);
 
-    setTimeout(function () {
-        currentQuestionIndex++;
-        if (currentQuestionIndex < activeQuizData.length) {
-            loadQuestion(currentQuestionIndex);
-        } else {
-            showResult();
-        }
-    }, 2000);
+    if (activeQuizData.length === 0) {
+        document.getElementById('question-title').innerText = '모든 비디오가 재생 불가능합니다.';
+        return;
+    }
+
+    if (currentQuestionIndex < activeQuizData.length) {
+        // 이미 렌더링된 컴포넌트들을 다음 문제로 덮어씌움
+        loadQuestion(currentQuestionIndex);
+    } else {
+        showResult();
+    }
 }
 
 // Auto-play video when ready
