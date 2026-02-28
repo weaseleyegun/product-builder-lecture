@@ -128,6 +128,10 @@ window.onYouTubeIframeAPIReady = function () {
 
 // Display a quiz question and set up the YouTube player
 function loadQuestion(index) {
+    if (typeof resetMultiplayerRound === 'function') resetMultiplayerRound();
+    var waitHostText = document.getElementById('wait-multi-next');
+    if (waitHostText) waitHostText.style.display = 'none';
+
     var question = activeQuizData[index];
 
     // Update UI headers
@@ -301,32 +305,51 @@ function showAnswerResult(isCorrect) {
 
     // Show next question button
     var nextBtn = document.getElementById('next-btn');
-    nextBtn.style.display = 'inline-block';
-    nextBtn.onclick = function () {
-        try {
-            if (playerDiv) {
-                playerDiv.style.opacity = '0';
-                playerDiv.style.pointerEvents = 'none';
-            }
-            var lDiv = document.querySelector('.youtube-link-reveal');
-            if (lDiv && lDiv.parentNode) {
-                lDiv.parentNode.removeChild(lDiv);
-            }
-            if (player && typeof player.stopVideo === 'function') {
-                player.stopVideo();
-            }
 
-            currentQuestionIndex++;
-            if (currentQuestionIndex < activeQuizData.length) {
-                loadQuestion(currentQuestionIndex);
-            } else {
-                showResult();
-            }
-        } catch (err) {
-            console.error('다음 문제 이동 중 에러:', err);
-            alert('다음 문제 로딩 중 오류가 발생했습니다.');
+    if (typeof isMultiplayerActive === 'function' && isMultiplayerActive() && typeof isHost !== 'undefined' && !isHost) {
+        nextBtn.style.display = 'none';
+        var waitHostText = document.getElementById('wait-multi-next');
+        if (!waitHostText) {
+            waitHostText = document.createElement('p');
+            waitHostText.id = 'wait-multi-next';
+            waitHostText.innerText = '방장이 다음 문제를 시작할 때까지 대기해 주세요...';
+            waitHostText.style = 'color: var(--accent); font-weight: bold; margin-top: 1rem; text-align: center;';
+            nextBtn.parentNode.insertBefore(waitHostText, nextBtn);
+        } else {
+            waitHostText.style.display = 'block';
         }
-    };
+    } else {
+        nextBtn.style.display = 'inline-block';
+        nextBtn.onclick = function () {
+            try {
+                if (typeof isMultiplayerActive === 'function' && isMultiplayerActive() && typeof multiplayerSendNext === 'function') {
+                    multiplayerSendNext(currentQuestionIndex + 1);
+                }
+
+                if (playerDiv) {
+                    playerDiv.style.opacity = '0';
+                    playerDiv.style.pointerEvents = 'none';
+                }
+                var lDiv = document.querySelector('.youtube-link-reveal');
+                if (lDiv && lDiv.parentNode) {
+                    lDiv.parentNode.removeChild(lDiv);
+                }
+                if (player && typeof player.stopVideo === 'function') {
+                    player.stopVideo();
+                }
+
+                currentQuestionIndex++;
+                if (currentQuestionIndex < activeQuizData.length) {
+                    loadQuestion(currentQuestionIndex);
+                } else {
+                    showResult();
+                }
+            } catch (err) {
+                console.error('다음 문제 이동 중 에러:', err);
+                alert('다음 문제 로딩 중 오류가 발생했습니다.');
+            }
+        };
+    }
 }
 
 // Handle user answer selection (Multiple Choice)

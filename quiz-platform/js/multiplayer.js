@@ -63,6 +63,10 @@ function setGameMode(mode) {
     }
 }
 
+window.isMultiplayerActive = function () {
+    return multiplayerEnabled && !!roomCode;
+};
+
 async function initSupabase() {
     if (supabaseClient) return true;
     try {
@@ -93,9 +97,23 @@ window.createMultiplayerRoom = async function (count) {
     document.getElementById('btn-start-multi').style.display = 'block';
 
     // Formulate a link
-    window.history.replaceState({}, '', window.location.pathname + '?id=' + currentQuizId + '&room=' + roomCode);
+    var qId = typeof quizId !== 'undefined' ? quizId : new URLSearchParams(window.location.search).get('id');
+    window.history.replaceState({}, '', window.location.pathname + '?id=' + qId + '&room=' + roomCode);
 
     setupRoomChannel();
+};
+
+window.manualJoinRoom = async function () {
+    var code = document.getElementById('multi-room-code').value.trim();
+    if (!code) {
+        alert('방 코드를 입력해주세요!');
+        return;
+    }
+    var qId = typeof quizId !== 'undefined' ? quizId : new URLSearchParams(window.location.search).get('id');
+    window.history.replaceState({}, '', window.location.pathname + '?id=' + qId + '&room=' + code);
+
+    roomCode = code;
+    await joinMultiplayerRoom();
 };
 
 window.joinMultiplayerRoom = async function () {
@@ -132,7 +150,24 @@ function setupRoomChannel() {
             activeQuizData = payload.payload.questions;
             document.getElementById('multiplayer-lobby').style.display = 'none';
             document.getElementById('quiz-wrapper').style.display = 'block';
-            loadQuestion(); // triggers quiz.js normal flow
+            if (typeof loadQuestion === 'function') loadQuestion(0); // fixes empty array index start
+        })
+        .on('broadcast', { event: 'NEXT_QUESTION' }, payload => {
+            var idx = payload.payload.index;
+            var nextBtn = document.getElementById('next-btn');
+            if (nextBtn) nextBtn.style.display = 'none';
+            var lDiv = document.querySelector('.youtube-link-reveal');
+            if (lDiv && lDiv.parentNode) {
+                lDiv.parentNode.removeChild(lDiv);
+            }
+            if (typeof player !== 'undefined' && player && typeof player.stopVideo === 'function') {
+                player.stopVideo();
+            }
+            if (typeof currentQuestionIndex !== 'undefined') currentQuestionIndex = idx;
+            if (typeof loadQuestion === 'function') {
+                if (idx < activeQuizData.length) loadQuestion(idx);
+                else { if (typeof showResult === 'function') showResult(); }
+            }
         })
         .on('broadcast', { event: 'ANSWER' }, payload => {
             // Someone answered. Display their result.
@@ -236,3 +271,16 @@ function handleOpponentAnswer(userId, isCorrect, score) {
         }
     }
 }
+
+window.multiplayerSendNext = function (nextIndex) {
+    if (!multiplayerEnabled) return;
+    roomChannel.send({
+        type: 'broadcast',
+        event: 'NEXT_QUESTION',
+        payload: { index: nextIndex }
+    });
+};
+
+window.resetMultiplayerRound = function () {
+    roundWinnerDetected = false;
+};

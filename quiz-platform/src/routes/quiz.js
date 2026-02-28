@@ -92,6 +92,14 @@ async function handleQuizResult(request, supabase) {
 
         if (fetchErr) return errorResponse(fetchErr.message);
 
+        // Try RPC first for security definitions
+        const { error: rpcErr } = await supabase.rpc('update_quiz_stats', {
+            q_id: quizId,
+            add_correct: correctCount || 0,
+            add_incorrect: incorrectCount || 0
+        });
+
+        // Fallback or explicit calculations
         const newCorrect = (quiz.correct_count || 0) + (correctCount || 0);
         const newIncorrect = (quiz.incorrect_count || 0) + (incorrectCount || 0);
         const newGameCount = (quiz.game_count || 0) + 1;
@@ -99,18 +107,20 @@ async function handleQuizResult(request, supabase) {
         const correct_rate = total > 0 ? Math.round((newCorrect / total) * 10000) / 100 : 0;
         const incorrect_rate = total > 0 ? Math.round((newIncorrect / total) * 10000) / 100 : 0;
 
-        const { error: updateErr } = await supabase
-            .from('quizzes')
-            .update({
-                correct_count: newCorrect,
-                incorrect_count: newIncorrect,
-                game_count: newGameCount,
-                correct_rate,
-                incorrect_rate
-            })
-            .eq('id', quizId);
+        if (rpcErr) {
+            const { error: updateErr } = await supabase
+                .from('quizzes')
+                .update({
+                    correct_count: newCorrect,
+                    incorrect_count: newIncorrect,
+                    game_count: newGameCount,
+                    correct_rate,
+                    incorrect_rate
+                })
+                .eq('id', quizId);
 
-        if (updateErr) return errorResponse(updateErr.message);
+            if (updateErr) return errorResponse(updateErr.message);
+        }
 
         // Recalculate all ranks by play_count
         const { data: allQuizzes } = await supabase
