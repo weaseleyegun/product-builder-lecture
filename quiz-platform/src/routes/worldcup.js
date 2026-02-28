@@ -8,7 +8,7 @@ async function handleWorldcups(supabase) {
         .from('worldcups')
         .select('id, title, description, play_count')
         .order('created_at', { ascending: false })
-        .limit(5);
+        .limit(100);
 
     if (error) return errorResponse(error.message);
     return jsonResponse(data);
