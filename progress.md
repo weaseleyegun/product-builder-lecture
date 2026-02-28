@@ -1,6 +1,11 @@
 # 📋 프로젝트 진행 상황
 > 마지막 업데이트: 2026-02-28 01:17 (KST)
 
+## 🎯 배포 및 URL 원칙
+- **공식 운영 주소**: [https://quiz-platform-frontend.pages.dev/](https://quiz-platform-frontend.pages.dev/)
+- ⚠️ **주의**: `main.` 접두사가 붙은 프리뷰 주소는 헷갈릴 수 있으므로 더 이상 사용/확인하지 않습니다. 오직 위의 공식 주소만 메인으로 사용합니다.
+- **배포 방식**: GitHub 자동 배포보다 터미널에서 수동 배포 명령어(`npx wrangler pages deploy . --project-name quiz-platform-frontend`)를 사용하여 즉시 100% 반영합니다.
+
 ## 🔑 현재 맥락 (AI가 이어받기 위한 핵심 정보)
 - **QuizRank.io** — 유튜브 노래 맞추기 퀴즈 및 이상형 월드컵 웹 플랫폼입니다. 현재 프론트엔드와 Cloudflare 백엔드가 모두 연동되어 있습니다.
 - 메인 화면 디자인을 5칸으로 넓게 만들었고, 모든 퀴즈와 월드컵의 대표 사진을 AI가 만든 예쁜 이미지로 교체했습니다.
