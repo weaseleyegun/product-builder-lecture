@@ -112,10 +112,13 @@ function selectRound(count) {
     loadQuestion(0);
 }
 
-// YouTube IFrame API callback
-function onYouTubeIframeAPIReady() {
-    fetchQuizData();
-}
+// Fetch data immediately when the script executes (do not wait for YouTube API)
+fetchQuizData();
+
+// YouTube IFrame API callback (just to set a flag or can be left empty if not strictly needed)
+window.onYouTubeIframeAPIReady = function () {
+    console.log('YouTube API Ready');
+};
 
 // Display a quiz question and set up the YouTube player
 function loadQuestion(index) {
