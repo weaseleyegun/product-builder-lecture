@@ -12,6 +12,20 @@ var currentQuestionIndex = 0;
 var score = 0;
 var playTimer;
 var quizTitle = '';
+var currentMode = 'multiple'; // default quiz mode
+
+// Extracts the title by removing the artist part if it exists (e.g., "Ado - Usseewa" -> "Usseewa")
+function extractTitle(text) {
+    if (!text) return '';
+    var parts = text.split(' - ');
+    return parts.length > 1 ? parts.slice(1).join(' - ').trim() : text.trim();
+}
+
+// Normalize title to ignore case and whitespaces for subjective matching
+function normalizeTitle(title) {
+    if (!title) return '';
+    return title.toLowerCase().replace(/\s+/g, '');
+}
 
 // Fetch quiz data from backend API (called on page load)
 async function fetchQuizData() {
@@ -67,6 +81,17 @@ function selectRound(count) {
         return;
     }
 
+    // Check quiz mode (multiple or text)
+    var modeOptions = document.getElementsByName('input_mode');
+    if (modeOptions) {
+        for (var i = 0; i < modeOptions.length; i++) {
+            if (modeOptions[i].checked) {
+                currentMode = modeOptions[i].value;
+                break;
+            }
+        }
+    }
+
     // Shuffle and slice questions
     var shuffled = allQuizQuestions.slice().sort(function () { return Math.random() - 0.5; });
     activeQuizData = shuffled.slice(0, Math.min(count, shuffled.length));
@@ -112,13 +137,26 @@ function loadQuestion(index) {
     var optionsContainer = document.getElementById('options-container');
     optionsContainer.innerHTML = '';
 
-    question.options.forEach(function (opt) {
-        var btn = document.createElement('button');
-        btn.className = 'btn-option';
-        btn.innerText = opt.text;
-        btn.onclick = function () { handleAnswer(btn, opt.isCorrect); };
-        optionsContainer.appendChild(btn);
-    });
+    if (currentMode === 'multiple') {
+        optionsContainer.style.display = 'grid';
+        question.options.forEach(function (opt) {
+            var btn = document.createElement('button');
+            btn.className = 'btn-option';
+            btn.innerText = extractTitle(opt.text);
+            btn.onclick = function () { handleAnswer(btn, opt.isCorrect); };
+            optionsContainer.appendChild(btn);
+        });
+    } else {
+        // Text Input subjective mode
+        optionsContainer.style.display = 'block';
+
+        var inputHtml = '<div style="display: flex; gap: 1rem; max-width: 500px; margin: 0 auto; flex-direction: column;">';
+        inputHtml += '<input type="text" id="subjective-input" placeholder="정답 (노래 제목)을 입력하세요" style="padding: 1rem; font-size: 1.2rem; border-radius: 12px; border: 2px solid var(--border-color); background: var(--card-bg); color: var(--text-color); outline: none;" onkeydown="if(event.key===\\\'Enter\\\') checkSubjectiveAnswer()">';
+        inputHtml += '<button id="submit-subjective" class="btn-primary large" onclick="checkSubjectiveAnswer()">정답 제출</button>';
+        inputHtml += '<p id="subjective-feedback" style="display: none; font-size: 1.2rem; font-weight: 800; margin-top: 1rem;"></p>';
+        inputHtml += '</div>';
+        optionsContainer.innerHTML = inputHtml;
+    }
 
     // Load or cue YouTube video
     if (!player) {
@@ -194,22 +232,11 @@ function onPlayerStateChange(event) {
     }
 }
 
-// Handle user answer selection
-function handleAnswer(btnElement, isCorrect) {
-    var allBtns = document.querySelectorAll('.btn-option');
-    allBtns.forEach(function (b) { b.disabled = true; });
-
+// Common logic after user answers (either multiple choice or subjective)
+function showAnswerResult(isCorrect) {
     if (isCorrect) {
-        btnElement.classList.add('correct');
         score += 100;
         document.getElementById('score-display').innerText = 'Score: ' + score;
-    } else {
-        btnElement.classList.add('wrong');
-        var question = activeQuizData[currentQuestionIndex];
-        var correctIdx = question.options.findIndex(function (o) { return o.isCorrect; });
-        if (correctIdx !== -1) {
-            allBtns[correctIdx].classList.add('correct');
-        }
     }
 
     clearTimeout(playTimer);
@@ -224,10 +251,14 @@ function handleAnswer(btnElement, isCorrect) {
 
     // Add direct YouTube link below video
     var currentQuestion = activeQuizData[currentQuestionIndex];
-    var linkDiv = document.createElement('div');
-    linkDiv.className = 'youtube-link-reveal';
-    linkDiv.innerHTML = '<a href="https://www.youtube.com/watch?v=' + currentQuestion.videoId + '&t=' + currentQuestion.startSeconds + 's" target="_blank" style="color: var(--primary-color); font-weight: bold; text-decoration: underline; margin-top: 1rem; display: block;">🔗 유튜브 원본 영상 보러가기</a>';
-    document.querySelector('.yt-placeholder').appendChild(linkDiv);
+    var ytPlaceholder = document.querySelector('.yt-placeholder');
+    var existingLink = document.querySelector('.youtube-link-reveal');
+    if (!existingLink && ytPlaceholder) {
+        var linkDiv = document.createElement('div');
+        linkDiv.className = 'youtube-link-reveal';
+        linkDiv.innerHTML = '<a href="https://www.youtube.com/watch?v=' + currentQuestion.videoId + '&t=' + currentQuestion.startSeconds + 's" target="_blank" style="color: var(--primary-color); font-weight: bold; text-decoration: underline; margin-top: 1rem; display: block;">🔗 유튜브 원본 영상 보러가기</a>';
+        ytPlaceholder.appendChild(linkDiv);
+    }
 
     // Show next question button
     var nextBtn = document.getElementById('next-btn');
@@ -238,8 +269,9 @@ function handleAnswer(btnElement, isCorrect) {
                 playerDiv.style.opacity = '0';
                 playerDiv.style.pointerEvents = 'none';
             }
-            if (linkDiv && linkDiv.parentNode) {
-                linkDiv.parentNode.removeChild(linkDiv);
+            var lDiv = document.querySelector('.youtube-link-reveal');
+            if (lDiv && lDiv.parentNode) {
+                lDiv.parentNode.removeChild(lDiv);
             }
             if (player && typeof player.stopVideo === 'function') {
                 player.stopVideo();
@@ -257,6 +289,76 @@ function handleAnswer(btnElement, isCorrect) {
         }
     };
 }
+
+// Handle user answer selection (Multiple Choice)
+function handleAnswer(btnElement, isCorrect) {
+    var allBtns = document.querySelectorAll('.btn-option');
+    allBtns.forEach(function (b) { b.disabled = true; });
+
+    if (isCorrect) {
+        btnElement.classList.add('correct');
+    } else {
+        btnElement.classList.add('wrong');
+        var question = activeQuizData[currentQuestionIndex];
+        var correctIdx = question.options.findIndex(function (o) { return o.isCorrect; });
+        if (correctIdx !== -1) {
+            allBtns[correctIdx].classList.add('correct');
+        }
+    }
+
+    showAnswerResult(isCorrect);
+}
+
+// Handle Subjective Answer check
+window.checkSubjectiveAnswer = function () {
+    var inputEl = document.getElementById('subjective-input');
+    var btnEl = document.getElementById('submit-subjective');
+    if (!inputEl) return;
+
+    var userAnswer = inputEl.value;
+    if (!userAnswer.trim()) {
+        alert("정답을 입력해주세요!");
+        return;
+    }
+
+    inputEl.disabled = true;
+    if (btnEl) btnEl.disabled = true;
+
+    var question = activeQuizData[currentQuestionIndex];
+    var correctOption = question.options.find(function (o) { return o.isCorrect; });
+    var correctTitle = extractTitle(correctOption.text);
+
+    var normalizedUser = normalizeTitle(userAnswer);
+    var normalizedCorrect = normalizeTitle(correctTitle);
+
+    var isCorrect = false;
+
+    // Fuzzy matching logic
+    if (normalizedUser === normalizedCorrect) {
+        isCorrect = true;
+    } else {
+        var correctTitleNoParens = correctTitle.replace(/\(.*?\)/g, '').replace(/\[.*?\]/g, '');
+        var normCorrectNoParens = normalizeTitle(correctTitleNoParens);
+        // If it matches exactly without parens, or if the correct answer contains the user's input (length >= 2)
+        if (normCorrectNoParens === normalizedUser ||
+            (normalizedUser.length >= 2 && normCorrectNoParens.includes(normalizedUser))) {
+            isCorrect = true;
+        }
+    }
+
+    var feedbackEl = document.getElementById('subjective-feedback');
+    feedbackEl.style.display = 'block';
+
+    if (isCorrect) {
+        feedbackEl.innerText = '✅ 정답입니다!';
+        feedbackEl.style.color = 'var(--accent)';
+    } else {
+        feedbackEl.innerText = '❌ 아쉽습니다! 정답: ' + correctTitle;
+        feedbackEl.style.color = 'var(--secondary-color)';
+    }
+
+    showAnswerResult(isCorrect);
+};
 
 // Show final score result
 function showResult() {

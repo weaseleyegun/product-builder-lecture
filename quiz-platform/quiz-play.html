@@ -195,9 +195,28 @@
                 <div id="round-select" class="quiz-container">
                     <h1
                         style="font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; background: linear-gradient(90deg, var(--primary-color), var(--accent)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">
-                        🎵 노래 맞추기 퀴즈</h1>
+                        🎵 노래 맞추기 퀴즈 (한글)</h1>
                     <p id="round-quiz-title" style="color: var(--text-muted); font-size: 1.1rem; margin-bottom: 2rem;">
                         퀴즈를 불러오는 중...</p>
+
+                    <div
+                        style="margin-bottom: 2.5rem; padding: 1.5rem; background: rgba(76, 110, 245, 0.05); border-radius: 16px; border: 1px solid var(--border-color); display: inline-block;">
+                        <h2 style="font-size: 1.3rem; margin-bottom: 1rem;">✍️ 정답 입력 방식을 선택하세요</h2>
+                        <div style="display: flex; justify-content: center; gap: 2rem;">
+                            <label
+                                style="cursor: pointer; display: flex; align-items: center; gap: 0.5rem; font-size: 1.1rem; font-weight: 600;">
+                                <input type="radio" name="input_mode" value="multiple" checked
+                                    style="width: 20px; height: 20px; accent-color: var(--primary-color);">
+                                4지 선다 객관식
+                            </label>
+                            <label
+                                style="cursor: pointer; display: flex; align-items: center; gap: 0.5rem; font-size: 1.1rem; font-weight: 600;">
+                                <input type="radio" name="input_mode" value="text"
+                                    style="width: 20px; height: 20px; accent-color: var(--primary-color);">
+                                주관식 직접 입력
+                            </label>
+                        </div>
+                    </div>
 
                     <h2 style="font-size: 1.5rem; margin-bottom: 1.5rem;">🏆 몇 문제에 도전할까요?</h2>
 
