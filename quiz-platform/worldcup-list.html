@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>초월드컵 전체보기 | QuizRank</title>
+    <meta name="description" content="모든 이상형 월드컵을 확인해보세요.">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7525260897274073"
+        crossorigin="anonymous"></script>
+    <!-- Favicon (Browser Tab Icon) -->
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏆</text></svg>">
+</head>
+
+<body>
+    <header class="navbar">
+        <div class="logo">QuizRank<span>.io</span></div>
+        <nav class="nav-links">
+            <a href="quiz-play.html">🎵 오늘의 퀴즈</a>
+            <a href="worldcup-play.html">🏆 이상형 월드컵</a>
+            <a href="worldcup-create.html">🏅 티어 리스트</a>
+        </nav>
+        <div class="actions">
+            <div class="theme-switch-wrapper">
+                <span class="theme-icon">☀️</span>
+                <label class="theme-switch" for="theme-toggle">
+                    <input type="checkbox" id="theme-toggle">
+                    <div class="slider"></div>
+                </label>
+                <span class="theme-icon">🌙</span>
+            </div>
+            <button class="btn-primary" onclick="location.href='login.html'">로그인</button>
+        </div>
+    </header>
+
+    <!-- Top Ad Placeholder -->
+    <div class="ad-placeholder top-ad">
+        <span>Google AdSense (Top)</span>
+    </div>
+
+    <main class="container">
+        <!-- Main Content Layout -->
+        <div class="content-layout">
+            <!-- Left Ad Placeholder -->
+            <aside class="ad-placeholder side-ad left-ad">
+                <span>AdSense<br>(Left)</span>
+            </aside>
+
+            <div class="main-sections">
+                <!-- 통합 검색 바 (Global Search) -->
+                <div class="search-container" style="margin-bottom: 2.5rem; position: relative;">
+                    <input type="text" id="global-search" placeholder="J-POP, 애니, 빌보드 등 노래와 월드컵을 검색해보세요!"
+                        style="width: 100%; padding: 1.2rem 2rem; font-size: 1.1rem; border-radius: 50px; border: 2px solid var(--border-color); background: var(--card-bg); color: var(--text-color); box-shadow: var(--shadow); transition: border-color 0.2s; outline: none;">
+                    <span
+                        style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%); font-size: 1.5rem; pointer-events: none; opacity: 0.7;">🔍</span>
+                </div>
+
+                <!-- Section: 월드컵 부분 전체 리스트 -->
+                <section id="worldcup" class="category-section">
+                    <div class="section-header">
+                        <h2>🏆 실시간 인기 월드컵 전체보기</h2>
+                    </div>
+                    <div class="card-grid" id="worldcup-grid"
+                        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1.5rem;">
+                        <p style="color: var(--text-muted); padding: 1rem;">데이터를 불러오는 중입니다...</p>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Right Ad Placeholder -->
+            <aside class="ad-placeholder side-ad right-ad">
+                <span>AdSense<br>(Right)</span>
+            </aside>
+        </div>
+    </main>
+
+    <!-- Bottom Ad Placeholder -->
+    <div class="ad-placeholder bottom-ad">
+        <span>Google AdSense (Bottom)</span>
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <p>&copy; 2026 QuizRank.io. All rights reserved.</p>
+            <div class="footer-links">
+                <a href="#">이용약관</a>
+                <a href="#">개인정보처리방침</a>
+                <a href="#">광고 문의</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/utils/config.js"></script>
+    <script src="js/utils/theme.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>
