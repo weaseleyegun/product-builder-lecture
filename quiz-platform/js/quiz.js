@@ -129,12 +129,38 @@ function loadQuestion(index) {
     document.getElementById('question-title').innerText = question.title;
     document.getElementById('next-btn').style.display = 'none';
 
-    // Apply blind mode filter on video
+    var isImage = question.videoId.startsWith('http');
+    document.getElementById('question-title').innerText = isImage ? '사진을 보고 누군지 맞혀보세요!' : '노래의 이 부분을 듣고 제목을 맞혀보세요!';
+
+    // Apply blind mode filter
     var playerDiv = document.getElementById('player');
+    var imagePlayer = document.getElementById('image-player');
+    var mediaControls = document.querySelector('.media-controls');
+
     if (playerDiv) {
-        playerDiv.style.filter = 'blur(100px) brightness(0)';
-        playerDiv.style.opacity = '1';
-        playerDiv.style.pointerEvents = 'none';
+        if (!imagePlayer) {
+            imagePlayer = document.createElement('img');
+            imagePlayer.id = 'image-player';
+            imagePlayer.style = 'display: none; max-width: 100%; max-height: 400px; border-radius: 12px; margin: 0 auto; object-fit: contain; width: 100%; padding: 1rem;';
+            playerDiv.parentNode.insertBefore(imagePlayer, playerDiv.nextSibling);
+        }
+
+        if (isImage) {
+            playerDiv.style.display = 'none';
+            imagePlayer.style.display = 'block';
+            imagePlayer.src = question.videoId;
+            imagePlayer.style.filter = 'blur(15px)';
+            imagePlayer.style.transition = 'filter 0.5s ease';
+            if (mediaControls) mediaControls.style.display = 'none';
+        } else {
+            playerDiv.style.display = 'block';
+            imagePlayer.style.display = 'none';
+            if (mediaControls) mediaControls.style.display = 'flex';
+
+            playerDiv.style.filter = 'blur(100px) brightness(0)';
+            playerDiv.style.opacity = '1';
+            playerDiv.style.pointerEvents = 'none';
+        }
 
         var existingLink = document.querySelector('.youtube-link-reveal');
         if (existingLink) existingLink.remove();
@@ -243,19 +269,24 @@ function showAnswerResult(isCorrect) {
 
     clearTimeout(playTimer);
 
-    // Reveal video after answering
+    // Reveal video or image after answering
+    var currentQuestion = activeQuizData[currentQuestionIndex];
+    var isImage = currentQuestion.videoId.startsWith('http');
     var playerDiv = document.getElementById('player');
-    if (playerDiv) {
+    var imagePlayer = document.getElementById('image-player');
+
+    if (isImage && imagePlayer) {
+        imagePlayer.style.filter = 'none';
+    } else if (playerDiv) {
         playerDiv.style.opacity = '1';
         playerDiv.style.filter = 'none';
         playerDiv.style.pointerEvents = 'auto';
     }
 
-    // Add direct YouTube link below video
-    var currentQuestion = activeQuizData[currentQuestionIndex];
+    // Add direct YouTube link below video (only if not image)
     var ytPlaceholder = document.querySelector('.yt-placeholder');
     var existingLink = document.querySelector('.youtube-link-reveal');
-    if (!existingLink && ytPlaceholder) {
+    if (!isImage && !existingLink && ytPlaceholder) {
         var linkDiv = document.createElement('div');
         linkDiv.className = 'youtube-link-reveal';
         linkDiv.innerHTML = '<a href="https://www.youtube.com/watch?v=' + currentQuestion.videoId + '&t=' + currentQuestion.startSeconds + 's" target="_blank" style="color: var(--primary-color); font-weight: bold; text-decoration: underline; margin-top: 1rem; display: block;">🔗 유튜브 원본 영상 보러가기</a>';
