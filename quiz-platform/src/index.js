@@ -2,7 +2,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { handleOptions, jsonResponse, errorResponse, corsHeaders } from './helpers/cors.js';
-import { handleDailyQuiz, handleQuizPlay } from './routes/quiz.js';
+import { handleDailyQuiz, handleQuizPlay, handleQuizResult } from './routes/quiz.js';
 import { handleWorldcups, handleWorldcupPlay, handleUserCreatedContent } from './routes/worldcup.js';
 
 export default {
@@ -27,7 +27,7 @@ export default {
         const method = request.method;
 
         if (path === '/api/daily-quiz' && method === 'GET') {
-            return handleDailyQuiz(supabase);
+            return handleDailyQuiz(url, supabase);
         }
         if (path === '/api/quiz-play' && method === 'GET') {
             return handleQuizPlay(url, supabase);
@@ -40,6 +40,9 @@ export default {
         }
         if (path === '/api/user-created-content' && method === 'POST') {
             return handleUserCreatedContent(request, supabase);
+        }
+        if (path === '/api/quiz-result' && method === 'POST') {
+            return handleQuizResult(request, supabase);
         }
 
         // Root health check
