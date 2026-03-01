@@ -55,6 +55,11 @@ document.addEventListener('DOMContentLoaded', function () {
             return null;
         }
 
+        function cleanDescription(desc) {
+            if (!desc) return '';
+            return desc.replace(/\[THUMBNAIL_URL:.*?\]/g, '').replace(/\[HASHTAGS:.*?\]/g, '').trim();
+        }
+
         container.innerHTML = items.map(item => {
             // Priority: thumbnail_url > metadata description > default metadata
             let thumb = item.thumbnail_url || extractThumbnail(item);
@@ -78,7 +83,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     <div style="width: 60px; height: 60px; border-radius: 8px; ${thumbStyle} flex-shrink: 0;"></div>
                     <div style="flex-grow: 1;">
                         <h4 style="margin: 0; font-size: 1rem;">${item.title}</h4>
-                        <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted);">${item.description ? item.description.substring(0, 50).replace(/\[THUMBNAIL_URL:.*?\]/g, '') + '...' : '설명 없음'}</p>
+                        <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted);">${cleanDescription(item.description).substring(0, 50)}...</p>
                     </div>
                     <button class="btn-primary" onclick="location.href='admin-edit.html?type=${type}&id=${item.id}'" style="padding: 0.5rem 1rem; font-size: 0.85rem;">관리</button>
                 </div>
@@ -178,8 +183,14 @@ document.addEventListener('DOMContentLoaded', function () {
                     dropZone.appendChild(thumbElement);
                 }
                 thumbElement.style.backgroundImage = `url('${reader.result}')`;
-                // If it's a large image, we might just keep the preview and let user use URL for final.
-                // For now, we update the URL input if we could upload, but let's just show preview.
+
+                // CRITICAL FIX: Update the actual input value so it gets saved to the database
+                const thumbInput = document.getElementById('edit-thumbnail');
+                if (thumbInput) {
+                    thumbInput.value = reader.result;
+                    // Trigger input event to ensure any listener knows it changed
+                    thumbInput.dispatchEvent(new Event('input'));
+                }
             };
         }
 
