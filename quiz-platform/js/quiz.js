@@ -169,6 +169,16 @@ function loadQuestion(index) {
     var isImage = question.videoId.startsWith('http');
     document.getElementById('question-title').innerText = isImage ? '사진을 보고 누군지 맞혀보세요!' : '노래의 이 부분을 듣고 제목을 맞혀보세요!';
 
+    // SECURITY: Hide song title from Chrome Media Hub / Lock screen to prevent spoilers
+    if ('mediaSession' in navigator && !isImage) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+            title: '❓ 노래 제목을 맞춰보세요!',
+            artist: 'QuizRank.io',
+            album: '힌트를 확인하려면 정답을 선택하세요',
+            artwork: [{ src: 'https://quizrank.pages.dev/favicon.ico', sizes: '128x128', type: 'image/x-icon' }]
+        });
+    }
+
     // Apply blind mode filter
     var playerDiv = document.getElementById('player');
     var imagePlayer = document.getElementById('image-player');
@@ -318,6 +328,15 @@ function showAnswerResult(isCorrect) {
         playerDiv.style.opacity = '1';
         playerDiv.style.filter = 'none';
         playerDiv.style.pointerEvents = 'auto';
+    }
+
+    // Reveal actual metadata to Media Session after answering
+    if ('mediaSession' in navigator && !isImage) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+            title: extractTitle(currentQuestion.answer),
+            artist: '정답 확인 완료',
+            artwork: [{ src: 'https://quizrank.pages.dev/favicon.ico', sizes: '128x128', type: 'image/x-icon' }]
+        });
     }
 
     // Add direct YouTube link below video (only if not image)
