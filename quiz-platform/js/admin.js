@@ -33,16 +33,34 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function renderAdminList(container, items, type) {
         if (!container) return;
-        container.innerHTML = items.map(item => `
-            <div class="admin-card" style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; margin-bottom: 0.8rem;">
-                <div style="width: 60px; height: 60px; border-radius: 8px; background: url('${item.thumbnail_url || 'https://via.placeholder.com/60'}') center/cover no-repeat, var(--primary-color); flex-shrink: 0;"></div>
-                <div style="flex-grow: 1;">
-                    <h4 style="margin: 0; font-size: 1rem;">${item.title}</h4>
-                    <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted);">${item.description ? item.description.substring(0, 50) + '...' : '설명 없음'}</p>
+        container.innerHTML = items.map(item => {
+            // Priority: thumbnail_url > metadata thumbnail
+            let thumb = item.thumbnail_url;
+            if (!thumb) {
+                if (type === 'quiz') {
+                    const meta = typeof getQuizMeta === 'function' ? getQuizMeta(item.title) : null;
+                    thumb = meta ? meta.thumbnail : '';
+                } else {
+                    const meta = typeof getWorldcupMeta === 'function' ? getWorldcupMeta(item.title) : null;
+                    thumb = meta ? meta.thumbnail : '';
+                }
+            }
+
+            const thumbStyle = thumb
+                ? `background: url('${thumb}') center/cover no-repeat; border: none;`
+                : `background: var(--primary-color); opacity: 0.7;`;
+
+            return `
+                <div class="admin-card" style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; margin-bottom: 0.8rem;">
+                    <div style="width: 60px; height: 60px; border-radius: 8px; ${thumbStyle} flex-shrink: 0;"></div>
+                    <div style="flex-grow: 1;">
+                        <h4 style="margin: 0; font-size: 1rem;">${item.title}</h4>
+                        <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted);">${item.description ? item.description.substring(0, 50) + '...' : '설명 없음'}</p>
+                    </div>
+                    <button class="btn-primary" onclick="location.href='admin-edit.html?type=${type}&id=${item.id}'" style="padding: 0.5rem 1rem; font-size: 0.85rem;">관리</button>
                 </div>
-                <button class="btn-primary" onclick="location.href='admin-edit.html?type=${type}&id=${item.id}'" style="padding: 0.5rem 1rem; font-size: 0.85rem;">관리</button>
-            </div>
-        `).join('');
+            `;
+        }).join('');
     }
 
     // 2. Editor Logic: Handle edit form
