@@ -79,6 +79,94 @@
             cursor: pointer;
             font-size: 0.9rem;
         }
+
+        .question-card.invalid-url {
+            border-color: #ff4757;
+            background: rgba(255, 71, 87, 0.05);
+        }
+
+        .url-status {
+            font-size: 0.85rem;
+            margin-top: 0.4rem;
+            display: none;
+        }
+
+        .url-status.error {
+            color: #ff4757;
+            display: block;
+        }
+
+        .url-status.success {
+            color: #2ed573;
+            display: block;
+        }
+
+        /* Drag & Drop Area */
+        .drop-zone {
+            width: 100%;
+            height: 200px;
+            padding: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            cursor: pointer;
+            color: var(--text-muted);
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            transition: all 0.2s;
+            background: rgba(255, 255, 255, 0.02);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .drop-zone--over {
+            border-style: solid;
+            border-color: var(--primary-color);
+            background: rgba(var(--primary-rgb), 0.1);
+        }
+
+        .drop-zone__thumb {
+            width: 100%;
+            height: 100%;
+            border-radius: 10px;
+            overflow: hidden;
+            background-color: #333;
+            background-size: cover;
+            background-position: center;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        .drop-zone__input {
+            display: none;
+        }
+
+        /* Hashtag styling */
+        .hashtag-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .hashtag-badge {
+            background: var(--primary-color);
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .hashtag-badge .remove {
+            cursor: pointer;
+            font-weight: bold;
+        }
     </style>
 </head>
 
@@ -116,9 +204,23 @@
             </div>
 
             <div class="form-group">
-                <label class="form-label">🖼️ 썸네일 이미지 주소 (선택 기능)</label>
-                <input type="text" id="quiz-thumbnail" class="form-input"
-                    placeholder="원하는 썸네일 이미지 URL을 입력하세요. 비우면 기본 썸네일이 적용됩니다.">
+                <label class="form-label">🏷️ 해시태그 (#)</label>
+                <input type="text" id="hashtag-input" class="form-input" placeholder="태그를 입력하고 엔터를 눌러주세요 (예: 케이팝)">
+                <div id="hashtag-list" class="hashtag-container"></div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">🖼️ 썸네일 이미지 (선택)</label>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.8rem;">
+                    이미지를 드래그하거나 클릭하여 업로드하세요. <br>
+                    <span style="color: var(--accent);">* 설정을 생략하면 '문제 1번'의 미디어가 썸네일로 자동 지정됩니다.</span>
+                </p>
+                <div class="drop-zone" id="thumb-drop-zone">
+                    <span class="drop-zone__prompt">이미지 파일을 드롭하거나 클릭하여 선택 (또는 이미지 URL 붙여넣기)</span>
+                    <input type="file" name="myFile" class="drop-zone__input" id="thumb-file-input" accept="image/*">
+                </div>
+                <input type="text" id="quiz-thumbnail-url" class="form-input" style="margin-top: 0.5rem;"
+                    placeholder="또는 직접 이미지 주소(URL)를 입력하세요.">
             </div>
 
             <div id="questions-container">
