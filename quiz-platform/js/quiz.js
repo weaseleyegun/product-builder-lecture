@@ -322,7 +322,7 @@ function showAnswerResult(isCorrect) {
     if (!isImage && !existingLink && ytPlaceholder) {
         var linkDiv = document.createElement('div');
         linkDiv.className = 'youtube-link-reveal';
-        linkDiv.innerHTML = '<a href="https://www.youtube.com/watch?v=' + currentQuestion.videoId + '&t=' + currentQuestion.startSeconds + 's" target="_blank" style="color: var(--primary-color); font-weight: bold; text-decoration: underline; margin-top: 1rem; display: block;">🔗 유튜브 원본 영상 보러가기</a>';
+        linkDiv.innerHTML = '<a href="https://www.youtube.com/watch?v=' + currentQuestion.videoId + '&t=' + currentQuestion.startSeconds + 's" target="_blank" style="color: var(--primary-color); font-weight: bold; text-decoration: underline; margin-top: 0.5rem; font-size: 0.9rem; display: block;">🔗 유튜브 원본 영상 보러가기</a>';
         ytPlaceholder.appendChild(linkDiv);
     }
 
