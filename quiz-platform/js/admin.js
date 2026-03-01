@@ -113,6 +113,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     e.preventDefault();
                     let val = this.value.trim().replace(/#/g, '');
                     if (val && !hashtags.includes(val)) {
+                        if (hashtags.length >= 5) {
+                            alert('해시태그는 최대 5개까지 등록 가능합니다.');
+                            return;
+                        }
                         hashtags.push(val);
                         renderHashtags();
                     }
