@@ -62,11 +62,26 @@ document.addEventListener('DOMContentLoaded', function () {
         if (item.description && item.description.includes('[THUMBNAIL_URL:')) {
             var match = item.description.match(/\[THUMBNAIL_URL:(.*?)\]/);
             if (match) {
-                item.description = item.description.replace(match[0], '').trim();
+                // item.description = item.description.replace(match[0], '').trim(); // Don't mutate here yet as we might need desc for hashtags
                 return match[1].trim();
             }
         }
         return null;
+    }
+
+    function extractHashtags(item) {
+        if (item.description && item.description.includes('[HASHTAGS:')) {
+            var match = item.description.match(/\[HASHTAGS:(.*?)\]/);
+            if (match) {
+                return match[1].split(',').map(function (t) { return t.trim(); }).filter(Boolean);
+            }
+        }
+        return [];
+    }
+
+    function cleanDescription(desc) {
+        if (!desc) return '';
+        return desc.replace(/\[THUMBNAIL_URL:.*?\]/g, '').replace(/\[HASHTAGS:.*?\]/g, '').trim();
     }
 
     // Render quiz cards into the grid
@@ -75,7 +90,9 @@ document.addEventListener('DOMContentLoaded', function () {
         grid.innerHTML = quizzes.map(function (quiz, idx) {
             var meta = getQuizMeta(quiz.title);
             var customThumb = quiz.thumbnail_url || extractThumbnail(quiz);
+            var hashtags = extractHashtags(quiz);
             var thumb = customThumb || meta.thumbnail;
+            var displayDesc = cleanDescription(quiz.description) || '재밌는 AI 퀴즈를 풀어보세요!';
 
             var imageStyle = thumb
                 ? 'background: url(\'' + thumb + '\') center/cover no-repeat, ' + meta.gradient + ';'
@@ -87,12 +104,23 @@ document.addEventListener('DOMContentLoaded', function () {
                 (quiz.play_count ? '<span style="font-size:0.75rem;color:var(--text-muted);">▶ ' + (quiz.play_count || 0) + '실행</span>' : '') +
                 (quiz.correct_rate ? '<span style="font-size:0.75rem;color:var(--accent);">✅ ' + quiz.correct_rate + '%</span>' : '') +
                 '</div>' : '';
+
+            // Render up to 3 hashtags
+            var tagsHtml = '';
+            if (hashtags.length > 0) {
+                tagsHtml = '<div class="hashtag-row" style="display:flex; gap:0.4rem; overflow:hidden; flex-wrap:wrap; margin-top:0.8rem;">' +
+                    hashtags.slice(0, 3).map(function (t) { return '<span style="font-size:0.65rem; padding:2px 8px; border-radius:12px; background:rgba(255,255,255,0.05); color:var(--text-muted);">#' + t + '</span>'; }).join('') +
+                    '</div>';
+            } else {
+                tagsHtml = '<span class="tag">#' + meta.tag + '</span>';
+            }
+
             return '<div class="card quiz-card" style="position:relative;" data-id="' + quiz.id + '" onclick="location.href=\'quiz-play.html?id=' + quiz.id + '\'"><div class="card-image" style="' + imageStyle + '">' + hotBadge + '</div>' +
                 '<div class="card-content">' +
                 '<h3>' + quiz.title + '</h3>' +
-                '<p>' + (quiz.description || '재밋는 AI 퀴즈를 풀어보세요!') + '</p>' +
+                '<p>' + displayDesc + '</p>' +
                 statsHtml +
-                '<span class="tag">#' + meta.tag + '</span>' +
+                tagsHtml +
                 '</div></div>';
         }).join('');
     }
@@ -108,17 +136,29 @@ document.addEventListener('DOMContentLoaded', function () {
         grid.innerHTML = worldcups.map(function (cup, i) {
             var meta = getWorldcupMeta(cup.title);
             var customThumb = cup.thumbnail_url || extractThumbnail(cup);
+            var hashtags = extractHashtags(cup);
             var thumb = customThumb || (meta && meta.thumbnail);
+            var displayDesc = cleanDescription(cup.description) || '최고의 1위를 선택하세요!';
 
             var gradient = meta ? meta.gradient : WORLDCUP_COLORS[i % WORLDCUP_COLORS.length];
             var imageStyle = thumb
                 ? 'background: url(\'' + thumb + '\') center/cover no-repeat, ' + gradient + ';'
                 : 'background: ' + gradient + ';';
+
+            // Render up to 3 hashtags
+            var tagsHtml = '';
+            if (hashtags.length > 0) {
+                tagsHtml = '<div class="hashtag-row" style="display:flex; gap:0.4rem; overflow:hidden; flex-wrap:wrap; margin-top:0.8rem;">' +
+                    hashtags.slice(0, 3).map(function (t) { return '<span style="font-size:0.65rem; padding:2px 8px; border-radius:12px; background:rgba(255,255,255,0.05); color:var(--accent);">#' + t + '</span>'; }).join('') +
+                    '</div>';
+            }
+
             return '<div class="card worldcup-card" onclick="location.href=\'worldcup-play.html?id=' + cup.id + '\'">' +
                 '<div class="card-image" style="' + imageStyle + '"></div>' +
                 '<div class="card-content">' +
                 '<h3>' + cup.title + '</h3>' +
-                '<p>' + (cup.description || '최고의 1위를 선택하세요!') + '</p>' +
+                '<p>' + displayDesc + '</p>' +
+                tagsHtml +
                 '</div></div>';
         }).join('');
     }
