@@ -97,6 +97,9 @@ function renderMatch() {
     document.getElementById('name-left').innerText = left.name;
     document.getElementById('img-right').src = right.img;
     document.getElementById('name-right').innerText = right.name;
+
+    // UX IMPROVEMENT: Ensure the user sees the new pair by scrolling to top of arena
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // Handle user's contender selection
