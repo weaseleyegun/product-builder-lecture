@@ -109,7 +109,7 @@ document.addEventListener('DOMContentLoaded', function () {
             var tagsHtml = '';
             if (hashtags.length > 0) {
                 tagsHtml = '<div class="hashtag-row" style="display:flex; gap:0.4rem; overflow:hidden; flex-wrap:wrap; margin-top:0.8rem;">' +
-                    hashtags.slice(0, 5).map(function (t) { return '<span style="font-size:0.65rem; padding:2px 8px; border-radius:12px; background:rgba(255,255,255,0.05); color:var(--text-muted);">#' + t + '</span>'; }).join('') +
+                    hashtags.slice(0, 5).map(function (t) { return '<span class="tag">#' + t + '</span>'; }).join('') +
                     '</div>';
             } else {
                 tagsHtml = '<span class="tag">#' + meta.tag + '</span>';
@@ -149,7 +149,7 @@ document.addEventListener('DOMContentLoaded', function () {
             var tagsHtml = '';
             if (hashtags.length > 0) {
                 tagsHtml = '<div class="hashtag-row" style="display:flex; gap:0.4rem; overflow:hidden; flex-wrap:wrap; margin-top:0.8rem;">' +
-                    hashtags.slice(0, 5).map(function (t) { return '<span style="font-size:0.65rem; padding:2px 8px; border-radius:12px; background:rgba(255,255,255,0.05); color:var(--accent);">#' + t + '</span>'; }).join('') +
+                    hashtags.slice(0, 5).map(function (t) { return '<span class="tag">#' + t + '</span>'; }).join('') +
                     '</div>';
             }
 
