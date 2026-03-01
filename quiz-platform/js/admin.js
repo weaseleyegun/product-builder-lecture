@@ -86,10 +86,41 @@ document.addEventListener('DOMContentLoaded', function () {
                         <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted);">${cleanDescription(item.description).substring(0, 50)}...</p>
                     </div>
                     <button class="btn-primary" onclick="location.href='admin-edit.html?type=${type}&id=${item.id}'" style="padding: 0.5rem 1rem; font-size: 0.85rem;">관리</button>
+                    <button class="btn-danger" onclick="deleteContent('${type}', '${item.id}', this)" style="padding: 0.5rem 1rem; font-size: 0.85rem;">삭제</button>
                 </div>
             `;
         }).join('');
     }
+
+    // Delete functionality
+    window.deleteContent = async function (type, id, btn) {
+        if (!confirm('정말로 이 콘텐츠를 삭제하시겠습니까? 관련 데이터가 모두 영구 삭제됩니다.')) return;
+
+        const card = btn.closest('.admin-card');
+        btn.disabled = true;
+        btn.textContent = '...';
+
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/admin/${type}/${id}`, {
+                method: 'DELETE'
+            });
+
+            if (res.ok) {
+                card.style.opacity = '0.5';
+                card.style.pointerEvents = 'none';
+                setTimeout(() => card.remove(), 500);
+            } else {
+                const err = await res.json();
+                alert('삭제 실패: ' + (err.error || '접권한이 없거나 오류가 발생했습니다.'));
+                btn.disabled = false;
+                btn.textContent = '삭제';
+            }
+        } catch (err) {
+            alert('서버 오류: ' + err.message);
+            btn.disabled = false;
+            btn.textContent = '삭제';
+        }
+    };
 
     // 2. Editor Logic: Handle edit form
     let hashtags = [];
