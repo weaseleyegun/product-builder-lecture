@@ -6,8 +6,8 @@ var roomCode = '';
 var roomChannel = null;
 var isHost = false;
 var players = {};
-var multiplayerEnabled = true;
-
+var multiplayerEnabled = false;
+var answersThisRound = new Set();
 // Pre-fill nickname if available
 document.addEventListener('DOMContentLoaded', () => {
     var nickInput = document.getElementById('multi-nickname');
@@ -22,43 +22,43 @@ document.addEventListener('DOMContentLoaded', () => {
         setGameMode('multi');
         document.getElementById('mode-multi').click(); // visual toggle
         roomCode = joinCode;
-        // Host has not started yet, wait for nickname submission to join
-        document.getElementById('round-prompt').style.display = 'none';
-        document.getElementById('round-buttons').innerHTML = `
-            <div style="grid-column: 1 / -1; text-align: center;">
-                <button class="btn-primary large" onclick="joinMultiplayerRoom()">방 입장하기</button>
-            </div>
-        `;
+
+        // 바로 대기실로 자동 입장
+        joinMultiplayerRoom();
     }
 });
 
 function setGameMode(mode) {
     if (mode === 'single') {
-        document.getElementById('single-settings').style.display = 'inline-block';
         document.getElementById('multi-settings').style.display = 'none';
 
         document.getElementById('mode-single').style.backgroundColor = 'var(--primary-color)';
         document.getElementById('mode-single').style.color = '#fff';
+        document.getElementById('mode-single').style.border = '2px solid var(--primary-color)';
         document.getElementById('mode-multi').style.backgroundColor = 'var(--card-bg)';
         document.getElementById('mode-multi').style.color = 'var(--text-color)';
+        document.getElementById('mode-multi').style.border = '2px solid var(--primary-color)';
         multiplayerEnabled = false;
 
         // Restore round buttons if hidden
         document.getElementById('round-buttons').style.display = 'grid';
-        document.getElementById('round-prompt').style.display = 'block';
+        var promptEl = document.getElementById('round-prompt');
+        if (promptEl) promptEl.style.display = 'block';
     } else {
-        document.getElementById('single-settings').style.display = 'none';
         document.getElementById('multi-settings').style.display = 'block';
 
         document.getElementById('mode-multi').style.backgroundColor = 'var(--primary-color)';
         document.getElementById('mode-multi').style.color = '#fff';
+        document.getElementById('mode-multi').style.border = '2px solid var(--primary-color)';
         document.getElementById('mode-single').style.backgroundColor = 'var(--card-bg)';
         document.getElementById('mode-single').style.color = 'var(--text-color)';
+        document.getElementById('mode-single').style.border = '2px solid var(--primary-color)';
         multiplayerEnabled = true;
 
         if (!roomCode) {
             document.getElementById('round-buttons').style.display = 'grid';
-            document.getElementById('round-prompt').innerText = "🏆 방을 먼저 생성할까요? 몇 문제에 도전할지 골라주세요!";
+            var promptEl = document.getElementById('round-prompt');
+            if (promptEl) promptEl.innerText = "🏆 방을 먼저 생성할까요? 몇 문제에 도전할지 골라주세요!";
         }
     }
 }
@@ -148,6 +148,9 @@ function setupRoomChannel() {
         .on('broadcast', { event: 'START_GAME' }, payload => {
             // Host sent start signal with questions data
             activeQuizData = payload.payload.questions;
+            if (payload.payload.mode && typeof currentMode !== 'undefined') {
+                currentMode = payload.payload.mode;
+            }
             document.getElementById('multiplayer-lobby').style.display = 'none';
             document.getElementById('quiz-wrapper').style.display = 'block';
             if (typeof loadQuestion === 'function') loadQuestion(0); // fixes empty array index start
@@ -218,7 +221,10 @@ window.startMultiplayerGame = function () {
     roomChannel.send({
         type: 'broadcast',
         event: 'START_GAME',
-        payload: { questions: activeQuizData }
+        payload: {
+            questions: activeQuizData,
+            mode: typeof currentMode !== 'undefined' ? currentMode : 'multiple'
+        }
     });
 };
 
@@ -233,6 +239,9 @@ window.multiplayerSendAnswer = function (isCorrect) {
         // Update presence score
         roomChannel.track({ nickname: myUser.nickname, score: myUser.score, isHost: isHost });
     }
+
+    answersThisRound.add(myUser.id);
+    if (typeof checkAllReadyForNext === 'function') checkAllReadyForNext();
 
     roomChannel.send({
         type: 'broadcast',
@@ -252,6 +261,9 @@ function handleOpponentAnswer(userId, isCorrect, score) {
         players[userId].score = score;
         updatePlayerList();
     }
+
+    answersThisRound.add(userId);
+    if (typeof checkAllReadyForNext === 'function') checkAllReadyForNext();
 
     if (isCorrect && !roundWinnerDetected) {
         roundWinnerDetected = true;
@@ -283,4 +295,26 @@ window.multiplayerSendNext = function (nextIndex) {
 
 window.resetMultiplayerRound = function () {
     roundWinnerDetected = false;
+    answersThisRound.clear();
+    if (typeof checkAllReadyForNext === 'function') checkAllReadyForNext();
+};
+
+window.checkAllReadyForNext = function () {
+    if (!isHost || !multiplayerEnabled) return;
+    var nextBtn = document.getElementById('next-btn');
+    if (!nextBtn) return;
+
+    var totalPlayers = Object.keys(players).length || 1;
+
+    if (answersThisRound.size >= totalPlayers || roundWinnerDetected) {
+        nextBtn.classList.remove('disabled');
+        nextBtn.style.opacity = '1';
+        nextBtn.style.pointerEvents = 'auto';
+        nextBtn.innerText = '다음 문제로';
+    } else {
+        nextBtn.classList.add('disabled');
+        nextBtn.style.opacity = '0.5';
+        nextBtn.style.pointerEvents = 'none';
+        nextBtn.innerText = '모든 플레이어 응답 대기중... (' + answersThisRound.size + '/' + totalPlayers + ')';
+    }
 };

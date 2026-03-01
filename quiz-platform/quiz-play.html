@@ -201,30 +201,20 @@
 
                     <div style="display: flex; gap: 1rem; justify-content: center; margin-bottom: 1.5rem;">
                         <button id="mode-single" class="btn-primary"
-                            style="flex: 1; padding: 1rem; border-radius: 12px; font-size: 1.2rem; background-color: var(--primary-color);"
+                            style="flex: 1; padding: 1rem; border-radius: 12px; font-size: 1.2rem; background-color: var(--primary-color); border: 2px solid var(--primary-color);"
                             onclick="setGameMode('single')">👤 싱글 플레이</button>
                         <button id="mode-multi" class="btn-primary"
                             style="flex: 1; padding: 1rem; border-radius: 12px; font-size: 1.2rem; background-color: var(--card-bg); color: var(--text-color); border: 2px solid var(--primary-color);"
                             onclick="setGameMode('multi')">🌐 멀티 플레이 (온라인)</button>
                     </div>
 
-                    <div id="single-settings"
-                        style="margin-bottom: 2.5rem; padding: 1.5rem; background: rgba(76, 110, 245, 0.05); border-radius: 16px; border: 1px solid var(--border-color); display: inline-block;">
-                        <h2 style="font-size: 1.3rem; margin-bottom: 1rem;">✍️ 정답 입력 방식을 선택하세요</h2>
-                        <div style="display: flex; justify-content: center; gap: 2rem;">
-                            <label
-                                style="cursor: pointer; display: flex; align-items: center; gap: 0.5rem; font-size: 1.1rem; font-weight: 600;">
-                                <input type="radio" name="input_mode" value="multiple" checked
-                                    style="width: 20px; height: 20px; accent-color: var(--primary-color);">
-                                4지 선다 객관식
-                            </label>
-                            <label
-                                style="cursor: pointer; display: flex; align-items: center; gap: 0.5rem; font-size: 1.1rem; font-weight: 600;">
-                                <input type="radio" name="input_mode" value="text"
-                                    style="width: 20px; height: 20px; accent-color: var(--primary-color);">
-                                주관식 직접 입력
-                            </label>
-                        </div>
+                    <div style="display: flex; gap: 1rem; justify-content: center; margin-bottom: 2.5rem;">
+                        <button id="input-mode-multiple" class="btn-primary"
+                            style="flex: 1; padding: 1rem; border-radius: 12px; font-size: 1.2rem; background-color: var(--primary-color); border: 2px solid var(--primary-color);"
+                            onclick="setInputMode('multiple')">📝 4지 선다 객관식</button>
+                        <button id="input-mode-text" class="btn-primary"
+                            style="flex: 1; padding: 1rem; border-radius: 12px; font-size: 1.2rem; background-color: var(--card-bg); color: var(--text-color); border: 2px solid var(--primary-color);"
+                            onclick="setInputMode('text')">⌨️ 주관식 직접 입력</button>
                     </div>
 
                     <div id="multi-settings"
@@ -246,7 +236,7 @@
                         </div>
                     </div>
 
-                    <h2 style="font-size: 1.5rem; margin-bottom: 1.5rem;">🏆 몇 문제에 도전할까요?</h2>
+                    <h2 id="round-prompt" style="font-size: 1.5rem; margin-bottom: 1.5rem;">🏆 몇 문제에 도전할까요?</h2>
 
                     <div id="round-buttons"
                         style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem; max-width: 700px; margin: 0 auto 2rem auto;">
@@ -289,7 +279,7 @@
                             <h2 style="font-size: 1.2rem; margin-bottom: 1rem;">매치 코드로 초대하세요: <span id="lobby-room-code"
                                     style="color: var(--accent); letter-spacing: 2px;">0000</span></h2>
                             <button class="btn-primary" style="width: 100%; margin-bottom: 1rem;"
-                                onclick="copyLobbyLink()">🔗 룸 링크 복사 (친구 초대)</button>
+                                onclick="copyLobbyLink()">🔗 링크 복사 (친구 초대)</button>
 
                             <h3
                                 style="margin-top: 2rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
@@ -370,6 +360,30 @@
     <script src="js/utils/theme.js"></script>
     <script src="js/multiplayer.js"></script>
     <script src="js/quiz.js?v=20260228"></script>
+    <script>
+        function setInputMode(mode) {
+            if (typeof currentMode !== 'undefined') {
+                currentMode = mode;
+            }
+            if (mode === 'multiple') {
+                document.getElementById('input-mode-multiple').style.backgroundColor = 'var(--primary-color)';
+                document.getElementById('input-mode-multiple').style.color = '#fff';
+                document.getElementById('input-mode-multiple').style.border = '2px solid var(--primary-color)';
+
+                document.getElementById('input-mode-text').style.backgroundColor = 'var(--card-bg)';
+                document.getElementById('input-mode-text').style.color = 'var(--text-color)';
+                document.getElementById('input-mode-text').style.border = '2px solid var(--primary-color)';
+            } else {
+                document.getElementById('input-mode-text').style.backgroundColor = 'var(--primary-color)';
+                document.getElementById('input-mode-text').style.color = '#fff';
+                document.getElementById('input-mode-text').style.border = '2px solid var(--primary-color)';
+
+                document.getElementById('input-mode-multiple').style.backgroundColor = 'var(--card-bg)';
+                document.getElementById('input-mode-multiple').style.color = 'var(--text-color)';
+                document.getElementById('input-mode-multiple').style.border = '2px solid var(--primary-color)';
+            }
+        }
+    </script>
 </body>
 
 </html>

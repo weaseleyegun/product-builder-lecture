@@ -6,7 +6,7 @@ import { jsonResponse, errorResponse } from '../helpers/cors.js';
 async function handleWorldcups(supabase) {
     const { data, error } = await supabase
         .from('worldcups')
-        .select('id, title, description, play_count')
+        .select('id, title, description, thumbnail_url, play_count')
         .order('created_at', { ascending: false })
         .limit(100);
 

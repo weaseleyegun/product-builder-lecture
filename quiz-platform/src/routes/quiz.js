@@ -8,7 +8,7 @@ async function handleDailyQuiz(url, supabase) {
 
     let query = supabase
         .from('quizzes')
-        .select('id, title, description, play_count, rank, correct_rate, incorrect_rate, game_count')
+        .select('id, title, description, thumbnail_url, play_count, rank, correct_rate, incorrect_rate, game_count')
         .limit(100);
 
     if (sort === 'rank') {
