@@ -65,4 +65,52 @@ async function handleUpdateWorldcup(request, url, supabase) {
     }
 }
 
-export { handleUpdateQuiz, handleUpdateWorldcup };
+// DELETE /api/admin/quiz/:id - Update quiz metadata
+async function handleDeleteQuiz(url, supabase) {
+    const id = url.pathname.split('/').pop();
+    if (!id || id === 'quiz') return errorResponse("Quiz ID is required", 400);
+
+    try {
+        const { error: authErr } = await supabase.auth.signInWithPassword({
+            email: 'agent@quizrank.com',
+            password: 'seed_password_1234!'
+        });
+        if (authErr) return errorResponse("Admin Auth Failed", 401);
+
+        const { error: deleteErr } = await supabase
+            .from('quizzes')
+            .delete()
+            .eq('id', id);
+
+        if (deleteErr) return errorResponse("DB Delete Error: " + deleteErr.message, 500);
+        return jsonResponse({ success: true, message: "Quiz deleted successfully" });
+    } catch (err) {
+        return errorResponse(err.message, 500);
+    }
+}
+
+// DELETE /api/admin/worldcup/:id - Update worldcup metadata
+async function handleDeleteWorldcup(url, supabase) {
+    const id = url.pathname.split('/').pop();
+    if (!id || id === 'worldcup') return errorResponse("Worldcup ID is required", 400);
+
+    try {
+        const { error: authErr } = await supabase.auth.signInWithPassword({
+            email: 'agent@quizrank.com',
+            password: 'seed_password_1234!'
+        });
+        if (authErr) return errorResponse("Admin Auth Failed", 401);
+
+        const { error: deleteErr } = await supabase
+            .from('worldcups')
+            .delete()
+            .eq('id', id);
+
+        if (deleteErr) return errorResponse("DB Delete Error: " + deleteErr.message, 500);
+        return jsonResponse({ success: true, message: "Worldcup deleted successfully" });
+    } catch (err) {
+        return errorResponse(err.message, 500);
+    }
+}
+
+export { handleUpdateQuiz, handleUpdateWorldcup, handleDeleteQuiz, handleDeleteWorldcup };
