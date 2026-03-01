@@ -276,7 +276,7 @@ function handleOpponentAnswer(userId, isCorrect, score) {
         document.getElementById('quiz-wrapper').appendChild(modal);
         setTimeout(() => modal.remove(), 2500);
 
-        // If not me, color layout to indicate round is over
+        // Round is over because someone got it right
         if (userId !== myUser.id) {
             clearTimeout(playTimer);
             showAnswerResult(null); // Force show answer in quiz.js
