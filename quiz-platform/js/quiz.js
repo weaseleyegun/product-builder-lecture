@@ -186,7 +186,7 @@ function loadQuestion(index) {
             playerDiv.style.display = 'none';
             imagePlayer.style.display = 'block';
             imagePlayer.src = question.videoId;
-            imagePlayer.style.filter = 'blur(15px)';
+            imagePlayer.style.filter = 'none'; // Blur removed at user request
             imagePlayer.style.transition = 'filter 0.5s ease';
             if (mediaControls) mediaControls.style.display = 'none';
         } else {
