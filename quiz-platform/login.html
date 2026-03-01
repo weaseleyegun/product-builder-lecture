@@ -114,13 +114,13 @@
             <h1>환영합니다!</h1>
             <div class="form-group">
                 <label class="form-label">이메일</label>
-                <input type="email" class="form-input" placeholder="example@email.com">
+                <input type="email" id="login-email" class="form-input" placeholder="example@email.com">
             </div>
             <div class="form-group">
                 <label class="form-label">비밀번호</label>
-                <input type="password" class="form-input" placeholder="••••••••">
+                <input type="password" id="login-password" class="form-input" placeholder="••••••••">
             </div>
-            <button class="btn-primary large" style="width: 100%;" onclick="alert('기본 로그인 준비중입니다!')">이메일로 로그인</button>
+            <button id="login-btn" class="btn-primary large" style="width: 100%;">이메일로 로그인</button>
 
             <div class="divider">또는</div>
 
@@ -141,6 +141,27 @@
                 </svg>
                 Google 계정으로 로그인 (준비중)
             </button>
+
+            <script>
+                document.getElementById('login-btn').addEventListener('click', async function () {
+                    const email = document.getElementById('login-email').value;
+                    const password = document.getElementById('login-password').value;
+
+                    if (!email || !password) return alert('이메일과 비밀번호를 입력해주세요.');
+
+                    // For now, if it's the admin account, we redirect directly after a simple check
+                    // In a real app, this should call Supabase login
+                    if (email === 'agent@quizrank.com' && password === 'seed_password_1234!') {
+                        localStorage.setItem('isAdmin', 'true');
+                        localStorage.setItem('adminEmail', email);
+                        localStorage.setItem('adminPw', password);
+                        alert('관리자 계정으로 로그인되었습니다.');
+                        location.href = 'admin-dashboard.html';
+                    } else {
+                        alert('로그인 기능 준비중입니다! 관리자 계정만 사용 가능합니다.');
+                    }
+                });
+            </script>
         </div>
     </main>
 
