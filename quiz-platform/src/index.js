@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import { handleOptions, jsonResponse, errorResponse, corsHeaders } from './helpers/cors.js';
 import { handleDailyQuiz, handleQuizPlay, handleQuizResult, handleUserCreatedQuiz } from './routes/quiz.js';
 import { handleWorldcups, handleWorldcupPlay, handleUserCreatedContent } from './routes/worldcup.js';
-import { handleUpdateQuiz, handleUpdateWorldcup } from './routes/admin.js';
+import { handleUpdateQuiz, handleUpdateWorldcup, handleDeleteQuiz, handleDeleteWorldcup } from './routes/admin.js';
 
 export default {
     async fetch(request, env, ctx) {
@@ -54,11 +54,13 @@ export default {
         if (path === '/api/quiz-result' && method === 'POST') {
             return handleQuizResult(request, supabase);
         }
-        if (path.startsWith('/api/admin/quiz/') && method === 'PUT') {
-            return handleUpdateQuiz(request, url, supabase);
+        if (path.startsWith('/api/admin/quiz/')) {
+            if (method === 'PUT') return handleUpdateQuiz(request, url, supabase);
+            if (method === 'DELETE') return handleDeleteQuiz(url, supabase);
         }
-        if (path.startsWith('/api/admin/worldcup/') && method === 'PUT') {
-            return handleUpdateWorldcup(request, url, supabase);
+        if (path.startsWith('/api/admin/worldcup/')) {
+            if (method === 'PUT') return handleUpdateWorldcup(request, url, supabase);
+            if (method === 'DELETE') return handleDeleteWorldcup(url, supabase);
         }
 
         // Root health check
