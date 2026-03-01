@@ -16,10 +16,14 @@ var currentMode = 'multiple'; // default quiz mode
 var correctCount = 0;   // correct answers in current game
 var incorrectCount = 0; // incorrect answers in current game
 
-// Returns the raw text. Prevsiously extracted just the title, but caused duplicated options.
+// Returns the title without the artist name (Artist - Title -> Title)
 function extractTitle(text) {
     if (!text) return '';
-    return text.trim();
+    const clean = text.trim();
+    if (clean.includes(' - ')) {
+        return clean.split(' - ').slice(1).join(' - ').trim();
+    }
+    return clean;
 }
 
 // Normalize title to ignore case and whitespaces for subjective matching
