@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function renderQuizzes(grid, quizzes, showHot) {
         grid.innerHTML = quizzes.map(function (quiz, idx) {
             var meta = getQuizMeta(quiz.title);
-            var customThumb = extractThumbnail(quiz);
+            var customThumb = quiz.thumbnail_url || extractThumbnail(quiz);
             var thumb = customThumb || meta.thumbnail;
 
             var imageStyle = thumb
@@ -107,7 +107,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function renderWorldcups(grid, worldcups) {
         grid.innerHTML = worldcups.map(function (cup, i) {
             var meta = getWorldcupMeta(cup.title);
-            var customThumb = extractThumbnail(cup);
+            var customThumb = cup.thumbnail_url || extractThumbnail(cup);
             var thumb = customThumb || (meta && meta.thumbnail);
 
             var gradient = meta ? meta.gradient : WORLDCUP_COLORS[i % WORLDCUP_COLORS.length];

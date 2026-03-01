@@ -37,12 +37,44 @@ async function fetchQuizData() {
         var data = await response.json();
         quizTitle = data.quiz.title || '노래 맞추기 퀴즈';
 
+        var allAnswers = Array.from(new Set(data.questions.map(function (q) {
+            return extractTitle(q.answer);
+        }).filter(Boolean)));
+
         // Map backend data to frontend format
         allQuizQuestions = data.questions.map(function (q, index) {
             var options = q.options;
             if (typeof options === 'string') {
                 options = JSON.parse(options);
             }
+
+            // 하드코딩 필터가 아닌, 길이가 1~2자인 영단어(A, B, C, D, Ad 등)가 많이 섞여있는지 검증
+            var isBadOption = false;
+            if (!Array.isArray(options) || options.length < 2) {
+                isBadOption = true;
+            } else {
+                var badCount = options.filter(function (o) {
+                    return /^[A-Za-z]{1,2}$/.test(extractTitle(o.text));
+                }).length;
+                if (badCount >= 2) isBadOption = true;
+            }
+
+            // 올바르지 않은 보기인 경우 현재 퀴즈의 다른 풀에서 정답 포함 동적 보기 생성
+            if (isBadOption && q.answer && allAnswers.length > 3) {
+                var correctAnswer = extractTitle(q.answer);
+                var wrongs = allAnswers.filter(function (a) { return a !== correctAnswer; })
+                    .sort(function () { return Math.random() - 0.5; })
+                    .slice(0, 3);
+                var newOpts = [correctAnswer].concat(wrongs).sort(function () { return Math.random() - 0.5; });
+                options = newOpts.map(function (text, i) {
+                    return {
+                        id: ['A', 'B', 'C', 'D'][i],
+                        text: text,
+                        isCorrect: text === correctAnswer
+                    };
+                });
+            }
+
             return {
                 id: q.id,
                 quizId: quizId,
@@ -82,16 +114,7 @@ function selectRound(count) {
         return;
     }
 
-    // Check quiz mode (multiple or text)
-    var modeOptions = document.getElementsByName('input_mode');
-    if (modeOptions) {
-        for (var i = 0; i < modeOptions.length; i++) {
-            if (modeOptions[i].checked) {
-                currentMode = modeOptions[i].value;
-                break;
-            }
-        }
-    }
+    // currentMode determines if we use multiple or text input
 
     // Shuffle and slice questions
     var shuffled = allQuizQuestions.slice().sort(function () { return Math.random() - 0.5; });

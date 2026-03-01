@@ -33,25 +33,34 @@ async function getYoutubeVideoId(query) {
 
 async function getWikiImage(searchName) {
     const rawName = searchName.split(" (")[0];
-    const url = `https://ko.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(rawName)}&prop=pageimages&format=json&pithumbsize=500`;
-    return new Promise((resolve) => {
-        https.get(url, (res) => {
-            let data = '';
-            res.on('data', chunk => data += chunk);
-            res.on('end', () => {
-                try {
-                    const json = JSON.parse(data);
-                    const pages = json.query.pages;
-                    const pageId = Object.keys(pages)[0];
-                    if (pageId !== "-1" && pages[pageId].thumbnail) {
-                        resolve(pages[pageId].thumbnail.source);
-                    } else {
-                        resolve(`https://ui-avatars.com/api/?name=${encodeURIComponent(rawName)}&size=500&background=random&color=fff`);
-                    }
-                } catch (e) { resolve(`https://ui-avatars.com/api/?name=${encodeURIComponent(rawName)}&size=500&background=random&color=fff`); }
-            });
-        }).on('error', () => resolve(`https://ui-avatars.com/api/?name=${encodeURIComponent(rawName)}&size=500&background=random&color=fff`));
-    });
+    const groupName = searchName.includes("(") ? searchName.match(/\((.*?)\)/)[1] : "";
+
+    const titlesMatch = [
+        `${rawName} (${groupName})`,
+        `${rawName} (가수)`,
+        `${rawName}`
+    ];
+
+    for (const title of titlesMatch) {
+        const url = `https://ko.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(title)}&prop=pageimages&format=json&pithumbsize=1000`;
+        const img = await new Promise((resolve) => {
+            https.get(url, (res) => {
+                let data = '';
+                res.on('data', chunk => data += chunk);
+                res.on('end', () => {
+                    try {
+                        const json = JSON.parse(data);
+                        const pages = json.query.pages;
+                        const pageId = Object.keys(pages)[0];
+                        if (pageId !== "-1" && pages[pageId].thumbnail) resolve(pages[pageId].thumbnail.source);
+                        else resolve(null);
+                    } catch (e) { resolve(null); }
+                });
+            }).on('error', () => resolve(null));
+        });
+        if (img) return img;
+    }
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(rawName)}&size=500&background=random&color=fff`;
 }
 
 function getRandomOptions(correctAnswer, pool, count = 3) {

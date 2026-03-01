@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 대시보드 | QuizRank</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚙️</text></svg>">
+</head>
+
+<body>
+    <header class="navbar">
+        <div class="logo"><a href="index.html"
+                style="text-decoration: none; color: inherit;">QuizRank<span>.io</span></a></div>
+        <nav class="nav-links">
+            <a href="admin-dashboard.html" class="active">🛠️ 관리 대시보드</a>
+            <a href="quiz-list.html">🎵 퀴즈 목록</a>
+        </nav>
+        <div class="actions">
+            <button class="btn-primary" onclick="location.href='index.html'">사용자 모드</button>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="admin-header" style="margin-bottom: 2rem;">
+            <h2>🛠️ 콘텐츠 통합 관리 모드</h2>
+            <p style="color: var(--text-muted);">퀴즈와 월드컵의 제목, 설명, 썸네일을 직접 수정할 수 있습니다.</p>
+        </div>
+
+        <div class="admin-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+            <!-- Quiz List Column -->
+            <section class="admin-section">
+                <h3 style="margin-bottom: 1.2rem; display: flex; align-items: center; gap: 0.5rem;">🎵 퀴즈 관리 <span
+                        style="font-size: 0.8rem; padding: 2px 8px; background: #AE3EC9; border-radius: 12px; color: #fff;">Quiz</span>
+                </h3>
+                <div id="admin-quiz-list" style="max-height: 600px; overflow-y: auto; padding-right: 0.5rem;">
+                    <p style="color: var(--text-muted);">퀴즈 데이터를 불러오는 중...</p>
+                </div>
+            </section>
+
+            <!-- Worldcup List Column -->
+            <section class="admin-section">
+                <h3 style="margin-bottom: 1.2rem; display: flex; align-items: center; gap: 0.5rem;">🏆 월드컵 관리 <span
+                        style="font-size: 0.8rem; padding: 2px 8px; background: #FCC419; border-radius: 12px; color: #333;">Worldcup</span>
+                </h3>
+                <div id="admin-worldcup-list" style="max-height: 600px; overflow-y: auto; padding-right: 0.5rem;">
+                    <p style="color: var(--text-muted);">월드컵 데이터를 불러오는 중...</p>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer style="margin-top: 4rem; text-align: center; color: var(--text-muted); font-size: 0.9rem; padding: 2rem;">
+        &copy; 2026 QuizRank.io 管理者モード
+    </footer>
+
+    <script src="js/utils/config.js"></script>
+    <script src="js/utils/theme.js"></script>
+    <script src="js/admin.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>콘텐츠 편집 | QuizRank Admin</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✍️</text></svg>">
+</head>
+
+<body>
+    <header class="navbar">
+        <div class="logo"><a href="index.html"
+                style="text-decoration: none; color: inherit;">QuizRank<span>.io</span></a></div>
+        <nav class="nav-links">
+            <a href="admin-dashboard.html">🛠️ 목록으로 돌아가기</a>
+        </nav>
+        <div class="actions">
+            <button class="btn-primary" onclick="location.href='admin-dashboard.html'">취소하고 나가기</button>
+        </div>
+    </header>
+
+    <main class="container" style="max-width: 800px; padding: 2rem;">
+        <div class="admin-header"
+            style="margin-bottom: 2rem; border-bottom: 2px solid var(--border-color); padding-bottom: 1rem;">
+            <h2>✍️ 콘텐츠 정보 편집</h2>
+            <p style="color: var(--text-muted);">제목, 설명, 썸네일을 직접 수정하세요. 수정 즉시 서비스에 반영됩니다.</p>
+        </div>
+
+        <form id="admin-edit-form" class="admin-form" style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <!-- Title -->
+            <div class="form-group">
+                <label for="edit-title" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">콘텐츠 제목</label>
+                <input type="text" id="edit-title" required placeholder="제목을 입력하세요"
+                    style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-color);">
+            </div>
+
+            <!-- Description -->
+            <div class="form-group">
+                <label for="edit-description" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">상세
+                    설명</label>
+                <textarea id="edit-description" rows="4" placeholder="설명을 입력하세요"
+                    style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-color);"></textarea>
+            </div>
+
+            <!-- Thumbnail & Preview -->
+            <div class="form-group">
+                <label for="edit-thumbnail" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">썸네일 이미지
+                    URL</label>
+                <div style="display: flex; gap: 1.5rem; align-items: start;">
+                    <input type="text" id="edit-thumbnail" placeholder="이미지 URL을 입력하세요"
+                        style="flex-grow: 1; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-color);">
+                    <div id="thumbnail-preview"
+                        style="width: 120px; height: 120px; border-radius: 12px; border: 2px dashed var(--border-color); background-size: cover; background-position: center; position: relative;">
+                        <span
+                            style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.3; font-size: 0.7rem; text-align: center;">미리보기<br>Preview</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="form-actions"
+                style="margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
+                <button type="submit" class="btn-primary"
+                    style="width: 100%; padding: 1.2rem; font-size: 1.1rem; border-radius: 12px; font-weight: 800;">
+                    저장하기
+                </button>
+            </div>
+        </form>
+    </main>
+
+    <script src="js/utils/config.js"></script>
+    <script src="js/utils/theme.js"></script>
+    <script src="js/admin.js"></script>
+</body>
+
+</html>
