@@ -238,8 +238,13 @@ input:checked+.slider:before {
     width: 100%;
     max-width: 900px;
     height: 90px;
-    margin: 2rem auto;
+    margin: 1rem auto;
     border-radius: 8px;
+}
+
+.top-ad.compact {
+    height: 60px;
+    font-size: 0.8rem;
 }
 
 .side-ad {

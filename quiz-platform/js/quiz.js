@@ -343,6 +343,12 @@ function showAnswerResult(isCorrect) {
         }
     } else {
         nextBtn.style.display = 'inline-block';
+
+        // UX IMPROVEMENT: Auto-scroll to the next button so the user doesn't have to scroll manually
+        setTimeout(function () {
+            nextBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+
         nextBtn.onclick = function () {
             try {
                 if (typeof isMultiplayerActive === 'function' && isMultiplayerActive() && typeof multiplayerSendNext === 'function') {
