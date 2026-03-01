@@ -136,6 +136,18 @@ button {
     transform: translateY(-2px);
 }
 
+.btn-danger {
+    background: #ff4757;
+    color: #fff;
+    padding: 0.5rem 1rem;
+    font-weight: 600;
+}
+
+.btn-danger:hover {
+    filter: brightness(1.1);
+    transform: translateY(-2px);
+}
+
 .large {
     padding: 0.8rem 1.5rem;
     font-size: 1.1rem;
