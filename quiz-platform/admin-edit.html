@@ -48,8 +48,13 @@
 
             <!-- Hashtags -->
             <div class="form-group">
-                <label class="form-label" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">🏷️ 해시태그
-                    (#)</label>
+                <label class="form-label"
+                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; font-weight: 600;">
+                    <span>🏷️ 해시태그 (#) <small
+                            style="font-weight: 400; color: var(--text-muted); margin-left: 0.5rem;">(최대
+                            5개)</small></span>
+                    <span id="hashtag-count" style="font-size: 0.8rem; color: var(--text-muted);">0 / 5</span>
+                </label>
                 <input type="text" id="hashtag-input" class="form-input" placeholder="태그를 입력하고 엔터를 눌러주세요 (예: 케이팝)"
                     style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-color);">
                 <div id="hashtag-list" style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.8rem;"></div>
