@@ -94,6 +94,12 @@ function renderHashtags() {
     hashtagList.innerHTML = hashtags.map(tag => `
         <span class="hashtag-badge">#${tag} <span class="remove" onclick="removeHashtag('${tag}')">&times;</span></span>
     `).join('');
+
+    const counter = document.getElementById('hashtag-count');
+    if (counter) {
+        counter.textContent = `${hashtags.length} / 5`;
+        counter.style.color = hashtags.length >= 5 ? '#ff4757' : 'rgba(255,255,255,0.5)';
+    }
 }
 
 function removeHashtag(tag) {
