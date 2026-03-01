@@ -1,6 +1,17 @@
 // js/admin.js - Frontend logic for Admin Dashboard and Editor
 
 document.addEventListener('DOMContentLoaded', function () {
+    // 0. Security Check: Redirect to login if not admin
+    const isAdmin = localStorage.getItem('isAdmin');
+    const isEditing = window.location.pathname.includes('admin-edit.html') || document.getElementById('admin-edit-form');
+    const isDashboard = window.location.pathname.includes('admin-dashboard.html') || document.getElementById('admin-quiz-list');
+
+    if ((isEditing || isDashboard) && isAdmin !== 'true') {
+        alert('관리자 권한이 필요합니다. 로그인 페이지로 이동합니다.');
+        window.location.href = 'login.html';
+        return;
+    }
+
     const quizList = document.getElementById('admin-quiz-list');
     const worldcupList = document.getElementById('admin-worldcup-list');
     const editForm = document.getElementById('admin-edit-form');
