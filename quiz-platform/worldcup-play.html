@@ -196,22 +196,20 @@
             </aside>
             <div class="main-sections" style="flex: 1;">
 
-                <div id="setup-screen" class="worldcup-container"
-                    style="display: none; padding: 3rem; background: var(--card-bg); border-radius: 20px; box-shadow: var(--shadow);">
-                    <h1 class="tournament-status" id="setup-title" style="margin-bottom: 0.5rem;">월드컵 준비 중...</h1>
+                <div id="setup-screen" class="worldcup-container">
+                    <h1 class="tournament-status" id="setup-title">월드컵 준비 중...</h1>
                     <p style="color: var(--text-muted); margin-bottom: 2rem;">데이터를 안전하게 불러왔습니다. 진행할 라운드 수를 선택해주세요.</p>
 
                     <div style="margin-bottom: 2rem;">
                         <label style="display: block; font-weight: 800; font-size: 1.2rem; margin-bottom: 1rem;">진행할 강수
                             선택</label>
                         <select id="round-select" class="form-input"
-                            style="max-width: 300px; margin: 0 auto; display: block; padding: 1rem; font-size: 1.2rem; appearance: auto; background: var(--bg-color); color: var(--text-color);">
+                            style="max-width: 300px; margin: 0 auto; display: block; padding: 1rem; border-radius: var(--radius); border: 1px solid hsl(var(--border)); background: hsl(var(--background)); color: hsl(var(--foreground));">
                             <!-- Options injected by JS -->
                         </select>
                     </div>
 
-                    <button class="btn-primary large" onclick="startGame()"
-                        style="font-size: 1.5rem; padding: 1rem 3rem;">시작하기 🚀</button>
+                    <button class="btn-primary large" onclick="startGame()">시작하기 🚀</button>
                 </div>
 
                 <div id="game-screen" class="worldcup-container" style="display: none;">

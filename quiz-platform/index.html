@@ -55,11 +55,10 @@
 
             <div class="main-sections">
                 <!-- 통합 검색 바 (Global Search) -->
-                <div class="search-container" style="margin-bottom: 2.5rem; position: relative;">
-                    <input type="text" id="global-search" placeholder="J-POP, 애니, 빌보드 등 노래와 월드컵을 검색해보세요!"
-                        style="width: 100%; padding: 1.2rem 2rem; font-size: 1.1rem; border-radius: 50px; border: 2px solid var(--border-color); background: var(--card-bg); color: var(--text-color); box-shadow: var(--shadow); transition: border-color 0.2s; outline: none;">
-                    <span
-                        style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%); font-size: 1.5rem; pointer-events: none; opacity: 0.7;">🔍</span>
+                <div class="search-container">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="global-search" placeholder="J-POP, 애니, 빌보드 등 노래와 월드컵을 검색해보세요!">
+
                 </div>
 
                 <!-- Section 1: 오늘의 AI 퀴즈 -->
@@ -70,9 +69,7 @@
                             <span class="badge">HOT</span>
                         </div>
                         <div style="display: flex; gap: 1rem; align-items: center;">
-                            <button class="btn-primary"
-                                style="padding: 0.4rem 1rem; font-size: 0.9rem; border-radius: 8px;"
-                                onclick="location.href='quiz-create.html'">+ 퀴즈 만들기</button>
+                            <button class="btn-primary" onclick="location.href='quiz-create.html'">+ 퀴즈 만들기</button>
                             <a href="quiz-list.html" class="view-all">전체보기 &rarr;</a>
                         </div>
                     </div>
@@ -86,9 +83,8 @@
                     <div class="section-header">
                         <h2>🏆 실시간 인기 월드컵</h2>
                         <div style="display: flex; gap: 1rem; align-items: center;">
-                            <button class="btn-primary"
-                                style="padding: 0.4rem 1rem; font-size: 0.9rem; border-radius: 8px; background-color: var(--accent);"
-                                onclick="location.href='worldcup-create.html'">+ 월드컵 만들기</button>
+                            <button class="btn-primary" onclick="location.href='worldcup-create.html'">+ 월드컵
+                                만들기</button>
                             <a href="worldcup-list.html" class="view-all">전체보기 &rarr;</a>
                         </div>
                     </div>
@@ -131,7 +127,7 @@
     <footer>
         <div class="footer-content">
             <p>&copy; 2026 QuizRank.io. All rights reserved.</p>
-                        <div class="footer-links">
+            <div class="footer-links">
                 <a href="terms.html">이용약관</a>
                 <a href="privacy.html">개인정보처리방침</a>
                 <a href="ad-inquiry.html">광고 문의</a>
