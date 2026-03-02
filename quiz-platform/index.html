@@ -64,86 +64,88 @@
 
                 <!-- Section 1: 오늘의 AI 퀴즈 -->
                 <section id="quiz" class="category-section">
-                    <div style="display: flex; align-items: center; gap: 0.85rem;">
-                        <h2><span class="section-icon icon-quiz"><svg xmlns="http://www.w3.org/2000/svg" width="24"
+                    <div class="section-header">
+                        <div style="display: flex; align-items: center; gap: 0.85rem;">
+                            <h2><span class="section-icon icon-quiz"><svg xmlns="http://www.w3.org/2000/svg" width="24"
+                                        height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M9 18V5l12-2v13"></path>
+                                        <circle cx="6" cy="18" r="3"></circle>
+                                        <circle cx="18" cy="16" r="3"></circle>
+                                    </svg></span> 맞추기</h2>
+                            <span class="badge">HOT</span>
+                        </div>
+                        <div style="display: flex; gap: 1rem; align-items: center;">
+                            <button class="btn-primary"
+                                style="padding: 0.4rem 1rem; font-size: 0.9rem; border-radius: 8px;"
+                                onclick="location.href='quiz-create.html'">+ 퀴즈 만들기</button>
+                            <a href="quiz-list.html" class="view-all">전체보기 &rarr;</a>
+                        </div>
+                    </div>
+                    <div class="card-grid" id="daily-quiz-grid">
+                        <p style="color: var(--text-muted); padding: 1rem;">퀴즈 데이터를 불러오는 중입니다...</p>
+                    </div>
+                </section>
+
+                <!-- Section 2: 실시간 인기 월드컵 -->
+                <section id="worldcup" class="category-section">
+                    <div class="section-header">
+                        <h2><span class="section-icon icon-worldcup"><svg xmlns="http://www.w3.org/2000/svg" width="24"
                                     height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
                                     stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M9 18V5l12-2v13"></path>
-                                    <circle cx="6" cy="18" r="3"></circle>
-                                    <circle cx="18" cy="16" r="3"></circle>
-                                </svg></span> Quiz</h2>
-                        <span class="badge">HOT</span>
-                    </div>
-                    <div style="display: flex; gap: 1rem; align-items: center;">
-                        <button class="btn-primary" style="padding: 0.4rem 1rem; font-size: 0.9rem; border-radius: 8px;"
-                            onclick="location.href='quiz-create.html'">+ 퀴즈 만들기</button>
-                        <a href="quiz-list.html" class="view-all">전체보기 &rarr;</a>
-                    </div>
-            </div>
-            <div class="card-grid" id="daily-quiz-grid">
-                <p style="color: var(--text-muted); padding: 1rem;">퀴즈 데이터를 불러오는 중입니다...</p>
-            </div>
-            </section>
-
-            <!-- Section 2: World Cup -->
-            <section id="worldcup" class="category-section">
-                <div class="section-header">
-                    <h2><span class="section-icon icon-worldcup"><svg xmlns="http://www.w3.org/2000/svg" width="24"
-                                height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                                stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
-                                <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
-                                <path d="M4 22h16"></path>
-                                <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
-                                <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
-                                <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
-                            </svg></span> World Cup</h2>
-                    <div style="display: flex; gap: 1rem; align-items: center;">
-                        <button class="btn-primary"
-                            style="padding: 0.4rem 1rem; font-size: 0.9rem; border-radius: 8px; background-color: var(--accent);"
-                            onclick="location.href='worldcup-create.html'">+ 월드컵 만들기</button>
-                        <a href="worldcup-list.html" class="view-all">전체보기 &rarr;</a>
-                    </div>
-                </div>
-                <div class="card-grid" id="worldcup-grid">
-                    <!-- Worldcup cards will be injected here by app.js -->
-                </div>
-            </section>
-
-            <!-- Section 3: Tier List -->
-            <section id="tier" class="category-section">
-                <div class="section-header">
-                    <h2><span class="section-icon icon-tier"><svg xmlns="http://www.w3.org/2000/svg" width="24"
-                                height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                                stroke-linecap="round" stroke-linejoin="round">
-                                <path
-                                    d="M7.21 15 2.66 7.14a2 2 0 0 1 .13-2.2L4.4 2.8A2 2 0 0 1 6 2h12a2 2 0 0 1 1.6.8l1.6 2.14a2 2 0 0 1 .14 2.2L16.79 15">
-                                </path>
-                                <path d="M11 12 5.12 2.2"></path>
-                                <path d="m13 12 5.88-9.8"></path>
-                                <path d="M8 7h8"></path>
-                                <circle cx="12" cy="17" r="5"></circle>
-                                <path d="M12 18v-2h-.5"></path>
-                            </svg></span> Tier List</h2>
-                    <button class="btn-create" onclick="location.href='worldcup-create.html'">나만의 티어 만들기</button>
-                </div>
-                <div class="card-grid">
-                    <div class="card tier-card" onclick="location.href='worldcup-create.html'">
-                        <div class="card-image" style="background: linear-gradient(135deg, #5C7CFA, #748FFC);">
-                        </div>
-                        <div class="card-content">
-                            <h3>2026년 1분기 애니 등급</h3>
-                            <p>S티어: 4개 작품</p>
+                                    <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+                                    <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+                                    <path d="M4 22h16"></path>
+                                    <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
+                                    <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
+                                    <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
+                                </svg></span> 실시간 인기 월드컵</h2>
+                        <div style="display: flex; gap: 1rem; align-items: center;">
+                            <button class="btn-primary"
+                                style="padding: 0.4rem 1rem; font-size: 0.9rem; border-radius: 8px; background-color: var(--accent);"
+                                onclick="location.href='worldcup-create.html'">+ 월드컵 만들기</button>
+                            <a href="worldcup-list.html" class="view-all">전체보기 &rarr;</a>
                         </div>
                     </div>
-                </div>
-            </section>
-        </div>
+                    <div class="card-grid" id="worldcup-grid">
+                        <!-- Worldcup cards will be injected here by app.js -->
+                    </div>
+                </section>
 
-        <!-- Right Ad Placeholder -->
-        <aside class="ad-placeholder side-ad right-ad">
-            <span>AdSense<br>(Right)</span>
-        </aside>
+                <!-- Section 3: 최신 티어 리스트 -->
+                <section id="tier" class="category-section">
+                    <div class="section-header">
+                        <h2><span class="section-icon icon-tier"><svg xmlns="http://www.w3.org/2000/svg" width="24"
+                                    height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                    stroke-linecap="round" stroke-linejoin="round">
+                                    <path
+                                        d="M7.21 15 2.66 7.14a2 2 0 0 1 .13-2.2L4.4 2.8A2 2 0 0 1 6 2h12a2 2 0 0 1 1.6.8l1.6 2.14a2 2 0 0 1 .14 2.2L16.79 15">
+                                    </path>
+                                    <path d="M11 12 5.12 2.2"></path>
+                                    <path d="m13 12 5.88-9.8"></path>
+                                    <path d="M8 7h8"></path>
+                                    <circle cx="12" cy="17" r="5"></circle>
+                                    <path d="M12 18v-2h-.5"></path>
+                                </svg></span> 최신 티어 리스트</h2>
+                        <button class="btn-create" onclick="location.href='worldcup-create.html'">나만의 티어 만들기</button>
+                    </div>
+                    <div class="card-grid">
+                        <div class="card tier-card" onclick="location.href='worldcup-create.html'">
+                            <div class="card-image" style="background: linear-gradient(135deg, #5C7CFA, #748FFC);">
+                            </div>
+                            <div class="card-content">
+                                <h3>2026년 1분기 애니 등급</h3>
+                                <p>S티어: 4개 작품</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Right Ad Placeholder -->
+            <aside class="ad-placeholder side-ad right-ad">
+                <span>AdSense<br>(Right)</span>
+            </aside>
         </div>
     </main>
 

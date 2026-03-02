@@ -330,8 +330,8 @@ input:checked+.slider:before {
     justify-content: center;
     width: 2.8rem;
     height: 2.8rem;
-    border-radius: 0.75rem;
-    background: rgba(255, 255, 255, 0.05);
+    border-radius: 0.85rem;
+    background: rgba(255, 255, 255, 0.08);
     position: relative;
     flex-shrink: 0;
     transition: all var(--transition);
@@ -344,19 +344,19 @@ input:checked+.slider:before {
 .section-icon svg {
     width: 1.6rem;
     height: 1.6rem;
-    filter: drop-shadow(0 0 8px currentColor);
+    filter: drop-shadow(0 0 10px currentColor);
 }
 
 .icon-quiz {
     color: #3b82f6;
 }
 
-/* Blue */
+/* Vivid Blue */
 .icon-worldcup {
-    color: #ef4444;
+    color: #fbbf24;
 }
 
-/* Red/Orange for Worldcup */
+/* Amber Gold */
 .icon-tier {
     color: #a855f7;
 }
@@ -368,17 +368,17 @@ input:checked+.slider:before {
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    box-shadow: 0 0 20px currentColor;
-    opacity: 0.2;
+    box-shadow: 0 0 25px currentColor;
+    opacity: 0.15;
     transition: opacity var(--transition);
 }
 
 .category-section:hover .section-icon {
-    transform: scale(1.05) rotate(-5deg);
+    transform: scale(1.1) rotate(-5deg);
 }
 
 .category-section:hover .section-icon::after {
-    opacity: 0.4;
+    opacity: 0.5;
 }
 
 .badge {
