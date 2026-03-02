@@ -330,18 +330,40 @@ input:checked+.slider:before {
     justify-content: center;
 }
 
-/* Sections & Cards */
-.section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    margin-bottom: 1.25rem;
+/* S.category-section {
+    margin-bottom: 4rem;
 }
 
+.section-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 0.75rem;
+    background: rgba(0, 0, 0, 0.2);
+    flex-shrink: 0;
+    transition: all var(--transition);
+}
+
+[data-theme="light"] .section-icon {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.section-icon svg {
+    width: 1.5rem;
+    height: 1.5rem;
+    filter: drop-shadow(0 0 8px currentColor);
+}
+
+.icon-quiz { color: #3b82f6; }
+.icon-worldcup { color: #facc15; }
+.icon-tier { color: #a855f7; }
+
 .section-header h2 {
-    font-size: 1.5rem;
-    font-weight: 600;
-    letter-spacing: -0.025em;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
 }
 
 .badge {
