@@ -18,15 +18,15 @@
     --border: 240 5.9% 90%;
     --input: 240 5.9% 90%;
     --ring: 240 5.9% 10%;
-    --radius: 0.5rem;
-    --transition: 0.2s ease-in-out;
+    --radius: 0.75rem;
+    --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --bg-color: hsl(var(--background));
     --text-color: hsl(var(--foreground));
     --border-color: hsl(var(--border));
     --primary-color: hsl(var(--primary));
     --card-bg: hsl(var(--card));
     --text-muted: hsl(var(--muted-foreground));
-    --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
     --hover-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
 }
 
