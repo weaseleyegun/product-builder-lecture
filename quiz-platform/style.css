@@ -248,18 +248,20 @@ input:checked+.slider:before {
 }
 
 .side-ad {
-    width: 300px;
+    width: 210px;
+    /* Adjusted to 70% of 300px */
     min-width: 150px;
     height: 600px;
     border-radius: 8px;
     position: sticky;
     top: 100px;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
 }
 
 /* Layout */
 .container {
-    max-width: 1600px;
+    max-width: 2080px;
+    /* Increased by 30% from 1600px */
     margin: 0 auto;
     padding: 0 1.5rem;
 }
@@ -317,6 +319,66 @@ input:checked+.slider:before {
 .section-header h2 {
     font-size: 1.8rem;
     font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+}
+
+.section-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.8rem;
+    height: 2.8rem;
+    border-radius: 0.75rem;
+    background: rgba(255, 255, 255, 0.05);
+    position: relative;
+    flex-shrink: 0;
+    transition: all var(--transition);
+}
+
+[data-theme="light"] .section-icon {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.section-icon svg {
+    width: 1.6rem;
+    height: 1.6rem;
+    filter: drop-shadow(0 0 8px currentColor);
+}
+
+.icon-quiz {
+    color: #3b82f6;
+}
+
+/* Blue */
+.icon-worldcup {
+    color: #ef4444;
+}
+
+/* Red/Orange for Worldcup */
+.icon-tier {
+    color: #a855f7;
+}
+
+/* Purple */
+
+.section-icon::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: 0 0 20px currentColor;
+    opacity: 0.2;
+    transition: opacity var(--transition);
+}
+
+.category-section:hover .section-icon {
+    transform: scale(1.05) rotate(-5deg);
+}
+
+.category-section:hover .section-icon::after {
+    opacity: 0.4;
 }
 
 .badge {
