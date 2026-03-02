@@ -180,6 +180,21 @@ button {
     background: hsl(var(--accent));
 }
 
+.btn-create,
+.btn-tier {
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    padding: 0.5rem 1rem;
+    height: 2.25rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.btn-create:hover,
+.btn-tier:hover {
+    opacity: 0.9;
+}
+
 /* Theme Toggle (Customized for shadcn style) */
 .theme-switch-wrapper {
     display: flex;
@@ -343,11 +358,14 @@ input:checked+.slider:before {
     text-decoration: none;
     font-size: 0.875rem;
     font-weight: 500;
-    transition: color var(--transition);
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius);
+    transition: all var(--transition);
 }
 
 .view-all:hover {
     color: hsl(var(--foreground));
+    background: hsl(var(--accent));
 }
 
 .card-grid {
