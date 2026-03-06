@@ -55,12 +55,12 @@ export default {
             return handleQuizResult(request, supabase);
         }
         if (path.startsWith('/api/admin/quiz/')) {
-            if (method === 'PUT') return handleUpdateQuiz(request, url, supabase);
-            if (method === 'DELETE') return handleDeleteQuiz(url, supabase);
+            if (method === 'PUT') return handleUpdateQuiz(request, url, supabase, env);
+            if (method === 'DELETE') return handleDeleteQuiz(request, url, supabase, env);
         }
         if (path.startsWith('/api/admin/worldcup/')) {
-            if (method === 'PUT') return handleUpdateWorldcup(request, url, supabase);
-            if (method === 'DELETE') return handleDeleteWorldcup(url, supabase);
+            if (method === 'PUT') return handleUpdateWorldcup(request, url, supabase, env);
+            if (method === 'DELETE') return handleDeleteWorldcup(request, url, supabase, env);
         }
 
         // Root health check

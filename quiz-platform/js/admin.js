@@ -1,13 +1,14 @@
 // js/admin.js - Frontend logic for Admin Dashboard and Editor
 
 document.addEventListener('DOMContentLoaded', function () {
-    // 0. Security Check: Redirect to login if not admin
-    const isAdmin = localStorage.getItem('isAdmin');
+    // 0. Security Check: Verify JWT in sessionStorage (real auth)
+    const token = sessionStorage.getItem('sb_access_token');
+    const userEmail = sessionStorage.getItem('sb_user_email');
     const isEditing = window.location.pathname.includes('admin-edit.html') || document.getElementById('admin-edit-form');
     const isDashboard = window.location.pathname.includes('admin-dashboard.html') || document.getElementById('admin-quiz-list');
 
-    if ((isEditing || isDashboard) && isAdmin !== 'true') {
-        alert('관리자 권한이 필요합니다. 로그인 페이지로 이동합니다.');
+    if ((isEditing || isDashboard) && !token) {
+        alert('로그인이 필요합니다. 로그인 페이지로 이동합니다.');
         window.location.href = 'login.html';
         return;
     }
@@ -111,9 +112,17 @@ document.addEventListener('DOMContentLoaded', function () {
         btn.disabled = true;
         btn.textContent = '...';
 
+        const token = sessionStorage.getItem('sb_access_token');
+        if (!token) {
+            alert('세션이 만료되었습니다. 다시 로그인해주세요.');
+            location.href = 'login.html';
+            return;
+        }
+
         try {
             const res = await fetch(`${API_BASE_URL}/api/admin/${type}/${id}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: { 'Authorization': 'Bearer ' + token }
             });
 
             if (res.ok) {
@@ -248,8 +257,14 @@ document.addEventListener('DOMContentLoaded', function () {
             btn.disabled = true;
             btn.textContent = '저장 중...';
 
+            const token = sessionStorage.getItem('sb_access_token');
+            if (!token) {
+                alert('세션이 만료되었습니다. 다시 로그인해주세요.');
+                location.href = 'login.html';
+                return;
+            }
+
             let desc = document.getElementById('edit-description').value;
-            // Clean up existing tags/thumbs in description to keep it tidy
             desc = desc.replace(/\[THUMBNAIL_URL:.*?\]/g, '').replace(/\[HASHTAGS:.*?\]/g, '').trim();
 
             if (hashtags.length > 0) {
@@ -265,7 +280,10 @@ document.addEventListener('DOMContentLoaded', function () {
             try {
                 const res = await fetch(`${API_BASE_URL}/api/admin/${type}/${id}`, {
                     method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
                     body: JSON.stringify(payload)
                 });
 
