@@ -110,7 +110,7 @@ document.addEventListener('DOMContentLoaded', function () {
         grid.innerHTML = '';
         items.forEach(function (item) {
             var card = document.createElement('div');
-            card.className = 'quiz-card' + (isHomePage ? ' home-card' : '');
+            card.className = 'card quiz-card' + (isHomePage ? ' home-card' : '');
             if (item.is_new) card.classList.add('new');
 
             // Use slug if available for SEO
