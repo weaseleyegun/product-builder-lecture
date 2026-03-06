@@ -123,7 +123,7 @@ document.addEventListener('DOMContentLoaded', function () {
             var cleanDesc = cleanDescription(item.description);
 
             card.innerHTML = `
-                <div class="card-thumb" style="background: url('${thumb}') center/cover no-repeat;">
+                <div class="card-image" style="background: url('${thumb}') center/cover no-repeat;">
                     ${(item.rank && item.rank <= 3) ? '<div class="ranking-badge">' + item.rank + '</div>' : ''}
                     ${item.is_hot ? '<div class="hot-badge">HOT</div>' : ''}
                 </div>
