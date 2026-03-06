@@ -414,9 +414,17 @@ input:checked+.slider:before {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 0.85rem;
+    font-size: 0.75rem;
     color: var(--text-muted);
-    font-weight: 600;
+    font-weight: 700;
+    gap: 0.5rem;
+}
+
+.card-stats span {
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 3px;
 }
 
 .success-rate {
@@ -460,7 +468,7 @@ input:checked+.slider:before {
 }
 
 .card-content {
-    padding: 1rem;
+    padding: 0.8rem 0.7rem;
 }
 
 .card-content h3 {
