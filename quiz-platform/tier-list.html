@@ -64,27 +64,9 @@
                                 onclick="location.href='worldcup-create.html'">+ 나만의 티어 만들기</button>
                         </div>
                     </div>
-                    <div class="card-grid"
+                    <div class="card-grid" id="tier-grid"
                         style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1.5rem;">
-                        <!-- Static Sample for demonstration -->
-                        <div class="card tier-card" onclick="location.href='tier-view.html'">
-                            <div class="card-image" style="background: linear-gradient(135deg, #5C7CFA, #748FFC);">
-                            </div>
-                            <div class="card-content">
-                                <h3>2026년 1분기 애니 등급</h3>
-                                <p>S티어: 4개 작품</p>
-                            </div>
-                        </div>
-
-                        <div class="card tier-card" onclick="location.href='#'">
-                            <div class="card-image" style="background: linear-gradient(135deg, #ff7f7f, #ff4c4c);">
-                            </div>
-                            <div class="card-content">
-                                <h3>역대급 명작 게임 리스트</h3>
-                                <p>S티어: 5개 작품</p>
-                            </div>
-                        </div>
-
+                        <p style="color: var(--text-muted); padding: 1rem;">데이터를 불러오는 중입니다...</p>
                     </div>
                 </section>
             </div>
@@ -112,6 +94,7 @@
 
     <script src="js/utils/config.js"></script>
     <script src="js/utils/theme.js"></script>
+    <script src="app.js"></script>
 </body>
 
 </html>

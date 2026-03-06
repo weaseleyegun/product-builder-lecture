@@ -27,8 +27,10 @@ window.handleFileUpload = function (event) {
                 var previewItem = document.createElement('div');
                 previewItem.className = 'preview-item';
                 previewItem.id = 'preview-' + itemId;
+                var defaultName = (currentFile && currentFile.name) ? currentFile.name.split('.')[0] : 'Item ' + (currentIndex + 1);
                 previewItem.innerHTML =
                     '<img src="' + imgUrl + '" alt="Preview">' +
+                    '<input type="text" class="item-name-input" id="input-' + itemId + '" value="' + defaultName + '" placeholder="이름/설명 입력">' +
                     '<button class="delete-btn" onclick="removeItem(\'' + itemId + '\')">❌</button>';
                 previewContainer.appendChild(previewItem);
 
@@ -100,14 +102,19 @@ document.addEventListener('DOMContentLoaded', function () {
 window.submitCreation = async function () {
     var title = document.getElementById('create-title').value;
 
-    if (!title || uploadedItems.length < 2) {
-        alert('제목을 입력하고 최소 2개의 이미지를 업로드해주세요!');
+    if (!title) {
+        alert('티어 리스트 제목을 입력해주세요!');
         return;
     }
 
+    // items: uploaded images + their names (can be empty array if no images)
     var items = uploadedItems.map(function (item, index) {
+        var nameInput = document.getElementById('input-' + item.id);
+        var itemName = nameInput ? nameInput.value.trim() : '';
+        if (!itemName) itemName = 'Item ' + (index + 1);
+
         return {
-            name: (item.file && item.file.name) ? item.file.name.split('.')[0] : 'Item ' + (index + 1),
+            name: itemName,
             image_url: item.url
         };
     });

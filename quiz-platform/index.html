@@ -99,7 +99,7 @@
                                     <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
                                     <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
                                     <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
-                                </svg></span> 실시간 인기 월드컵</h2>
+                                </svg></span> 인기 월드컵</h2>
                         <div style="display: flex; gap: 1rem; align-items: center;">
                             <button class="btn-primary"
                                 style="padding: 0.4rem 1rem; font-size: 0.9rem; border-radius: 8px; background-color: #F59F00; color: white; border: none;"
@@ -126,23 +126,16 @@
                                     <path d="M8 7h8"></path>
                                     <circle cx="12" cy="17" r="5"></circle>
                                     <path d="M12 18v-2h-.5"></path>
-                                </svg></span> 최신 티어 리스트</h2>
+                                </svg></span> 티어 리스트</h2>
                         <div style="display: flex; gap: 1rem; align-items: center;">
                             <button class="btn-primary"
                                 style="padding: 0.4rem 1rem; font-size: 0.9rem; border-radius: 8px; background-color: #AE3EC9; color: white; border: none;"
-                                onclick="location.href='worldcup-create.html'">+ 나만의 티어 만들기</button>
+                                onclick="location.href='worldcup-create.html'">+ 티어 리스트 만들기</button>
                             <a href="tier-list.html" class="view-all">전체보기 &rarr;</a>
                         </div>
                     </div>
-                    <div class="card-grid">
-                        <div class="card tier-card" onclick="location.href='tier-view.html'">
-                            <div class="card-image" style="background: linear-gradient(135deg, #5C7CFA, #748FFC);">
-                            </div>
-                            <div class="card-content">
-                                <h3>2026년 1분기 애니 등급</h3>
-                                <p>S티어: 4개 작품</p>
-                            </div>
-                        </div>
+                    <div class="card-grid" id="tier-grid">
+                        <p style="color: var(--text-muted); padding: 1rem;">데이터를 불러오는 중입니다...</p>
                     </div>
                 </section>
             </div>
