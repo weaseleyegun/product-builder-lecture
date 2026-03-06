@@ -12152,36 +12152,46 @@ async function handleSitemap(supabase) {
   try {
     const baseUrl = "https://quizrank.pages.dev";
     const [quizRes, wcRes] = await Promise.all([
-      supabase.from("quizzes").select("id, slug, updated_at"),
-      supabase.from("worldcups").select("id, slug, updated_at")
+      supabase.from("quizzes").select("id, slug, created_at"),
+      supabase.from("worldcups").select("id, slug, created_at")
     ]);
-    let xml = '<?xml version="1.0" encoding="UTF-8"?>';
-    xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
-    xml += `<url><loc>${baseUrl}/</loc><priority>1.0</priority></url>`;
-    xml += `<url><loc>${baseUrl}/quiz-list.html</loc><priority>0.8</priority></url>`;
-    xml += `<url><loc>${baseUrl}/worldcup-list.html</loc><priority>0.8</priority></url>`;
+    if (quizRes.error) console.error("Quiz fetch error for sitemap:", quizRes.error);
+    if (wcRes.error) console.error("Worldcup fetch error for sitemap:", wcRes.error);
+    let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+    xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
+    xml += `  <url><loc>${baseUrl}/</loc><priority>1.0</priority></url>
+`;
+    xml += `  <url><loc>${baseUrl}/quiz-list.html</loc><priority>0.8</priority></url>
+`;
+    xml += `  <url><loc>${baseUrl}/worldcup-list.html</loc><priority>0.8</priority></url>
+`;
     if (quizRes.data) {
       quizRes.data.forEach((item) => {
-        const id = item.slug || item.id;
-        xml += `<url><loc>${baseUrl}/quiz-play.html?id=${id}</loc><lastmod>${new Date(item.updated_at || Date.now()).toISOString().split("T")[0]}</lastmod><priority>0.7</priority></url>`;
+        const identifier = item.slug || item.id;
+        const lastmod = item.created_at ? new Date(item.created_at).toISOString().split("T")[0] : (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
+        xml += `  <url><loc>${baseUrl}/quiz-play.html?id=${identifier}</loc><lastmod>${lastmod}</lastmod><priority>0.7</priority></url>
+`;
       });
     }
     if (wcRes.data) {
       wcRes.data.forEach((item) => {
-        const id = item.slug || item.id;
+        const identifier = item.slug || item.id;
         const page = item.slug && item.slug.startsWith("tier-") ? "tier-view.html" : "worldcup-play.html";
-        xml += `<url><loc>${baseUrl}/${page}?id=${id}</loc><lastmod>${new Date(item.updated_at || Date.now()).toISOString().split("T")[0]}</lastmod><priority>0.7</priority></url>`;
+        const lastmod = item.created_at ? new Date(item.created_at).toISOString().split("T")[0] : (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
+        xml += `  <url><loc>${baseUrl}/${page}?id=${identifier}</loc><lastmod>${lastmod}</lastmod><priority>0.7</priority></url>
+`;
       });
     }
     xml += "</urlset>";
     return new Response(xml, {
       headers: {
-        "Content-Type": "application/xml",
-        "Access-Control-Allow-Origin": "*"
+        "Content-Type": "application/xml; charset=utf-8",
+        "X-Content-Type-Options": "nosniff",
+        "Cache-Control": "public, max-age=3600"
       }
     });
   } catch (err) {
-    return new Response("Error generating sitemap", { status: 500 });
+    return new Response("Error generating sitemap: " + err.message, { status: 500 });
   }
 }
 __name(handleSitemap, "handleSitemap");
