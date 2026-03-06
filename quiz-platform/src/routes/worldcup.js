@@ -6,7 +6,7 @@ import { jsonResponse, errorResponse } from '../helpers/cors.js';
 async function handleWorldcups(supabase) {
     const { data, error } = await supabase
         .from('worldcups')
-        .select('id, title, description, thumbnail_url, play_count')
+        .select('id, slug, title, description, thumbnail_url, play_count')
         .order('created_at', { ascending: false })
         .limit(100);
 
@@ -14,25 +14,30 @@ async function handleWorldcups(supabase) {
     return jsonResponse(data);
 }
 
-// GET /api/worldcup-play?id=UUID - Fetch worldcup items for gameplay
+// GET /api/worldcup-play?id=UUID_OR_SLUG - Fetch worldcup items for gameplay
 async function handleWorldcupPlay(url, supabase) {
     const worldcupId = url.searchParams.get('id');
-    if (!worldcupId) return errorResponse("Worldcup ID is required", 400);
+    if (!worldcupId) return errorResponse("Worldcup ID or Slug is required", 400);
 
-    // Fetch worldcup info
-    const { data: cupInfo, error: cupError } = await supabase
-        .from('worldcups')
-        .select('*')
-        .eq('id', worldcupId)
-        .single();
+    // Fetch worldcup info (Try ID first, then slug)
+    let cupQuery = supabase.from('worldcups').select('*');
+    if (worldcupId.length === 36 && worldcupId.includes('-')) {
+        cupQuery = cupQuery.eq('id', worldcupId);
+    } else {
+        cupQuery = cupQuery.eq('slug', worldcupId);
+    }
 
-    if (cupError) return errorResponse(cupError.message);
+    const { data: cupInfo, error: cupError } = await cupQuery.single();
+
+    if (cupError || !cupInfo) return errorResponse("Worldcup not found", 404);
+
+    const actualId = cupInfo.id; // Correct UUID for items lookup
 
     // Fetch all items and shuffle
     const { data: items, error: itemsError } = await supabase
         .from('worldcup_items')
         .select('id, name, image_url, win_count')
-        .eq('worldcup_id', worldcupId);
+        .eq('worldcup_id', actualId);
 
     if (itemsError) return errorResponse(itemsError.message);
 
@@ -62,33 +67,28 @@ async function handleUserCreatedContent(request, supabase) {
             .insert([{ title, description: description || '' }])
             .select();
 
-        if (cupError) {
-            console.error("Supabase Error:", cupError.message);
-            return errorResponse("DB Insert failed: " + cupError.message, 500);
-        }
+        if (cupError) return errorResponse(cupError.message, 500);
 
         const worldcupId = cupData[0].id;
 
-        // Insert items
-        const itemsToInsert = items.map(function (item) {
-            return {
+        // Insert items if any
+        if (items && items.length > 0) {
+            const itemsToInsert = items.map(item => ({
                 worldcup_id: worldcupId,
                 name: item.name,
                 image_url: item.image_url
-            };
-        });
+            }));
 
-        // Insert items only if provided
-        if (itemsToInsert.length > 0) {
             const { error: itemsError } = await supabase
                 .from('worldcup_items')
                 .insert(itemsToInsert);
-            if (itemsError) return errorResponse(itemsError.message);
+
+            if (itemsError) return errorResponse(itemsError.message, 500);
         }
 
         return jsonResponse({ success: true, worldcupId });
     } catch (err) {
-        return errorResponse(err.message || "Internal Server Error.");
+        return errorResponse(err.message || "Internal Server Error", 500);
     }
 }
 

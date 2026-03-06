@@ -28,6 +28,11 @@ async function initSetup() {
         var data = await response.json();
         var worldcupInfo = data.worldcup;
 
+        // SEO: Update Meta Tags
+        if (typeof updateSEOMeta === 'function') {
+            updateSEOMeta(worldcupInfo.title, worldcupInfo.description, worldcupInfo.thumbnail_url);
+        }
+
         // Map data to internal structure
         fetchedDataset = data.items.map(function (item) {
             return { id: item.id, name: item.name, img: item.image_url };

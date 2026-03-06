@@ -5,6 +5,7 @@ import { handleOptions, jsonResponse, errorResponse, corsHeaders } from './helpe
 import { handleDailyQuiz, handleQuizPlay, handleQuizResult, handleUserCreatedQuiz } from './routes/quiz.js';
 import { handleWorldcups, handleWorldcupPlay, handleUserCreatedContent } from './routes/worldcup.js';
 import { handleUpdateQuiz, handleUpdateWorldcup, handleDeleteQuiz, handleDeleteWorldcup } from './routes/admin.js';
+import { handleSitemap } from './helpers/sitemap.js';
 
 export default {
     async fetch(request, env, ctx) {
@@ -27,6 +28,9 @@ export default {
         const path = url.pathname;
         const method = request.method;
 
+        if (path === '/api/sitemap' && method === 'GET') {
+            return handleSitemap(supabase);
+        }
         if (path === '/api/config' && method === 'GET') {
             return jsonResponse({
                 SUPABASE_URL: env.SUPABASE_URL,
