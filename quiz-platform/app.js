@@ -124,7 +124,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             card.innerHTML = `
                 <div class="card-thumb" style="background: url('${thumb}') center/cover no-repeat;">
-                    ${item.rank <= 3 ? '<div class="ranking-badge">' + item.rank + '</div>' : ''}
+                    ${(item.rank && item.rank <= 3) ? '<div class="ranking-badge">' + item.rank + '</div>' : ''}
                     ${item.is_hot ? '<div class="hot-badge">HOT</div>' : ''}
                 </div>
                 <div class="card-content">
@@ -134,7 +134,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         ${hashtags.slice(0, 3).map(tag => '<span class="tag">#' + tag.trim() + '</span>').join('')}
                     </div>
                     <div class="card-stats">
-                        <span>▶ ${item.play_count.toLocaleString()}회 실행</span>
+                        <span>▶ ${(item.play_count || 0).toLocaleString()}회 실행</span>
                         <span class="success-rate">✅ ${(item.correct_rate || 0).toFixed(1)}%</span>
                     </div>
                 </div>
@@ -206,7 +206,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     <h3>${item.title}</h3>
                     <p>티어 리스트/랭킹 만들기</p>
                     <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">
-                        <span>▶ ${item.play_count.toLocaleString()}회 실행</span>
+                        <span>▶ ${(item.play_count || 0).toLocaleString()}회 실행</span>
                     </div>
                 </div>
             `;
