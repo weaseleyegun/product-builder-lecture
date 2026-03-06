@@ -8,6 +8,8 @@
     <meta name="description" content="QuizRank에 로그인하고 포인트를 적립하세요.">
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <!-- Load config first so API_BASE_URL is available to inline scripts -->
+    <script src="js/utils/config.js"></script>
     <!-- Supabase JS (needed for login) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <!-- Google AdSense -->
@@ -145,52 +147,52 @@
             </button>
 
             <script>
-                // Use Supabase JS for real authentication
+                // Supabase auth login
                 document.addEventListener('DOMContentLoaded', function () {
-                    // Load Supabase config dynamically from the worker API
-                    fetch('/api/config').then(r => r.json()).then(function (cfg) {
-                        const sbClient = supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY);
+                    // config.js already loaded: API_BASE_URL points to correct Worker
+                    fetch(API_BASE_URL + '/api/config')
+                        .then(r => r.json())
+                        .then(function (cfg) {
+                            const sbClient = supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY);
 
-                        document.getElementById('login-btn').addEventListener('click', async function () {
-                            const email = document.getElementById('login-email').value.trim();
-                            const password = document.getElementById('login-password').value;
+                            document.getElementById('login-btn').addEventListener('click', async function () {
+                                const email = document.getElementById('login-email').value.trim();
+                                const password = document.getElementById('login-password').value;
 
-                            if (!email || !password) return alert('이메일과 비밀번호를 입력해주세요.');
+                                if (!email || !password) return alert('이메일과 비밀번호를 입력해주세요.');
 
-                            const btn = document.getElementById('login-btn');
-                            btn.disabled = true;
-                            btn.textContent = '로그인 중...';
+                                const btn = document.getElementById('login-btn');
+                                btn.disabled = true;
+                                btn.textContent = '로그인 중...';
 
-                            try {
-                                const { data, error } = await sbClient.auth.signInWithPassword({ email, password });
+                                try {
+                                    const { data, error } = await sbClient.auth.signInWithPassword({ email, password });
 
-                                if (error) {
-                                    alert('로그인 실패: ' + error.message);
-                                    return;
+                                    if (error) {
+                                        alert('로그인 실패: ' + error.message);
+                                        return;
+                                    }
+
+                                    // Store JWT in sessionStorage (clears when tab/browser closes)
+                                    sessionStorage.setItem('sb_access_token', data.session.access_token);
+                                    sessionStorage.setItem('sb_user_email', data.user.email);
+                                    localStorage.setItem('isAdmin', 'true');
+
+                                    location.href = 'admin-dashboard.html';
+                                } catch (e) {
+                                    alert('오류가 발생했습니다: ' + e.message);
+                                } finally {
+                                    btn.disabled = false;
+                                    btn.textContent = '이메일로 로그인';
                                 }
-
-                                // Store JWT in sessionStorage (auto-clears when tab/browser closes)
-                                sessionStorage.setItem('sb_access_token', data.session.access_token);
-                                sessionStorage.setItem('sb_user_email', data.user.email);
-
-                                // Legacy flag (now secondary – real check is the JWT)
-                                localStorage.setItem('isAdmin', 'true');
-
-                                alert('로그인되었습니다.');
-                                location.href = 'admin-dashboard.html';
-                            } catch (e) {
-                                alert('오류가 발생했습니다: ' + e.message);
-                            } finally {
-                                btn.disabled = false;
-                                btn.textContent = '이메일로 로그인';
-                            }
+                            });
+                        })
+                        .catch(function (e) {
+                            console.error('Config fetch failed:', e);
+                            document.getElementById('login-btn').addEventListener('click', function () {
+                                alert('API 서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.');
+                            });
                         });
-                    }).catch(function () {
-                        // Fallback: if config API is unreachable (local dev without wrangler)
-                        document.getElementById('login-btn').addEventListener('click', function () {
-                            alert('API 서버(wrangler dev)가 실행 중인지 확인해주세요.');
-                        });
-                    });
                 });
             </script>
         </div>
