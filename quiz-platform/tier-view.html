@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2026년 1분기 애니 등급 티어리스트 | QuizRank.io</title>
+    <meta name="description" content="2026년 1분기 최고 인기작들의 티어리스트를 확인하세요.">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7525260897274073"
+        crossorigin="anonymous"></script>
+    <style>
+        .tier-list-container {
+            width: 100%;
+            margin: 2rem auto;
+        }
+
+        .tier-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .tier-header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .tier-header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .tier-list-board {
+            background-color: #1a1a1a;
+            border: 2px solid #000;
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .tier-row {
+            display: flex;
+            border-bottom: 2px solid #000;
+            min-height: 100px;
+        }
+
+        .tier-row:last-child {
+            border-bottom: none;
+        }
+
+        .tier-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 120px;
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #333;
+            text-shadow: none;
+            flex-shrink: 0;
+            border-right: 2px solid #000;
+        }
+
+        .tier-s {
+            background-color: #ff7f7f;
+        }
+
+        .tier-a {
+            background-color: #ffbf7f;
+        }
+
+        .tier-b {
+            background-color: #ffff7f;
+        }
+
+        .tier-c {
+            background-color: #7fff7f;
+        }
+
+        .tier-d {
+            background-color: #7fbfff;
+        }
+
+        .tier-items {
+            display: flex;
+            flex-wrap: wrap;
+            padding: 4px;
+            gap: 4px;
+            width: 100%;
+            background-color: #1a1a1a;
+        }
+
+        .tier-item {
+            width: 90px;
+            height: 90px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-size: cover;
+            background-position: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .tier-item:hover {
+            opacity: 0.8;
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+
+
+        .tier-item-name {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            font-size: 0.65rem;
+            padding: 0.2rem;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            z-index: 2;
+        }
+
+        .tier-item-placeholder {
+            font-size: 2rem;
+            opacity: 0.5;
+        }
+
+        .tier-item.dragging {
+            opacity: 0.5;
+            transform: scale(0.95);
+        }
+
+        .image-pool {
+            display: flex;
+            flex-wrap: wrap;
+            padding: 1rem;
+            gap: 4px;
+            width: 100%;
+            background-color: #1a1a1a;
+            border: 2px solid #000;
+            border-radius: 4px;
+            min-height: 200px;
+            margin-top: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .pool-header {
+            width: 100%;
+            font-size: 1.2rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            color: var(--secondary-color);
+            border-bottom: 1px solid #333;
+            padding-bottom: 0.5rem;
+        }
+
+        .tier-items.drag-over,
+        .image-pool.drag-over {
+            background-color: rgba(255, 255, 255, 0.05);
+            outline: 2px dashed var(--primary-color);
+            outline-offset: -2px;
+        }
+
+        @media (max-width: 768px) {
+            .tier-row {
+                flex-direction: column;
+            }
+
+            .tier-label {
+                width: 100%;
+                height: 50px;
+                font-size: 1.5rem;
+                padding: 0.5rem;
+                border-right: none;
+                border-bottom: 2px solid #000;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header class="navbar">
+        <div class="logo"><a href="index.html"
+                style="text-decoration: none; color: inherit;">QuizRank<span>.io</span></a></div>
+        <div class="actions">
+            <div class="theme-switch-wrapper">
+                <span class="theme-icon">☀️</span>
+                <label class="theme-switch" for="theme-toggle">
+                    <input type="checkbox" id="theme-toggle">
+                    <div class="slider"></div>
+                </label>
+                <span class="theme-icon">🌙</span>
+            </div>
+            <button class="btn-primary" onclick="location.href='login.html'">로그인</button>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="content-layout">
+            <aside class="ad-placeholder side-ad left-ad">
+                <span>AdSense<br>(Left)</span>
+            </aside>
+            <div class="main-sections" style="flex: 1;">
+
+                <div class="tier-list-container">
+                    <div class="tier-header">
+                        <h1>2026년 1분기 신작 애니 등급표</h1>
+                        <p>전문가와 유저 투표를 종합하여 선정된 최신 티어리스트입니다.</p>
+                    </div>
+
+                    <div class="tier-list-board">
+                        <!-- S Tier -->
+                        <div class="tier-row">
+                            <div class="tier-label tier-s">S</div>
+                            <div class="tier-items" data-tier="S"></div>
+                        </div>
+
+                        <!-- A Tier -->
+                        <div class="tier-row">
+                            <div class="tier-label tier-a">A</div>
+                            <div class="tier-items" data-tier="A"></div>
+                        </div>
+
+                        <!-- B Tier -->
+                        <div class="tier-row">
+                            <div class="tier-label tier-b">B</div>
+                            <div class="tier-items" data-tier="B"></div>
+                        </div>
+
+                        <!-- C Tier -->
+                        <div class="tier-row">
+                            <div class="tier-label tier-c">C</div>
+                            <div class="tier-items" data-tier="C"></div>
+                        </div>
+
+                        <!-- D Tier -->
+                        <div class="tier-row">
+                            <div class="tier-label tier-d">D</div>
+                            <div class="tier-items" data-tier="D"></div>
+                        </div>
+                    </div>
+
+                    <!-- Image Pool for Dragging -->
+                    <div class="image-pool" id="image-pool" data-tier="pool">
+                        <div class="pool-header">이미지 풀 (드래그하여 위로 올리세요)</div>
+                        <div class="tier-item" draggable="true" id="item-1"
+                            style="background-image: url('https://cdn.myanimelist.net/images/anime/1681/148216l.jpg');">
+                            <div class="tier-item-name">귀멸의 칼날: 무한성편</div>
+                        </div>
+                        <div class="tier-item" draggable="true" id="item-2"
+                            style="background-image: url('https://cdn.myanimelist.net/images/anime/1792/138022l.jpg');">
+                            <div class="tier-item-name">주술회전 3기</div>
+                        </div>
+                        <div class="tier-item" draggable="true" id="item-3"
+                            style="background-image: url('https://cdn.myanimelist.net/images/anime/1979/153329l.jpg');">
+                            <div class="tier-item-name">최애의 아이 3기</div>
+                        </div>
+                        <div class="tier-item" draggable="true" id="item-4"
+                            style="background-image: url('https://cdn.myanimelist.net/images/anime/1618/103829l.jpg');">
+                            <div class="tier-item-name">체인소 맨 2기</div>
+                        </div>
+                        <div class="tier-item" draggable="true" id="item-5"
+                            style="background-image: url('https://cdn.myanimelist.net/images/anime/1448/147351l.jpg');">
+                            <div class="tier-item-name">나혼자만 레벨업 2기</div>
+                        </div>
+                        <div class="tier-item" draggable="true" id="item-6"
+                            style="background-image: url('https://cdn.myanimelist.net/images/anime/1697/151793l.jpg');">
+                            <div class="tier-item-name">스파이 패밀리 3기</div>
+                        </div>
+                        <div class="tier-item" draggable="true" id="item-7"
+                            style="background-image: url('https://cdn.myanimelist.net/images/anime/1584/144860l.jpg');">
+                            <div class="tier-item-name">블루 록 2기</div>
+                        </div>
+                        <div class="tier-item" draggable="true" id="item-8"
+                            style="background-image: url('https://cdn.myanimelist.net/images/anime/1723/154941l.jpg');">
+                            <div class="tier-item-name">무직전생 3기</div>
+                        </div>
+                        <div class="tier-item" draggable="true" id="item-9"
+                            style="background-image: url('https://cdn.myanimelist.net/images/anime/1803/154473l.jpg');">
+                            <div class="tier-item-name">전생슬 4기</div>
+                        </div>
+                        <div class="tier-item" draggable="true" id="item-10"
+                            style="background-image: url('https://cdn.myanimelist.net/images/anime/1025/147458l.jpg');">
+                            <div class="tier-item-name">약사의 혼잣말 2기</div>
+                        </div>
+                        <div class="tier-item" draggable="true" id="item-11"
+                            style="background-image: url('https://cdn.myanimelist.net/images/anime/1177/150344l.jpg');">
+                            <div class="tier-item-name">괴수 8호 2기</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ad-placeholder" style="max-width: 800px; height: 90px; margin: 3rem auto;">
+                    <span>Google AdSense (Tier Page)</span>
+                </div>
+            </div>
+            <aside class="ad-placeholder side-ad right-ad">
+                <span>AdSense<br>(Right)</span>
+            </aside>
+        </div>
+    </main>
+
+    <script src="js/utils/config.js"></script>
+    <script src="js/utils/theme.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const draggables = document.querySelectorAll('.tier-item');
+            const dropZones = document.querySelectorAll('.tier-items, .image-pool');
+
+            draggables.forEach(draggable => {
+                draggable.addEventListener('dragstart', () => {
+                    draggable.classList.add('dragging');
+                });
+
+                draggable.addEventListener('dragend', () => {
+                    draggable.classList.remove('dragging');
+                    dropZones.forEach(zone => zone.classList.remove('drag-over'));
+                });
+            });
+
+            dropZones.forEach(zone => {
+                zone.addEventListener('dragover', e => {
+                    e.preventDefault(); // allow drop
+                    const draggable = document.querySelector('.dragging');
+                    if (draggable) {
+                        zone.classList.add('drag-over');
+                    }
+                });
+
+                zone.addEventListener('dragleave', () => {
+                    zone.classList.remove('drag-over');
+                });
+
+                zone.addEventListener('drop', e => {
+                    e.preventDefault();
+                    zone.classList.remove('drag-over');
+                    const draggable = document.querySelector('.dragging');
+                    if (draggable) {
+                        // Insert appending logic
+                        zone.appendChild(draggable);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>
