@@ -46,8 +46,8 @@ async function handleUserCreatedContent(request, supabase) {
         const body = await request.json();
         const { title, description, items } = body;
 
-        if (!title || !items || items.length === 0) {
-            return errorResponse("Title and items are required.", 400);
+        if (!title) {
+            return errorResponse("Title is required.", 400);
         }
 
         // Authenticate to bypass RLS
@@ -78,11 +78,13 @@ async function handleUserCreatedContent(request, supabase) {
             };
         });
 
-        const { error: itemsError } = await supabase
-            .from('worldcup_items')
-            .insert(itemsToInsert);
-
-        if (itemsError) return errorResponse(itemsError.message);
+        // Insert items only if provided
+        if (itemsToInsert.length > 0) {
+            const { error: itemsError } = await supabase
+                .from('worldcup_items')
+                .insert(itemsToInsert);
+            if (itemsError) return errorResponse(itemsError.message);
+        }
 
         return jsonResponse({ success: true, worldcupId });
     } catch (err) {

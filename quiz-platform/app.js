@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     let allQuizzes = [];
     let allWorldcups = [];
+    let allTiers = [];
 
     // Fetch quiz list from API and render cards
     async function fetchDailyQuizzes(sort) {
@@ -31,24 +32,41 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Fetch worldcup list from API and render cards
     async function fetchWorldcups() {
-        var grid = document.getElementById('worldcup-grid');
-        if (!grid) return;
+        var wcGrid = document.getElementById('worldcup-grid');
+        var tierGrid = document.getElementById('tier-grid');
         try {
             var response = await fetch(API_BASE_URL + '/api/worldcups');
             if (response.ok) {
-                allWorldcups = await response.json();
+                let data = await response.json();
 
-                // If it's the home page (index.html), show only the first 5 worldcups
+                allTiers = data.filter(function (item) {
+                    var title = item.title.toLowerCase();
+                    return title.includes('티어') || title.includes('등급') || title.includes('랭킹') || title.includes('리스트');
+                });
+
+                allWorldcups = data.filter(function (item) {
+                    return !allTiers.includes(item);
+                });
+
                 var isHomePage = window.location.pathname.endsWith('index.html') || window.location.pathname === '/';
-                var displayWorldcups = isHomePage ? allWorldcups.slice(0, 5) : allWorldcups;
 
-                renderWorldcups(grid, displayWorldcups);
+                if (wcGrid) {
+                    var displayWorldcups = isHomePage ? allWorldcups.slice(0, 5) : allWorldcups;
+                    renderWorldcups(wcGrid, displayWorldcups);
+                }
+
+                if (tierGrid) {
+                    var displayTiers = isHomePage ? allTiers.slice(0, 5) : allTiers;
+                    renderTiers(tierGrid, displayTiers);
+                }
             } else {
-                grid.innerHTML = '<p style="grid-column: 1 / -1; text-align: center;">월드컵 데이터를 불러오는데 실패했습니다.</p>';
+                if (wcGrid) wcGrid.innerHTML = '<p style="grid-column: 1 / -1; text-align: center;">데이터를 불러오는데 실패했습니다.</p>';
+                if (tierGrid) tierGrid.innerHTML = '<p style="grid-column: 1 / -1; text-align: center;">데이터를 불러오는데 실패했습니다.</p>';
             }
         } catch (error) {
-            console.error('Error fetching worldcups:', error);
-            grid.innerHTML = '<p style="grid-column: 1 / -1; text-align: center;">서버와 연결할 수 없습니다.</p>';
+            console.error('Error fetching worldcups/tiers:', error);
+            if (wcGrid) wcGrid.innerHTML = '<p style="grid-column: 1 / -1; text-align: center;">서버와 연결할 수 없습니다.</p>';
+            if (tierGrid) tierGrid.innerHTML = '<p style="grid-column: 1 / -1; text-align: center;">서버와 연결할 수 없습니다.</p>';
         }
     }
 
@@ -163,6 +181,44 @@ document.addEventListener('DOMContentLoaded', function () {
         }).join('');
     }
 
+    // Render tier lists into the grid
+    function renderTiers(grid, tiers) {
+        if (!grid) return;
+        if (tiers.length === 0) {
+            grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 3rem 0; background: var(--card-bg); border-radius: 12px; margin-top: 1rem;">' +
+                '<h3>아직 등록된 티어 리스트가 없습니다.</h3>' +
+                '<p style="margin-top: 0.5rem; font-size: 0.95rem;">첫 번째 티어 리스트의 주인공이 되어보세요!</p></div>';
+            return;
+        }
+
+        grid.innerHTML = tiers.map(function (tier, i) {
+            var meta = getWorldcupMeta(tier.title);
+            var customThumb = tier.thumbnail_url || extractThumbnail(tier);
+            var thumb = customThumb || (meta && meta.thumbnail);
+
+            // Generate some random gradient if no meta
+            var gradients = [
+                'linear-gradient(135deg, #5C7CFA, #748FFC)',
+                'linear-gradient(135deg, #ff7f7f, #ff4c4c)',
+                'linear-gradient(135deg, #20C997, #69DB7C)',
+                'linear-gradient(135deg, #AE3EC9, #F06595)'
+            ];
+            var gradient = meta ? meta.gradient : gradients[i % gradients.length];
+            var imageStyle = thumb
+                ? 'background: url(\'' + thumb + '\') center/cover no-repeat, ' + gradient + ';'
+                : 'background: ' + gradient + ';';
+
+            // By default route to worldcup-play unless it's explicitly built for tier view. We can map via ID or dynamically load in tier-view later
+            // For now, let's keep tier-view.html for playing / drag drop
+            return '<div class="card tier-card" onclick="location.href=\'tier-view.html?id=' + tier.id + '\'">' +
+                '<div class="card-image" style="' + imageStyle + '"></div>' +
+                '<div class="card-content">' +
+                '<h3>' + tier.title + '</h3>' +
+                '<p>티어 리스트/랭킹 만들기</p>' +
+                '</div></div>';
+        }).join('');
+    }
+
     // Initialize TierMaker (placeholder)
     function initTierMaker() {
         console.log('TierMaker Drag & Drop Initialized');
@@ -182,8 +238,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 // 입력창이 비었을 때
                 var grid1 = document.getElementById('daily-quiz-grid');
                 if (grid1 && allQuizzes.length > 0) renderQuizzes(grid1, isHomePage ? allQuizzes.slice(0, 5) : allQuizzes, isHomePage);
+
                 var grid2 = document.getElementById('worldcup-grid');
                 if (grid2 && allWorldcups.length > 0) renderWorldcups(grid2, isHomePage ? allWorldcups.slice(0, 5) : allWorldcups);
+
+                var grid3 = document.getElementById('tier-grid');
+                if (grid3 && allTiers.length > 0) renderTiers(grid3, isHomePage ? allTiers.slice(0, 5) : allTiers);
                 return;
             }
 
@@ -213,6 +273,20 @@ document.addEventListener('DOMContentLoaded', function () {
                     renderWorldcups(grid2, filteredWorldcups);
                 } else {
                     grid2.innerHTML = '<p style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 2rem;">검색 결과가 없습니다.</p>';
+                }
+            }
+
+            var grid3 = document.getElementById('tier-grid');
+            if (grid3 && allTiers.length > 0) {
+                var filteredTiers = allTiers.filter(function (t) {
+                    var meta = getWorldcupMeta(t.title);
+                    var hasTagMatch = meta && meta.hashtags && meta.hashtags.some(function (tag) { return tag.includes(query); });
+                    return hasTagMatch || t.title.toLowerCase().includes(query) || (t.description && t.description.toLowerCase().includes(query));
+                });
+                if (filteredTiers.length > 0) {
+                    renderTiers(grid3, filteredTiers);
+                } else {
+                    grid3.innerHTML = '<p style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 2rem;">검색 결과가 없습니다.</p>';
                 }
             }
         });
