@@ -15,18 +15,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const quizList = document.getElementById('admin-quiz-list');
     const worldcupList = document.getElementById('admin-worldcup-list');
+    const tierList = document.getElementById('admin-tier-list');
     const editForm = document.getElementById('admin-edit-form');
     const thumbnailInput = document.getElementById('edit-thumbnail');
     const thumbnailPreview = document.getElementById('thumbnail-preview');
 
     // 1. Dashboard Logic: Fetch all items
-    if (quizList || worldcupList) {
+    if (quizList || worldcupList || tierList) {
         fetchAllContent();
     }
 
     async function fetchAllContent() {
         try {
-            // Re-use current public APIs but display more info
             const quizRes = await fetch(API_BASE_URL + '/api/daily-quiz?sort=latest');
             const worldcupRes = await fetch(API_BASE_URL + '/api/worldcups');
 
@@ -34,12 +34,25 @@ document.addEventListener('DOMContentLoaded', function () {
                 const quizzes = await quizRes.json();
                 renderAdminList(quizList, quizzes, 'quiz');
             }
+
             if (worldcupRes.ok) {
-                const worldcups = await worldcupRes.json();
+                const allWorldcups = await worldcupRes.json();
+
+                // Split worldcups vs tier lists by keyword (same logic as app.js)
+                const TIER_KEYWORDS = ['티어', '등급', '랜킹', '리스트'];
+                const tiers = allWorldcups.filter(function (item) {
+                    var t = item.title.toLowerCase();
+                    return TIER_KEYWORDS.some(function (kw) { return t.includes(kw); });
+                });
+                const worldcups = allWorldcups.filter(function (item) {
+                    return !tiers.includes(item);
+                });
+
                 renderAdminList(worldcupList, worldcups, 'worldcup');
+                renderAdminList(tierList, tiers, 'tier');
             }
         } catch (err) {
-            console.error("Admin Fetch Error:", err);
+            console.error('Admin Fetch Error:', err);
         }
     }
 
@@ -74,6 +87,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
         container.innerHTML = items.map(item => {
             // Priority: thumbnail_url > metadata description > default metadata
+            // Tier type maps to worldcup backend routes (same DB table)
+            const apiType = type === 'tier' ? 'worldcup' : type;
+
             let thumb = item.thumbnail_url || extractThumbnail(item);
 
             if (!thumb) {
@@ -88,17 +104,23 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const thumbStyle = thumb
                 ? `background: url('${thumb}') center/cover no-repeat; border: none;`
-                : `background: var(--primary-color); opacity: 0.7;`;
+                : type === 'tier'
+                    ? `background: linear-gradient(135deg, #7950F2, #AE3EC9); opacity: 0.9;`
+                    : `background: var(--primary-color); opacity: 0.7;`;
+
+            const typeBadge = type === 'tier'
+                ? `<span style="font-size:0.7rem;padding:1px 6px;background:#7950F2;border-radius:8px;color:#fff;margin-left:4px;">Tier</span>`
+                : '';
 
             return `
                 <div class="admin-card" style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; margin-bottom: 0.8rem;">
                     <div style="width: 60px; height: 60px; border-radius: 8px; ${thumbStyle} flex-shrink: 0;"></div>
                     <div style="flex-grow: 1;">
-                        <h4 style="margin: 0; font-size: 1rem;">${item.title}</h4>
+                        <h4 style="margin: 0; font-size: 1rem;">${item.title}${typeBadge}</h4>
                         <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted);">${cleanDescription(item.description).substring(0, 50)}...</p>
                     </div>
-                    <button class="btn-primary" onclick="location.href='admin-edit.html?type=${type}&id=${item.id}'" style="padding: 0.5rem 1rem; font-size: 0.85rem;">관리</button>
-                    <button class="btn-danger" onclick="deleteContent('${type}', '${item.id}', this)" style="padding: 0.5rem 1rem; font-size: 0.85rem;">삭제</button>
+                    <button class="btn-primary" onclick="location.href='admin-edit.html?type=${apiType}&id=${item.id}'" style="padding: 0.5rem 1rem; font-size: 0.85rem;">관리</button>
+                    <button class="btn-danger" onclick="deleteContent('${apiType}', '${item.id}', this)" style="padding: 0.5rem 1rem; font-size: 0.85rem;">삭제</button>
                 </div>
             `;
         }).join('');
