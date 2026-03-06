@@ -27,10 +27,10 @@
     <main class="container">
         <div class="admin-header" style="margin-bottom: 2rem;">
             <h2>🛠️ 콘텐츠 통합 관리 모드</h2>
-            <p style="color: var(--text-muted);">퀴즈와 월드컵의 제목, 설명, 썸네일을 직접 수정할 수 있습니다.</p>
+            <p style="color: var(--text-muted);">퀴즈, 월드컵, 티어 리스트의 제목, 설명, 썸네일을 직접 수정할 수 있습니다.</p>
         </div>
 
-        <div class="admin-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+        <div class="admin-grid" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2rem;">
             <!-- Quiz List Column -->
             <section class="admin-section">
                 <h3 style="margin-bottom: 1.2rem; display: flex; align-items: center; gap: 0.5rem;">🎵 퀴즈 관리 <span
@@ -48,6 +48,16 @@
                 </h3>
                 <div id="admin-worldcup-list" style="max-height: 600px; overflow-y: auto; padding-right: 0.5rem;">
                     <p style="color: var(--text-muted);">월드컵 데이터를 불러오는 중...</p>
+                </div>
+            </section>
+
+            <!-- Tier List Column -->
+            <section class="admin-section">
+                <h3 style="margin-bottom: 1.2rem; display: flex; align-items: center; gap: 0.5rem;">🥇 티어 리스트 관리 <span
+                        style="font-size: 0.8rem; padding: 2px 8px; background: #7950F2; border-radius: 12px; color: #fff;">Tier</span>
+                </h3>
+                <div id="admin-tier-list" style="max-height: 600px; overflow-y: auto; padding-right: 0.5rem;">
+                    <p style="color: var(--text-muted);">티어 리스트 데이터를 불러오는 중...</p>
                 </div>
             </section>
         </div>
