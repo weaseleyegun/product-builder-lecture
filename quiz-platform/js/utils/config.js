@@ -1,7 +1,10 @@
 // config.js - Central configuration for API URLs and constants
 
-const API_BASE_URL = 'https://quiz-platform-worker.rlaehrjs03.workers.dev';
+const PROD_API_URL = 'https://quiz-platform-worker.rlaehrjs03.workers.dev';
 const LOCAL_API_URL = 'http://localhost:8787';
+
+// Automatically switch between production and local API
+const API_BASE_URL = window.location.hostname === 'localhost' ? LOCAL_API_URL : PROD_API_URL;
 
 // Quiz card metadata: keyword matching, gradient color, tag, and thumbnail image
 const QUIZ_META = [

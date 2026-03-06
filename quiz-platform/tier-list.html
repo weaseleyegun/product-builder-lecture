@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>티어 리스트 전체보기 | QuizRank</title>
+    <meta name="description" content="모든 최신 티어 리스트를 확인해보세요.">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7525260897274073"
+        crossorigin="anonymous"></script>
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏆</text></svg>">
+</head>
+
+<body>
+    <header class="navbar">
+        <div class="logo"><a href="index.html"
+                style="text-decoration: none; color: inherit;">QuizRank<span>.io</span></a></div>
+        <nav class="nav-links">
+            <a href="quiz-play.html">🎵 오늘의 퀴즈</a>
+            <a href="worldcup-play.html">🏆 이상형 월드컵</a>
+            <a href="tier-list.html">🏅 티어 리스트</a>
+        </nav>
+        <div class="actions">
+            <div class="theme-switch-wrapper">
+                <span class="theme-icon">☀️</span>
+                <label class="theme-switch" for="theme-toggle">
+                    <input type="checkbox" id="theme-toggle">
+                    <div class="slider"></div>
+                </label>
+                <span class="theme-icon">🌙</span>
+            </div>
+            <button class="btn-primary" onclick="location.href='login.html'">로그인</button>
+        </div>
+    </header>
+
+    <div class="ad-placeholder top-ad">
+        <span>Google AdSense (Top)</span>
+    </div>
+
+    <main class="container">
+        <div class="content-layout">
+            <aside class="ad-placeholder side-ad left-ad">
+                <span>AdSense<br>(Left)</span>
+            </aside>
+
+            <div class="main-sections">
+                <div class="search-container" style="margin-bottom: 2.5rem; position: relative;">
+                    <input type="text" id="global-search" placeholder="J-POP, 애니, 빌보드 등 노래와 티어를 검색해보세요!"
+                        style="width: 100%; padding: 1.2rem 2rem; font-size: 1.1rem; border-radius: 50px; border: 2px solid var(--border-color); background: var(--card-bg); color: var(--text-color); box-shadow: var(--shadow); transition: border-color 0.2s; outline: none;">
+                    <span
+                        style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%); font-size: 1.5rem; pointer-events: none; opacity: 0.7;">🔍</span>
+                </div>
+
+                <section id="tier" class="category-section">
+                    <div class="section-header">
+                        <h2>🏅 최신 티어 리스트 전체보기</h2>
+                        <div style="display: flex; gap: 1rem; align-items: center;">
+                            <button class="btn-primary"
+                                style="padding: 0.4rem 1rem; font-size: 0.9rem; border-radius: 8px; background-color: #AE3EC9; color: white; border: none;"
+                                onclick="location.href='worldcup-create.html'">+ 나만의 티어 만들기</button>
+                        </div>
+                    </div>
+                    <div class="card-grid"
+                        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1.5rem;">
+                        <!-- Static Sample for demonstration -->
+                        <div class="card tier-card" onclick="location.href='tier-view.html'">
+                            <div class="card-image" style="background: linear-gradient(135deg, #5C7CFA, #748FFC);">
+                            </div>
+                            <div class="card-content">
+                                <h3>2026년 1분기 애니 등급</h3>
+                                <p>S티어: 4개 작품</p>
+                            </div>
+                        </div>
+
+                        <div class="card tier-card" onclick="location.href='#'">
+                            <div class="card-image" style="background: linear-gradient(135deg, #ff7f7f, #ff4c4c);">
+                            </div>
+                            <div class="card-content">
+                                <h3>역대급 명작 게임 리스트</h3>
+                                <p>S티어: 5개 작품</p>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+            </div>
+
+            <aside class="ad-placeholder side-ad right-ad">
+                <span>AdSense<br>(Right)</span>
+            </aside>
+        </div>
+    </main>
+
+    <div class="ad-placeholder bottom-ad">
+        <span>Google AdSense (Bottom)</span>
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <p>&copy; 2026 QuizRank.io. All rights reserved.</p>
+            <div class="footer-links">
+                <a href="terms.html">이용약관</a>
+                <a href="privacy.html">개인정보처리방침</a>
+                <a href="ad-inquiry.html">광고 문의</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/utils/config.js"></script>
+    <script src="js/utils/theme.js"></script>
+</body>
+
+</html>
