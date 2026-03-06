@@ -64,252 +64,170 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (tierGrid) tierGrid.innerHTML = '<p style="grid-column: 1 / -1; text-align: center;">데이터를 불러오는데 실패했습니다.</p>';
             }
         } catch (error) {
-            console.error('Error fetching worldcups/tiers:', error);
+            console.error('Error fetching worldcup data:', error);
             if (wcGrid) wcGrid.innerHTML = '<p style="grid-column: 1 / -1; text-align: center;">서버와 연결할 수 없습니다.</p>';
-            if (tierGrid) tierGrid.innerHTML = '<p style="grid-column: 1 / -1; text-align: center;">서버와 연결할 수 없습니다.</p>';
         }
     }
 
-    // Get gradient, tag, and thumbnail for a quiz card based on title keyword
+    // Helper functions for metadata and extraction
     function getQuizMeta(title) {
-        var match = QUIZ_META.find(function (m) { return title && title.includes(m.keyword); });
-        return match || { gradient: 'linear-gradient(135deg, #868e96, #adb5bd)', tag: '퀴즈', thumbnail: '', hashtags: [] };
+        for (var i = 0; i < QUIZ_META.length; i++) {
+            if (title.toUpperCase().includes(QUIZ_META[i].keyword)) return QUIZ_META[i];
+        }
+        return QUIZ_META[0]; // Default
     }
 
-    function extractThumbnail(item) {
-        if (item.description && item.description.includes('[THUMBNAIL_URL:')) {
-            var match = item.description.match(/\[THUMBNAIL_URL:(.*?)\]/);
-            if (match) {
-                // item.description = item.description.replace(match[0], '').trim(); // Don't mutate here yet as we might need desc for hashtags
-                return match[1].trim();
-            }
+    function getWorldcupMeta(title) {
+        for (var i = 0; i < WORLDCUP_META.length; i++) {
+            if (title.includes(WORLDCUP_META[i].keyword)) return WORLDCUP_META[i];
         }
         return null;
     }
 
-    function extractHashtags(item) {
-        if (item.description && item.description.includes('[HASHTAGS:')) {
-            var match = item.description.match(/\[HASHTAGS:(.*?)\]/);
-            if (match) {
-                return match[1].split(',').map(function (t) { return t.trim(); }).filter(Boolean);
-            }
+    function extractThumbnail(item) {
+        if (item.thumbnail_url) return item.thumbnail_url;
+        if (item.description && item.description.includes('[THUMB:')) {
+            return item.description.match(/\[THUMB:(.*?)\]/)[1];
         }
-        return [];
+        return null;
     }
 
     function cleanDescription(desc) {
         if (!desc) return '';
-        return desc.replace(/\[THUMBNAIL_URL:.*?\]/g, '').replace(/\[HASHTAGS:.*?\]/g, '').trim();
+        return desc.replace(/\[THUMB:.*?\]/g, '').replace(/\[HASHTAGS:.*?\]/g, '').trim();
+    }
+
+    function extractHashtags(item) {
+        if (item.description && item.description.includes('[HASHTAGS:')) {
+            return item.description.match(/\[HASHTAGS:(.*?)\]/)[1].split(',');
+        }
+        const meta = getWorldcupMeta(item.title);
+        return meta ? meta.hashtags : ['퀴즈', '월드컵'];
     }
 
     // Render quiz cards into the grid
-    // showHot: if true, first 5 shown on home page with HOT badge
-    function renderQuizzes(grid, quizzes, showHot) {
-        grid.innerHTML = quizzes.map(function (quiz, idx) {
-            var meta = getQuizMeta(quiz.title);
-            var customThumb = quiz.thumbnail_url || extractThumbnail(quiz);
-            var hashtags = extractHashtags(quiz);
-            var thumb = customThumb || meta.thumbnail;
-            var displayDesc = cleanDescription(quiz.description) || '재밌는 AI 퀴즈를 풀어보세요!';
+    function renderQuizzes(grid, items, isHomePage) {
+        grid.innerHTML = '';
+        items.forEach(function (item) {
+            var card = document.createElement('div');
+            card.className = 'quiz-card' + (isHomePage ? ' home-card' : '');
+            if (item.is_new) card.classList.add('new');
 
-            var imageStyle = thumb
-                ? 'background: url(\'' + thumb + '\') center/cover no-repeat, ' + meta.gradient + ';'
-                : 'background: ' + meta.gradient + ';';
-            var isHot = showHot && idx < 5;
-            var hotBadge = isHot ? '<span style="position:absolute;top:10px;right:10px;background:#ff4757;color:#fff;font-size:0.72rem;font-weight:800;padding:3px 10px;border-radius:20px;letter-spacing:1px;">HOT</span>' : '';
-            var statsHtml = (quiz.play_count || quiz.correct_rate) ?
-                '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.4rem;">' +
-                (quiz.play_count ? '<span style="font-size:0.75rem;color:var(--text-muted);">▶ ' + (quiz.play_count || 0) + '실행</span>' : '') +
-                (quiz.correct_rate ? '<span style="font-size:0.75rem;color:var(--accent);">✅ ' + quiz.correct_rate + '%</span>' : '') +
-                '</div>' : '';
+            // Use slug if available for SEO
+            var identifier = item.slug || item.id;
+            var playUrl = 'quiz-play.html?id=' + identifier;
 
-            // Render up to 3 hashtags
-            var tagsHtml = '';
-            if (hashtags.length > 0) {
-                tagsHtml = '<div class="hashtag-row" style="display:flex; gap:0.4rem; overflow:hidden; flex-wrap:wrap; margin-top:0.8rem;">' +
-                    hashtags.slice(0, 5).map(function (t) { return '<span class="tag">#' + t + '</span>'; }).join('') +
-                    '</div>';
-            } else {
-                tagsHtml = '<span class="tag">#' + meta.tag + '</span>';
-            }
+            var meta = getQuizMeta(item.title);
+            var hashtags = extractHashtags(item);
+            var thumb = item.thumbnail_url || extractThumbnail(item) || meta.thumbnail;
+            var cleanDesc = cleanDescription(item.description);
 
-            return '<div class="card quiz-card" style="position:relative;" data-id="' + quiz.id + '" onclick="location.href=\'quiz-play.html?id=' + quiz.id + '\'"><div class="card-image" style="' + imageStyle + '">' + hotBadge + '</div>' +
-                '<div class="card-content">' +
-                '<h3>' + quiz.title + '</h3>' +
-                '<p>' + displayDesc + '</p>' +
-                statsHtml +
-                tagsHtml +
-                '</div></div>';
-        }).join('');
-    }
-
-    // Get worldcup card metadata
-    function getWorldcupMeta(title) {
-        var match = WORLDCUP_META.find(function (m) { return title && title.includes(m.keyword); });
-        return match || null;
+            card.innerHTML = `
+                <div class="card-thumb" style="background: url('${thumb}') center/cover no-repeat;">
+                    ${item.rank <= 3 ? '<div class="ranking-badge">' + item.rank + '</div>' : ''}
+                    ${item.is_hot ? '<div class="hot-badge">HOT</div>' : ''}
+                </div>
+                <div class="card-content">
+                    <h3 class="card-title">${item.title}</h3>
+                    <p class="card-desc">${cleanDesc.substring(0, 60)}${cleanDesc.length > 60 ? '...' : ''}</p>
+                    <div class="card-tags">
+                        ${hashtags.slice(0, 3).map(tag => '<span class="tag">#' + tag.trim() + '</span>').join('')}
+                    </div>
+                    <div class="card-stats">
+                        <span>▶ ${item.play_count.toLocaleString()}회 실행</span>
+                        <span class="success-rate">✅ ${(item.correct_rate || 0).toFixed(1)}%</span>
+                    </div>
+                </div>
+            `;
+            card.onclick = function () { location.href = playUrl; };
+            grid.appendChild(card);
+        });
     }
 
     // Render worldcup cards into the grid
     function renderWorldcups(grid, worldcups) {
-        grid.innerHTML = worldcups.map(function (cup, i) {
-            var meta = getWorldcupMeta(cup.title);
-            var customThumb = cup.thumbnail_url || extractThumbnail(cup);
-            var hashtags = extractHashtags(cup);
-            var thumb = customThumb || (meta && meta.thumbnail);
-            var displayDesc = cleanDescription(cup.description) || '최고의 1위를 선택하세요!';
+        grid.innerHTML = '';
+        worldcups.forEach(function (item, i) {
+            var card = document.createElement('div');
+            card.className = 'card worldcup-card';
+
+            var identifier = item.slug || item.id;
+            var playUrl = 'worldcup-play.html?id=' + identifier;
+
+            var meta = getWorldcupMeta(item.title);
+            var thumb = item.thumbnail_url || extractThumbnail(item) || (meta ? meta.thumbnail : null);
+            var tags = extractHashtags(item);
+            var cleanDesc = cleanDescription(item.description) || '최고의 1위를 선택하세요!';
 
             var gradient = meta ? meta.gradient : WORLDCUP_COLORS[i % WORLDCUP_COLORS.length];
             var imageStyle = thumb
-                ? 'background: url(\'' + thumb + '\') center/cover no-repeat, ' + gradient + ';'
-                : 'background: ' + gradient + ';';
+                ? `background: url('${thumb}') center/cover no-repeat, ${gradient};`
+                : `background: ${gradient};`;
 
-            // Render up to 3 hashtags
-            var tagsHtml = '';
-            if (hashtags.length > 0) {
-                tagsHtml = '<div class="hashtag-row" style="display:flex; gap:0.4rem; overflow:hidden; flex-wrap:wrap; margin-top:0.8rem;">' +
-                    hashtags.slice(0, 5).map(function (t) { return '<span class="tag">#' + t + '</span>'; }).join('') +
-                    '</div>';
-            }
+            var tagsHtml = '<div class="card-tags">' +
+                tags.slice(0, 2).map(tag => '<span class="tag">#' + tag.trim() + '</span>').join('') +
+                '</div>';
 
-            return '<div class="card worldcup-card" onclick="location.href=\'worldcup-play.html?id=' + cup.id + '\'">' +
-                '<div class="card-image" style="' + imageStyle + '"></div>' +
-                '<div class="card-content">' +
-                '<h3>' + cup.title + '</h3>' +
-                '<p>' + displayDesc + '</p>' +
-                tagsHtml +
-                '</div></div>';
-        }).join('');
+            card.innerHTML = `
+                <div class="card-image" style="${imageStyle}"></div>
+                <div class="card-content">
+                    <h3>${item.title}</h3>
+                    <p>${cleanDesc.substring(0, 50)}...</p>
+                    ${tagsHtml}
+                </div>
+            `;
+            card.onclick = function () { location.href = playUrl; };
+            grid.appendChild(card);
+        });
     }
 
     // Render tier lists into the grid
     function renderTiers(grid, tiers) {
         if (!grid) return;
-        if (tiers.length === 0) {
-            grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 3rem 0; background: var(--card-bg); border-radius: 12px; margin-top: 1rem;">' +
-                '<h3>아직 등록된 티어 리스트가 없습니다.</h3>' +
-                '<p style="margin-top: 0.5rem; font-size: 0.95rem;">첫 번째 티어 리스트의 주인공이 되어보세요!</p></div>';
-            return;
-        }
+        grid.innerHTML = '';
+        tiers.forEach(function (item, i) {
+            var card = document.createElement('div');
+            card.className = 'card tier-card';
 
-        grid.innerHTML = tiers.map(function (tier, i) {
-            var meta = getWorldcupMeta(tier.title);
-            var customThumb = tier.thumbnail_url || extractThumbnail(tier);
-            var thumb = customThumb || (meta && meta.thumbnail);
+            var identifier = item.slug || item.id;
+            var playUrl = 'tier-view.html?id=' + identifier;
 
-            // Generate some random gradient if no meta
-            var gradients = [
-                'linear-gradient(135deg, #5C7CFA, #748FFC)',
-                'linear-gradient(135deg, #ff7f7f, #ff4c4c)',
-                'linear-gradient(135deg, #20C997, #69DB7C)',
-                'linear-gradient(135deg, #AE3EC9, #F06595)'
-            ];
-            var gradient = meta ? meta.gradient : gradients[i % gradients.length];
+            var meta = getWorldcupMeta(item.title);
+            var thumb = item.thumbnail_url || extractThumbnail(item) || (meta ? meta.thumbnail : null);
+
+            var gradient = 'linear-gradient(135deg, #7950F2, #AE3EC9)';
             var imageStyle = thumb
-                ? 'background: url(\'' + thumb + '\') center/cover no-repeat, ' + gradient + ';'
-                : 'background: ' + gradient + ';';
+                ? `background: url('${thumb}') center/cover no-repeat, ${gradient};`
+                : `background: ${gradient};`;
 
-            // By default route to worldcup-play unless it's explicitly built for tier view. We can map via ID or dynamically load in tier-view later
-            // For now, let's keep tier-view.html for playing / drag drop
-            return '<div class="card tier-card" onclick="location.href=\'tier-view.html?id=' + tier.id + '\'">' +
-                '<div class="card-image" style="' + imageStyle + '"></div>' +
-                '<div class="card-content">' +
-                '<h3>' + tier.title + '</h3>' +
-                '<p>티어 리스트/랭킹 만들기</p>' +
-                '</div></div>';
-        }).join('');
-    }
-
-    // Initialize TierMaker (placeholder)
-    function initTierMaker() {
-        console.log('TierMaker Drag & Drop Initialized');
-    }
-
-    // Global Search Event Listener
-    var searchInput = document.getElementById('global-search');
-    if (searchInput) {
-        searchInput.addEventListener('input', function (e) {
-            var originalQuery = e.target.value.toLowerCase().trim();
-            // # 기호를 제거하여 일반 단어로 변경 (예: #노래 -> 노래)
-            var query = originalQuery.replace(/#/g, '');
-
-            var isHomePage = window.location.pathname.endsWith('index.html') || window.location.pathname === '/';
-
-            if (!query) {
-                // 입력창이 비었을 때
-                var grid1 = document.getElementById('daily-quiz-grid');
-                if (grid1 && allQuizzes.length > 0) renderQuizzes(grid1, isHomePage ? allQuizzes.slice(0, 5) : allQuizzes, isHomePage);
-
-                var grid2 = document.getElementById('worldcup-grid');
-                if (grid2 && allWorldcups.length > 0) renderWorldcups(grid2, isHomePage ? allWorldcups.slice(0, 5) : allWorldcups);
-
-                var grid3 = document.getElementById('tier-grid');
-                if (grid3 && allTiers.length > 0) renderTiers(grid3, isHomePage ? allTiers.slice(0, 5) : allTiers);
-                return;
-            }
-
-            var grid1 = document.getElementById('daily-quiz-grid');
-            if (grid1 && allQuizzes.length > 0) {
-                var filteredQuizzes = allQuizzes.filter(function (q) {
-                    var meta = getQuizMeta(q.title);
-                    var hasTagMatch = meta.hashtags && meta.hashtags.some(function (tag) { return tag.includes(query); });
-                    return hasTagMatch || q.title.toLowerCase().includes(query) || (q.description && q.description.toLowerCase().includes(query));
-                });
-                if (filteredQuizzes.length > 0) {
-                    // 검색 결과는 5개 제한을 풀거나 그대로 제한할 수 있는데, 일단은 검색하면 다 보여주는 게 편하므로 제한 안함
-                    renderQuizzes(grid1, filteredQuizzes);
-                } else {
-                    grid1.innerHTML = '<p style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 2rem;">검색 결과가 없습니다.</p>';
-                }
-            }
-
-            var grid2 = document.getElementById('worldcup-grid');
-            if (grid2 && allWorldcups.length > 0) {
-                var filteredWorldcups = allWorldcups.filter(function (w) {
-                    var meta = getWorldcupMeta(w.title);
-                    var hasTagMatch = meta && meta.hashtags && meta.hashtags.some(function (tag) { return tag.includes(query); });
-                    return hasTagMatch || w.title.toLowerCase().includes(query) || (w.description && w.description.toLowerCase().includes(query));
-                });
-                if (filteredWorldcups.length > 0) {
-                    renderWorldcups(grid2, filteredWorldcups);
-                } else {
-                    grid2.innerHTML = '<p style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 2rem;">검색 결과가 없습니다.</p>';
-                }
-            }
-
-            var grid3 = document.getElementById('tier-grid');
-            if (grid3 && allTiers.length > 0) {
-                var filteredTiers = allTiers.filter(function (t) {
-                    var meta = getWorldcupMeta(t.title);
-                    var hasTagMatch = meta && meta.hashtags && meta.hashtags.some(function (tag) { return tag.includes(query); });
-                    return hasTagMatch || t.title.toLowerCase().includes(query) || (t.description && t.description.toLowerCase().includes(query));
-                });
-                if (filteredTiers.length > 0) {
-                    renderTiers(grid3, filteredTiers);
-                } else {
-                    grid3.innerHTML = '<p style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 2rem;">검색 결과가 없습니다.</p>';
-                }
-            }
+            card.innerHTML = `
+                <div class="card-image" style="${imageStyle}"></div>
+                <div class="card-content">
+                    <h3>${item.title}</h3>
+                    <p>티어 리스트/랭킹 만들기</p>
+                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">
+                        <span>▶ ${item.play_count.toLocaleString()}회 실행</span>
+                    </div>
+                </div>
+            `;
+            card.onclick = function () { location.href = playUrl; };
+            grid.appendChild(card);
         });
     }
 
+    // Initialize
     fetchDailyQuizzes('rank');
     fetchWorldcups();
-    initTierMaker();
 
-    // Expose sort function for quiz-list page
-    window.sortQuizzes = function (sort) {
-        fetchDailyQuizzes(sort);
-    };
+    // Sorting listeners
+    var sortLinks = document.querySelectorAll('.filter-links a');
+    sortLinks.forEach(function (link) {
+        link.addEventListener('click', function (e) {
+            e.preventDefault();
+            sortLinks.forEach(l => l.classList.remove('active'));
+            this.classList.add('active');
+            var sort = this.innerText.includes('인기') ? 'rank' : 'latest';
+            fetchDailyQuizzes(sort);
+        });
+    });
 });
-
-// SEO utility
-function seoOptimization(title, desc) {
-    document.title = title + ' - QuizRank.io';
-    var metaDesc = document.querySelector('meta[name="description"]');
-    if (metaDesc) metaDesc.setAttribute('content', desc);
-}
-
-// Kakao share (placeholder)
-function shareKakao(resultData) {
-    console.log('카카오톡 공유:', resultData);
-}

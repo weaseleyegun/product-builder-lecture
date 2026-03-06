@@ -11872,7 +11872,7 @@ __name(errorResponse, "errorResponse");
 // src/routes/quiz.js
 async function handleDailyQuiz(url, supabase) {
   const sort = url.searchParams.get("sort") || "rank";
-  let query = supabase.from("quizzes").select("id, title, description, thumbnail_url, play_count, rank, correct_rate, incorrect_rate, game_count").limit(100);
+  let query = supabase.from("quizzes").select("id, slug, title, description, thumbnail_url, play_count, rank, correct_rate, incorrect_rate, game_count").limit(100);
   if (sort === "rank") {
     query = query.order("play_count", { ascending: false });
   } else if (sort === "latest") {
@@ -11893,14 +11893,18 @@ async function handleQuizPlay(url, supabase) {
   const quizId = url.searchParams.get("id");
   const limit = parseInt(url.searchParams.get("limit")) || 5;
   if (!quizId) return errorResponse("Quiz ID is required", 400);
-  await supabase.rpc("increment_play_count", { quiz_id: quizId }).maybeSingle();
-  const { data: current } = await supabase.from("quizzes").select("play_count").eq("id", quizId).single();
-  if (current) {
-    await supabase.from("quizzes").update({ play_count: (current.play_count || 0) + 1 }).eq("id", quizId);
+  let quizQuery = supabase.from("quizzes").select("*");
+  if (quizId.length === 36 && quizId.includes("-")) {
+    quizQuery = quizQuery.eq("id", quizId);
+  } else {
+    quizQuery = quizQuery.eq("slug", quizId);
   }
-  const { data: quizInfo, error: quizError } = await supabase.from("quizzes").select("*").eq("id", quizId).single();
-  if (quizError) return errorResponse(quizError.message);
-  const { data: questions, error: questionsError } = await supabase.from("quiz_questions").select("id, video_id, start_time, end_time, answer, options").eq("quiz_id", quizId).neq("is_embeddable", false);
+  const { data: quizInfo, error: quizError } = await quizQuery.single();
+  if (quizError || !quizInfo) return errorResponse("Quiz not found", 404);
+  const actualId = quizInfo.id;
+  await supabase.rpc("increment_play_count", { quiz_id: actualId }).maybeSingle();
+  await supabase.from("quizzes").update({ play_count: (quizInfo.play_count || 0) + 1 }).eq("id", actualId);
+  const { data: questions, error: questionsError } = await supabase.from("quiz_questions").select("id, video_id, start_time, end_time, answer, options").eq("quiz_id", actualId).neq("is_embeddable", false);
   if (questionsError) return errorResponse(questionsError.message);
   const shuffled = questions.sort(() => 0.5 - Math.random());
   const selectedQuestions = shuffled.slice(0, limit);
@@ -11993,17 +11997,24 @@ __name(handleUserCreatedQuiz, "handleUserCreatedQuiz");
 
 // src/routes/worldcup.js
 async function handleWorldcups(supabase) {
-  const { data, error } = await supabase.from("worldcups").select("id, title, description, thumbnail_url, play_count").order("created_at", { ascending: false }).limit(100);
+  const { data, error } = await supabase.from("worldcups").select("id, slug, title, description, thumbnail_url, play_count").order("created_at", { ascending: false }).limit(100);
   if (error) return errorResponse(error.message);
   return jsonResponse(data);
 }
 __name(handleWorldcups, "handleWorldcups");
 async function handleWorldcupPlay(url, supabase) {
   const worldcupId = url.searchParams.get("id");
-  if (!worldcupId) return errorResponse("Worldcup ID is required", 400);
-  const { data: cupInfo, error: cupError } = await supabase.from("worldcups").select("*").eq("id", worldcupId).single();
-  if (cupError) return errorResponse(cupError.message);
-  const { data: items, error: itemsError } = await supabase.from("worldcup_items").select("id, name, image_url, win_count").eq("worldcup_id", worldcupId);
+  if (!worldcupId) return errorResponse("Worldcup ID or Slug is required", 400);
+  let cupQuery = supabase.from("worldcups").select("*");
+  if (worldcupId.length === 36 && worldcupId.includes("-")) {
+    cupQuery = cupQuery.eq("id", worldcupId);
+  } else {
+    cupQuery = cupQuery.eq("slug", worldcupId);
+  }
+  const { data: cupInfo, error: cupError } = await cupQuery.single();
+  if (cupError || !cupInfo) return errorResponse("Worldcup not found", 404);
+  const actualId = cupInfo.id;
+  const { data: items, error: itemsError } = await supabase.from("worldcup_items").select("id, name, image_url, win_count").eq("worldcup_id", actualId);
   if (itemsError) return errorResponse(itemsError.message);
   const shuffledItems = items.sort(() => 0.5 - Math.random());
   return jsonResponse({ worldcup: cupInfo, items: shuffledItems });
@@ -12021,25 +12032,20 @@ async function handleUserCreatedContent(request, supabase) {
       password: "seed_password_1234!"
     });
     const { data: cupData, error: cupError } = await supabase.from("worldcups").insert([{ title, description: description || "" }]).select();
-    if (cupError) {
-      console.error("Supabase Error:", cupError.message);
-      return errorResponse("DB Insert failed: " + cupError.message, 500);
-    }
+    if (cupError) return errorResponse(cupError.message, 500);
     const worldcupId = cupData[0].id;
-    const itemsToInsert = items.map(function(item) {
-      return {
+    if (items && items.length > 0) {
+      const itemsToInsert = items.map((item) => ({
         worldcup_id: worldcupId,
         name: item.name,
         image_url: item.image_url
-      };
-    });
-    if (itemsToInsert.length > 0) {
+      }));
       const { error: itemsError } = await supabase.from("worldcup_items").insert(itemsToInsert);
-      if (itemsError) return errorResponse(itemsError.message);
+      if (itemsError) return errorResponse(itemsError.message, 500);
     }
     return jsonResponse({ success: true, worldcupId });
   } catch (err) {
-    return errorResponse(err.message || "Internal Server Error.");
+    return errorResponse(err.message || "Internal Server Error", 500);
   }
 }
 __name(handleUserCreatedContent, "handleUserCreatedContent");
@@ -12141,6 +12147,45 @@ async function handleDeleteWorldcup(request, url, supabase, env) {
 }
 __name(handleDeleteWorldcup, "handleDeleteWorldcup");
 
+// src/helpers/sitemap.js
+async function handleSitemap(supabase) {
+  try {
+    const baseUrl = "https://quizrank.pages.dev";
+    const [quizRes, wcRes] = await Promise.all([
+      supabase.from("quizzes").select("id, slug, updated_at"),
+      supabase.from("worldcups").select("id, slug, updated_at")
+    ]);
+    let xml = '<?xml version="1.0" encoding="UTF-8"?>';
+    xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
+    xml += `<url><loc>${baseUrl}/</loc><priority>1.0</priority></url>`;
+    xml += `<url><loc>${baseUrl}/quiz-list.html</loc><priority>0.8</priority></url>`;
+    xml += `<url><loc>${baseUrl}/worldcup-list.html</loc><priority>0.8</priority></url>`;
+    if (quizRes.data) {
+      quizRes.data.forEach((item) => {
+        const id = item.slug || item.id;
+        xml += `<url><loc>${baseUrl}/quiz-play.html?id=${id}</loc><lastmod>${new Date(item.updated_at || Date.now()).toISOString().split("T")[0]}</lastmod><priority>0.7</priority></url>`;
+      });
+    }
+    if (wcRes.data) {
+      wcRes.data.forEach((item) => {
+        const id = item.slug || item.id;
+        const page = item.slug && item.slug.startsWith("tier-") ? "tier-view.html" : "worldcup-play.html";
+        xml += `<url><loc>${baseUrl}/${page}?id=${id}</loc><lastmod>${new Date(item.updated_at || Date.now()).toISOString().split("T")[0]}</lastmod><priority>0.7</priority></url>`;
+      });
+    }
+    xml += "</urlset>";
+    return new Response(xml, {
+      headers: {
+        "Content-Type": "application/xml",
+        "Access-Control-Allow-Origin": "*"
+      }
+    });
+  } catch (err) {
+    return new Response("Error generating sitemap", { status: 500 });
+  }
+}
+__name(handleSitemap, "handleSitemap");
+
 // src/index.js
 var src_default = {
   async fetch(request, env, ctx) {
@@ -12154,6 +12199,9 @@ var src_default = {
     const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY);
     const path = url.pathname;
     const method = request.method;
+    if (path === "/api/sitemap" && method === "GET") {
+      return handleSitemap(supabase);
+    }
     if (path === "/api/config" && method === "GET") {
       return jsonResponse({
         SUPABASE_URL: env.SUPABASE_URL,

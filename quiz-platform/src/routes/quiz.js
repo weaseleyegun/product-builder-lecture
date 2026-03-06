@@ -8,7 +8,7 @@ async function handleDailyQuiz(url, supabase) {
 
     let query = supabase
         .from('quizzes')
-        .select('id, title, description, thumbnail_url, play_count, rank, correct_rate, incorrect_rate, game_count')
+        .select('id, slug, title, description, thumbnail_url, play_count, rank, correct_rate, incorrect_rate, game_count')
         .limit(100);
 
     if (sort === 'rank') {
@@ -28,42 +28,38 @@ async function handleDailyQuiz(url, supabase) {
     return jsonResponse(data);
 }
 
-// GET /api/quiz-play?id=UUID&limit=N - Fetch random questions for a quiz
+// GET /api/quiz-play?id=UUID_OR_SLUG&limit=N - Fetch random questions for a quiz
 async function handleQuizPlay(url, supabase) {
     const quizId = url.searchParams.get('id');
     const limit = parseInt(url.searchParams.get('limit')) || 5;
 
     if (!quizId) return errorResponse("Quiz ID is required", 400);
 
-    // Increment play_count
-    await supabase.rpc('increment_play_count', { quiz_id: quizId }).maybeSingle();
-    // Fallback: direct update if rpc fails
-    const { data: current } = await supabase
-        .from('quizzes')
-        .select('play_count')
-        .eq('id', quizId)
-        .single();
-    if (current) {
-        await supabase
-            .from('quizzes')
-            .update({ play_count: (current.play_count || 0) + 1 })
-            .eq('id', quizId);
+    // Fetch quiz info (Try ID first, then slug)
+    let quizQuery = supabase.from('quizzes').select('*');
+
+    if (quizId.length === 36 && quizId.includes('-')) { // Likely UUID
+        quizQuery = quizQuery.eq('id', quizId);
+    } else {
+        quizQuery = quizQuery.eq('slug', quizId);
     }
 
-    // Fetch quiz info
-    const { data: quizInfo, error: quizError } = await supabase
-        .from('quizzes')
-        .select('*')
-        .eq('id', quizId)
-        .single();
+    const { data: quizInfo, error: quizError } = await quizQuery.single();
 
-    if (quizError) return errorResponse(quizError.message);
+    if (quizError || !quizInfo) return errorResponse("Quiz not found", 404);
+
+    const actualId = quizInfo.id; // Correct UUID for questions lookup
+
+    // Increment play_count
+    await supabase.rpc('increment_play_count', { quiz_id: actualId }).maybeSingle();
+    // Fallback: direct update if rpc fails
+    await supabase.from('quizzes').update({ play_count: (quizInfo.play_count || 0) + 1 }).eq('id', actualId);
 
     // Fetch only embeddable questions for this quiz
     const { data: questions, error: questionsError } = await supabase
         .from('quiz_questions')
         .select('id, video_id, start_time, end_time, answer, options')
-        .eq('quiz_id', quizId)
+        .eq('quiz_id', actualId)
         .neq('is_embeddable', false);
 
     if (questionsError) return errorResponse(questionsError.message);
@@ -207,4 +203,3 @@ async function handleUserCreatedQuiz(request, supabase) {
 }
 
 export { handleDailyQuiz, handleQuizPlay, handleQuizResult, handleUserCreatedQuiz };
-

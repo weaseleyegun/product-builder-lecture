@@ -35,11 +35,16 @@ function normalizeTitle(title) {
 // Fetch quiz data from backend API (called on page load)
 async function fetchQuizData() {
     try {
-        var response = await fetch(API_BASE_URL + '/api/quiz-play?id=' + quizId + '&limit=100');
+        var response = await fetch(API_BASE_URL + '/api/quiz-play?id=' + rawQuizId + '&limit=100');
         if (!response.ok) throw new Error('API request failed');
 
         var data = await response.json();
         quizTitle = data.quiz.title || '노래 맞추기 퀴즈';
+
+        // SEO: Update Meta Tags
+        if (typeof updateSEOMeta === 'function') {
+            updateSEOMeta(quizTitle, data.quiz.description, data.quiz.thumbnail_url);
+        }
 
         var allAnswers = Array.from(new Set(data.questions.map(function (q) {
             return extractTitle(q.answer);
