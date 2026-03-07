@@ -31,11 +31,12 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Fetch worldcup list from API and render cards
-    async function fetchWorldcups() {
+    async function fetchWorldcups(sort) {
         var wcGrid = document.getElementById('worldcup-grid');
         var tierGrid = document.getElementById('tier-grid');
+        var sortParam = sort || 'rank';
         try {
-            var response = await fetch(API_BASE_URL + '/api/worldcups');
+            var response = await fetch(API_BASE_URL + '/api/worldcups?sort=' + sortParam);
             if (response.ok) {
                 let data = await response.json();
 
@@ -215,11 +216,20 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // Expose functions for sorting from list pages
+    window.sortQuizzes = function (sort) {
+        fetchDailyQuizzes(sort);
+    };
+
+    window.sortWorldcups = function (sort) {
+        fetchWorldcups(sort);
+    };
+
     // Initialize
     fetchDailyQuizzes('rank');
-    fetchWorldcups();
+    fetchWorldcups('rank');
 
-    // Sorting listeners
+    // Sorting listeners for static elements if any
     var sortLinks = document.querySelectorAll('.filter-links a');
     sortLinks.forEach(function (link) {
         link.addEventListener('click', function (e) {
@@ -228,6 +238,7 @@ document.addEventListener('DOMContentLoaded', function () {
             this.classList.add('active');
             var sort = this.innerText.includes('인기') ? 'rank' : 'latest';
             fetchDailyQuizzes(sort);
+            fetchWorldcups(sort);
         });
     });
 });
