@@ -98,9 +98,17 @@ function renderMatch() {
     var left = currentRound[currentMatchIndex];
     var right = currentRound[currentMatchIndex + 1];
 
-    document.getElementById('img-left').src = left.img;
+    if (window.SafeImageLoader) {
+        SafeImageLoader.load(document.getElementById('img-left'), left.img, left.name);
+        SafeImageLoader.load(document.getElementById('img-right'), right.img, right.name);
+    } else {
+        document.getElementById('img-left').src = left.img;
+        document.getElementById('name-left').innerText = left.name;
+        document.getElementById('img-right').src = right.img;
+        document.getElementById('name-right').innerText = right.name;
+    }
+
     document.getElementById('name-left').innerText = left.name;
-    document.getElementById('img-right').src = right.img;
     document.getElementById('name-right').innerText = right.name;
 
     // UX IMPROVEMENT: Ensure the user sees the new pair by scrolling to top of arena
@@ -131,7 +139,11 @@ window.selectContender = function (selectedIndex) {
 function showWinner(winner) {
     document.getElementById('game-screen').style.display = 'none';
     document.getElementById('setup-screen').style.display = 'none';
-    document.getElementById('winner-img').src = winner.img;
+    if (window.SafeImageLoader) {
+        SafeImageLoader.load(document.getElementById('winner-img'), winner.img, winner.name);
+    } else {
+        document.getElementById('winner-img').src = winner.img;
+    }
     document.getElementById('winner-name').innerText = winner.name;
     document.getElementById('result-screen').style.display = 'block';
 }
