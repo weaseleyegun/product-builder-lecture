@@ -324,8 +324,77 @@
 
     <script src="js/utils/config.js"></script>
     <script src="js/utils/theme.js"></script>
+    <script src="js/utils/seo.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const tierId = urlParams.get('id');
+
+            if (!tierId) {
+                alert('잘못된 접근입니다.');
+                location.href = 'index.html';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/worldcup-play?id=${tierId}`);
+                if (!response.ok) throw new Error('데이터를 불러오는데 실패했습니다.');
+
+                const data = await response.json();
+                const tierInfo = data.worldcup;
+                const items = data.items;
+
+                // Update Header
+                document.querySelector('.tier-header h1').textContent = tierInfo.title;
+                document.querySelector('.tier-header p').textContent = tierInfo.description || '최고의 티어를 직접 정해보세요!';
+
+                // Update SEO
+                if (window.updateSEO) {
+                    window.updateSEO({
+                        title: `${tierInfo.title} | QuizRank.io`,
+                        description: tierInfo.description || `${tierInfo.title} 티어 리스트를 확인하고 직접 만들어보세요.`
+                    });
+                }
+
+                // Render Image Pool
+                const pool = document.getElementById('image-pool');
+                // Clear existing hardcoded items (except header)
+                while (pool.children.length > 1) {
+                    pool.removeChild(pool.lastChild);
+                }
+
+                items.forEach((item, index) => {
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'tier-item';
+                    itemDiv.draggable = true;
+                    itemDiv.id = `item-${item.id}`;
+
+                    if (item.image_url) {
+                        itemDiv.style.backgroundImage = `url('${item.image_url}')`;
+                    } else {
+                        // Fallback: Show first character if no image
+                        itemDiv.style.backgroundColor = '#333';
+                        itemDiv.innerHTML = `<span class="tier-item-placeholder">${item.name.charAt(0)}</span>`;
+                    }
+
+                    const nameDiv = document.createElement('div');
+                    nameDiv.className = 'tier-item-name';
+                    nameDiv.textContent = item.name;
+                    itemDiv.appendChild(nameDiv);
+
+                    pool.appendChild(itemDiv);
+                });
+
+                // Initialize Drag & Drop after rendering
+                initializeDragAndDrop();
+
+            } catch (error) {
+                console.error('Error:', error);
+                document.querySelector('.tier-header h1').textContent = '데이터를 찾을 수 없습니다.';
+            }
+        });
+
+        function initializeDragAndDrop() {
             const draggables = document.querySelectorAll('.tier-item');
             const dropZones = document.querySelectorAll('.tier-items, .image-pool');
 
@@ -342,7 +411,7 @@
 
             dropZones.forEach(zone => {
                 zone.addEventListener('dragover', e => {
-                    e.preventDefault(); // allow drop
+                    e.preventDefault();
                     const draggable = document.querySelector('.dragging');
                     if (draggable) {
                         zone.classList.add('drag-over');
@@ -358,12 +427,11 @@
                     zone.classList.remove('drag-over');
                     const draggable = document.querySelector('.dragging');
                     if (draggable) {
-                        // Insert appending logic
                         zone.appendChild(draggable);
                     }
                 });
             });
-        });
+        }
     </script>
 </body>
 

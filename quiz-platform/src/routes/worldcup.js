@@ -2,14 +2,22 @@
 
 import { jsonResponse, errorResponse } from '../helpers/cors.js';
 
-// GET /api/worldcups - Fetch worldcup list for main page
-async function handleWorldcups(supabase) {
-    const { data, error } = await supabase
+// GET /api/worldcups?sort=rank|latest - Fetch worldcup list for main page
+async function handleWorldcups(url, supabase) {
+    const sort = url.searchParams.get('sort') || 'rank';
+
+    let query = supabase
         .from('worldcups')
-        .select('id, slug, title, description, thumbnail_url, play_count')
-        .order('created_at', { ascending: false })
+        .select('id, slug, title, description, thumbnail_url, play_count, created_at')
         .limit(100);
 
+    if (sort === 'rank') {
+        query = query.order('play_count', { ascending: false });
+    } else if (sort === 'latest') {
+        query = query.order('created_at', { ascending: false });
+    }
+
+    const { data, error } = await query;
     if (error) return errorResponse(error.message);
     return jsonResponse(data);
 }
