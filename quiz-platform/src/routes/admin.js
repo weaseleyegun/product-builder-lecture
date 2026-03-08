@@ -4,7 +4,7 @@ import { jsonResponse, errorResponse } from '../helpers/cors.js';
 
 // ── Auth guard ───────────────────────────────────────────────────────────────
 // Extracts Bearer token from Authorization header and verifies it with Supabase.
-async function verifyAdminToken(request, supabase, env) {
+async function verifyOwnerOrAdminToken(request, tableName, itemId, supabase, env) {
     const authHeader = request.headers.get('Authorization') || '';
     const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : null;
 
@@ -17,13 +17,29 @@ async function verifyAdminToken(request, supabase, env) {
         return { user: null, err: errorResponse('Invalid or expired token', 401) };
     }
 
-    // Whitelist: only the admin email may access these routes
     const adminEmail = env.ADMIN_EMAIL || 'agent@quizrank.com';
-    if (data.user.email !== adminEmail) {
-        return { user: null, err: errorResponse('Access denied: not an admin account', 403) };
+    const isAdmin = data.user.email === adminEmail;
+
+    if (isAdmin) {
+        return { user: data.user, isAdmin: true, err: null };
     }
 
-    return { user: data.user, err: null };
+    // Check ownership
+    const { data: itemData, error: itemError } = await supabase
+        .from(tableName)
+        .select('creator_id')
+        .eq('id', itemId)
+        .single();
+
+    if (itemError || !itemData) {
+        return { user: null, err: errorResponse('Item not found', 404) };
+    }
+
+    if (itemData.creator_id !== data.user.id) {
+        return { user: null, err: errorResponse('Access denied: not the owner or admin', 403) };
+    }
+
+    return { user: data.user, isAdmin: false, err: null };
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -31,11 +47,11 @@ async function verifyAdminToken(request, supabase, env) {
 async function handleUpdateQuiz(request, url, supabase, env) {
     if (request.method !== 'PUT') return errorResponse('Method not allowed', 405);
 
-    const { err } = await verifyAdminToken(request, supabase, env);
-    if (err) return err;
-
     const id = url.pathname.split('/').pop();
     if (!id || id === 'quiz') return errorResponse('Quiz ID is required', 400);
+
+    const { err } = await verifyOwnerOrAdminToken(request, 'quizzes', id, supabase, env);
+    if (err) return err;
 
     try {
         const body = await request.json();
@@ -62,11 +78,11 @@ async function handleUpdateQuiz(request, url, supabase, env) {
 async function handleUpdateWorldcup(request, url, supabase, env) {
     if (request.method !== 'PUT') return errorResponse('Method not allowed', 405);
 
-    const { err } = await verifyAdminToken(request, supabase, env);
-    if (err) return err;
-
     const id = url.pathname.split('/').pop();
     if (!id || id === 'worldcup') return errorResponse('Worldcup ID is required', 400);
+
+    const { err } = await verifyOwnerOrAdminToken(request, 'worldcups', id, supabase, env);
+    if (err) return err;
 
     try {
         const body = await request.json();
@@ -91,11 +107,11 @@ async function handleUpdateWorldcup(request, url, supabase, env) {
 
 // DELETE /api/admin/quiz/:id
 async function handleDeleteQuiz(request, url, supabase, env) {
-    const { err } = await verifyAdminToken(request, supabase, env);
-    if (err) return err;
-
     const id = url.pathname.split('/').pop();
     if (!id || id === 'quiz') return errorResponse('Quiz ID is required', 400);
+
+    const { err } = await verifyOwnerOrAdminToken(request, 'quizzes', id, supabase, env);
+    if (err) return err;
 
     try {
         await supabase.auth.signInWithPassword({
@@ -112,11 +128,11 @@ async function handleDeleteQuiz(request, url, supabase, env) {
 
 // DELETE /api/admin/worldcup/:id
 async function handleDeleteWorldcup(request, url, supabase, env) {
-    const { err } = await verifyAdminToken(request, supabase, env);
-    if (err) return err;
-
     const id = url.pathname.split('/').pop();
     if (!id || id === 'worldcup') return errorResponse('Worldcup ID is required', 400);
+
+    const { err } = await verifyOwnerOrAdminToken(request, 'worldcups', id, supabase, env);
+    if (err) return err;
 
     try {
         await supabase.auth.signInWithPassword({

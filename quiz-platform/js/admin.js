@@ -25,18 +25,45 @@ document.addEventListener('DOMContentLoaded', function () {
         fetchAllContent();
     }
 
+    function parseJwt(token) {
+        try {
+            var base64Url = token.split('.')[1];
+            var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            var jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function (c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+            return JSON.parse(jsonPayload);
+        } catch (e) { return null; }
+    }
+
     async function fetchAllContent() {
         try {
+            const jwtData = parseJwt(token);
+            const userId = jwtData ? jwtData.sub : null;
+            const isAdmin = userEmail === 'agent@quizrank.com'; // Admin whitelisted email
+
+            if (!isAdmin) {
+                // If not admin, change the title
+                const header = document.querySelector('.admin-header h2');
+                if (header) header.textContent = '🛠️ 나의 콘텐츠 관리';
+                const desc = document.querySelector('.admin-header p');
+                if (desc) desc.textContent = '직접 생성한 퀴즈, 월드컵, 티어 리스트만 수정 및 삭제할 수 있습니다.';
+                const navLink = document.querySelector('a.active');
+                if (navLink && navLink.textContent.includes('관리 대시보드')) navLink.textContent = '🛠️ 나의 콘텐츠 관리';
+            }
+
             const quizRes = await fetch(API_BASE_URL + '/api/daily-quiz?sort=latest');
             const worldcupRes = await fetch(API_BASE_URL + '/api/worldcups');
 
             if (quizRes.ok) {
-                const quizzes = await quizRes.json();
+                let quizzes = await quizRes.json();
+                if (!isAdmin && userId) quizzes = quizzes.filter(q => q.creator_id === userId);
                 renderAdminList(quizList, quizzes, 'quiz');
             }
 
             if (worldcupRes.ok) {
-                const allWorldcups = await worldcupRes.json();
+                let allWorldcups = await worldcupRes.json();
+                if (!isAdmin && userId) allWorldcups = allWorldcups.filter(w => w.creator_id === userId);
 
                 // Split worldcups vs tier lists by keyword (same logic as app.js)
                 const TIER_KEYWORDS = ['티어', '등급', '랜킹', '리스트'];

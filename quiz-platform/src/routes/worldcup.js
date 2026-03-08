@@ -8,7 +8,7 @@ async function handleWorldcups(url, supabase) {
 
     let query = supabase
         .from('worldcups')
-        .select('id, slug, title, description, thumbnail_url, play_count, created_at')
+        .select('id, slug, title, description, thumbnail_url, play_count, created_at, creator_id')
         .limit(100);
 
     if (sort === 'rank') {
@@ -41,6 +41,11 @@ async function handleWorldcupPlay(url, supabase) {
 
     const actualId = cupInfo.id; // Correct UUID for items lookup
 
+    // Increment play_count
+    await supabase.rpc('increment_worldcup_play_count', { wc_id: actualId }).maybeSingle();
+    // Fallback: direct update if rpc fails
+    await supabase.from('worldcups').update({ play_count: (cupInfo.play_count || 0) + 1 }).eq('id', actualId);
+
     // Fetch all items and shuffle
     const { data: items, error: itemsError } = await supabase
         .from('worldcup_items')
@@ -63,6 +68,16 @@ async function handleUserCreatedContent(request, supabase) {
             return errorResponse("Title is required.", 400);
         }
 
+        // Verify Token
+        const authHeader = request.headers.get('Authorization') || '';
+        const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : null;
+        if (!token) return errorResponse("로그인이 필요합니다.", 401);
+
+        const { data: userData, error: userError } = await supabase.auth.getUser(token);
+        if (userError || !userData?.user) return errorResponse("유효하지 않은 토큰입니다.", 401);
+
+        const creatorId = userData.user.id;
+
         // Authenticate to bypass RLS
         await supabase.auth.signInWithPassword({
             email: 'agent@quizrank.com',
@@ -72,7 +87,7 @@ async function handleUserCreatedContent(request, supabase) {
         // Insert worldcup
         const { data: cupData, error: cupError } = await supabase
             .from('worldcups')
-            .insert([{ title, description: description || '' }])
+            .insert([{ title, description: description || '', creator_id: creatorId }])
             .select();
 
         if (cupError) return errorResponse(cupError.message, 500);
