@@ -8,7 +8,7 @@ async function handleDailyQuiz(url, supabase) {
 
     let query = supabase
         .from('quizzes')
-        .select('id, slug, title, description, thumbnail_url, play_count, rank, correct_rate, incorrect_rate, game_count')
+        .select('id, slug, title, description, thumbnail_url, play_count, rank, correct_rate, incorrect_rate, game_count, creator_id')
         .limit(100);
 
     if (sort === 'rank') {
@@ -149,7 +149,17 @@ async function handleUserCreatedQuiz(request, supabase) {
             return errorResponse("Title and questions are required.", 400);
         }
 
-        // Authenticate to bypass RLS
+        // Verify Token
+        const authHeader = request.headers.get('Authorization') || '';
+        const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : null;
+        if (!token) return errorResponse("로그인이 필요합니다.", 401);
+
+        const { data: userData, error: userError } = await supabase.auth.getUser(token);
+        if (userError || !userData?.user) return errorResponse("유효하지 않은 토큰입니다.", 401);
+
+        const creatorId = userData.user.id;
+
+        // Authenticate as Admin to bypass RLS (since RLS policies for INSERT are strict in current setup)
         await supabase.auth.signInWithPassword({
             email: 'agent@quizrank.com',
             password: 'seed_password_1234!'
@@ -158,14 +168,11 @@ async function handleUserCreatedQuiz(request, supabase) {
         // Insert quiz
         const { data: quizData, error: quizError } = await supabase
             .from('quizzes')
-            .insert([{ title, description: description || '', is_user_created: true }])
+            .insert([{ title, description: description || '', creator_id: creatorId }])
             .select();
 
-        // RLS may block anonymous inserts - simulate success or bypass if allowed
         if (quizError) {
-            console.error("Supabase Error (RLS blocked insert):", quizError.message);
-            // Instead of mock success, if anon is allowed this will succeed.
-            // If we still get error, return error (user wants it added to DB).
+            console.error("Supabase Error:", quizError.message);
             return errorResponse("DB Insert failed: " + quizError.message, 500);
         }
 

@@ -174,6 +174,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 <div class="card-content">
                     <h3>${item.title}</h3>
                     <p>${cleanDesc.substring(0, 50)}...</p>
+                    <div class="card-stats" style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">
+                        <span>▶ ${(item.play_count || 0).toLocaleString()}회 실행</span>
+                    </div>
                     ${tagsHtml}
                 </div>
             `;
@@ -206,7 +209,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 <div class="card-content">
                     <h3>${item.title}</h3>
                     <p>티어 리스트/랭킹 만들기</p>
-                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">
+                    <div class="card-stats" style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">
                         <span>▶ ${(item.play_count || 0).toLocaleString()}회 실행</span>
                     </div>
                 </div>
@@ -228,6 +231,49 @@ document.addEventListener('DOMContentLoaded', function () {
     // Initialize
     fetchDailyQuizzes('rank');
     fetchWorldcups('rank');
+
+    // 글로벌 검색 기능 구현
+    var globalSearchInput = document.getElementById('global-search');
+    if (globalSearchInput) {
+        globalSearchInput.addEventListener('input', function (e) {
+            var searchTerm = e.target.value.toLowerCase().trim();
+            var isHomePage = window.location.pathname.endsWith('index.html') || window.location.pathname === '/';
+
+            // 1. 퀴즈 필터링
+            var quizGrid = document.getElementById('daily-quiz-grid');
+            if (quizGrid) {
+                var filteredQuizzes = allQuizzes.filter(function (q) {
+                    var title = q.title.toLowerCase();
+                    var desc = (q.description || "").toLowerCase();
+                    return title.includes(searchTerm) || desc.includes(searchTerm);
+                });
+                // 검색 중일 때는 slice 하지 않고 전체 검색 결과를 보여줌 (홈페이지 포함)
+                renderQuizzes(quizGrid, searchTerm ? filteredQuizzes : (isHomePage ? allQuizzes.slice(0, 5) : allQuizzes), isHomePage);
+            }
+
+            // 2. 월드컵 필터링
+            var wcGrid = document.getElementById('worldcup-grid');
+            if (wcGrid) {
+                var filteredWcs = allWorldcups.filter(function (w) {
+                    var title = w.title.toLowerCase();
+                    var desc = (w.description || "").toLowerCase();
+                    return title.includes(searchTerm) || desc.includes(searchTerm);
+                });
+                renderWorldcups(wcGrid, searchTerm ? filteredWcs : (isHomePage ? allWorldcups.slice(0, 5) : allWorldcups));
+            }
+
+            // 3. 티어 리스트 필터링
+            var tierGrid = document.getElementById('tier-grid');
+            if (tierGrid) {
+                var filteredTiers = allTiers.filter(function (t) {
+                    var title = t.title.toLowerCase();
+                    var desc = (t.description || "").toLowerCase();
+                    return title.includes(searchTerm) || desc.includes(searchTerm);
+                });
+                renderTiers(tierGrid, searchTerm ? filteredTiers : (isHomePage ? allTiers.slice(0, 5) : allTiers));
+            }
+        });
+    }
 
     // Sorting listeners for static elements if any
     var sortLinks = document.querySelectorAll('.filter-links a');

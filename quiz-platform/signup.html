@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>회원가입 | QuizRank.io</title>
+    <meta name="description" content="QuizRank에 가입하고 나만의 퀴즈와 월드컵을 만들어보세요!">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <!-- Load config first so API_BASE_URL is available to inline scripts -->
+    <script src="js/utils/config.js"></script>
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏆</text></svg>">
+    <style>
+        .login-container {
+            max-width: 400px;
+            margin: 4rem auto;
+            text-align: center;
+            padding: 2rem;
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+        }
+
+        .login-container h1 {
+            font-size: 2rem;
+            margin-bottom: 2rem;
+            color: var(--primary-color);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.8rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-color);
+            color: var(--text-color);
+            font-size: 1rem;
+        }
+
+        .footer-link {
+            display: block;
+            margin-top: 1.5rem;
+            color: var(--primary-color);
+            text-decoration: none;
+            font-size: 0.95rem;
+        }
+
+        .footer-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="navbar">
+        <div class="logo"><a href="index.html"
+                style="text-decoration: none; color: inherit;">QuizRank<span>.io</span></a></div>
+        <div class="actions">
+            <div class="theme-switch-wrapper">
+                <span class="theme-icon">☀️</span>
+                <label class="theme-switch" for="theme-toggle">
+                    <input type="checkbox" id="theme-toggle">
+                    <div class="slider"></div>
+                </label>
+                <span class="theme-icon">🌙</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="login-container">
+            <h1>회원가입</h1>
+            <div class="form-group">
+                <label class="form-label">이메일</label>
+                <input type="email" id="signup-email" class="form-input" placeholder="example@email.com">
+            </div>
+            <div class="form-group">
+                <label class="form-label">비밀번호 (6자 이상)</label>
+                <input type="password" id="signup-password" class="form-input" placeholder="••••••••">
+            </div>
+            <div class="form-group">
+                <label class="form-label">비밀번호 확인</label>
+                <input type="password" id="signup-password-confirm" class="form-input" placeholder="••••••••">
+            </div>
+            <div class="form-group">
+                <label class="form-label">닉네임</label>
+                <input type="text" id="signup-nickname" class="form-input" placeholder="멋진 닉네임을 설정해주세요">
+                <p id="nickname-error" style="color: #ff4757; font-size: 0.85rem; margin-top: 5px; display: none;">이미 사용
+                    중인 닉네임입니다.</p>
+            </div>
+            <button id="signup-btn" class="btn-primary large" style="width: 100%;">가입하기</button>
+
+            <a href="login.html" class="footer-link">이미 계정이 있으신가요? 로그인</a>
+
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    fetch(API_BASE_URL + '/api/config')
+                        .then(r => r.json())
+                        .then(function (cfg) {
+                            const sbClient = supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY);
+
+                            document.getElementById('signup-btn').addEventListener('click', async function () {
+                                const email = document.getElementById('signup-email').value.trim();
+                                const password = document.getElementById('signup-password').value;
+                                const passwordConfirm = document.getElementById('signup-password-confirm').value;
+                                const nickname = document.getElementById('signup-nickname').value.trim();
+                                const nicknameError = document.getElementById('nickname-error');
+
+                                nicknameError.style.display = 'none';
+
+                                if (!email || !password || !passwordConfirm || !nickname) {
+                                    return alert('모든 항목을 입력해주세요.');
+                                }
+
+                                if (password.length < 6) {
+                                    return alert('비밀번호는 최소 6자 이상이어야 합니다.');
+                                }
+
+                                if (password !== passwordConfirm) {
+                                    return alert('비밀번호가 일치하지 않습니다.');
+                                }
+
+                                const btn = document.getElementById('signup-btn');
+                                btn.disabled = true;
+                                btn.textContent = '가입 중...';
+
+                                try {
+                                    // 1. 닉네임 중복 체크
+                                    const { data: profiles, error: profileErr } = await sbClient
+                                        .from('profiles')
+                                        .select('id')
+                                        .eq('username', nickname)
+                                        .single();
+
+                                    if (profiles) {
+                                        nicknameError.style.display = 'block';
+                                        btn.disabled = false;
+                                        btn.textContent = '가입하기';
+                                        return;
+                                    }
+
+                                    // 2. Supabase Auth 가입
+                                    const { data, error } = await sbClient.auth.signUp({
+                                        email,
+                                        password,
+                                        options: {
+                                            data: {
+                                                user_name: nickname // 이 데이터로 trigger가 profiles 생성
+                                            }
+                                        }
+                                    });
+
+                                    if (error) {
+                                        alert('가입 실패: ' + error.message);
+                                        return;
+                                    }
+
+                                    if (data.session) {
+                                        // 이메일 인증 불필요 설정일 경우 바로 토큰 세팅 후 로그인
+                                        sessionStorage.setItem('sb_access_token', data.session.access_token);
+                                        sessionStorage.setItem('sb_user_email', data.user.email);
+                                        alert('가입이 완료되었습니다!');
+                                        location.href = 'index.html';
+                                    } else {
+                                        // 이메일 인증이 필요한 설정인 경우
+                                        alert('가입이 완료되었습니다! 가입하신 이메일을 확인해 인증을 완료해주세요.');
+                                        location.href = 'login.html';
+                                    }
+                                } catch (e) {
+                                    alert('오류가 발생했습니다: ' + e.message);
+                                } finally {
+                                    btn.disabled = false;
+                                    btn.textContent = '가입하기';
+                                }
+                            });
+                        })
+                        .catch(function (e) {
+                            console.error('Config fetch failed:', e);
+                            document.getElementById('signup-btn').addEventListener('click', function () {
+                                alert('API 서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.');
+                            });
+                        });
+                });
+            </script>
+        </div>
+    </main>
+
+    <script src="js/utils/config.js"></script>
+    <script src="js/utils/theme.js"></script>
+</body>
+
+</html>

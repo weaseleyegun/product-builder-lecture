@@ -158,8 +158,14 @@ function updateThumbnailPreview(file) {
     };
 }
 
-// Add 1st question by default
+// Add 1st question by default and Auth check
 window.onload = function () {
+    const token = sessionStorage.getItem('sb_access_token');
+    if (!token) {
+        alert('회원 가입 후 이용할 수 있습니다.');
+        window.location.href = 'login.html';
+        return;
+    }
     addQuestion();
 };
 
@@ -226,9 +232,13 @@ async function submitQuiz() {
     }
 
     try {
+        const token = sessionStorage.getItem('sb_access_token');
         const res = await fetch(API_BASE_URL + '/api/user-created-quiz', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
             body: JSON.stringify({ title: title, description: desc, questions: questions })
         });
         const data = await res.json();

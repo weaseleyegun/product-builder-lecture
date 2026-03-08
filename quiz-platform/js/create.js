@@ -76,8 +76,15 @@ function handleDragEnd() {
     draggedItem = null;
 }
 
-// Initialize dropzones
+// Initialize dropzones and Auth check
 document.addEventListener('DOMContentLoaded', function () {
+    const token = sessionStorage.getItem('sb_access_token');
+    if (!token) {
+        alert('회원 가입 후 이용할 수 있습니다.');
+        window.location.href = 'login.html';
+        return;
+    }
+
     var dropzones = document.querySelectorAll('.dropzone');
     dropzones.forEach(function (zone) {
         zone.addEventListener('dragover', function (e) {
@@ -135,9 +142,13 @@ window.submitCreation = async function () {
     };
 
     try {
+        const token = sessionStorage.getItem('sb_access_token');
         var response = await fetch(API_BASE_URL + '/api/user-created-content', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
             body: JSON.stringify(payload)
         });
 
