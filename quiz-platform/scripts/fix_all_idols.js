@@ -21,61 +21,84 @@ async function run() {
         .select('id, name, image_url');
 
     const idolMap = {
-        '허윤진': 'https://upload.wikimedia.org/wikipedia/commons/d/d4/260110_Le_Sserafim%27s_Huh_Yunjin_at_GDA_2026_02.jpg',
-        '웬디': 'https://upload.wikimedia.org/wikipedia/commons/e/e8/160514_Red_Velvet_WENDY_01.jpg',
-        '유진': 'https://upload.wikimedia.org/wikipedia/commons/6/6d/220822_An_Yu-jin_IVE.jpg',
-        '가을': 'https://upload.wikimedia.org/wikipedia/commons/0/05/220822_Gaeul_IVE.jpg',
-        '원영': 'https://upload.wikimedia.org/wikipedia/commons/3/3a/220824_Jang_Won-young_IVE.jpg',
-        '민지': 'https://upload.wikimedia.org/wikipedia/commons/a/a2/230107_NewJeans_Minji.jpg',
-        '해린': 'https://upload.wikimedia.org/wikipedia/commons/e/e2/2023_MMA_NewJeans_Haerin_1.jpg',
-        '혜인': 'https://upload.wikimedia.org/wikipedia/commons/3/36/230107_NewJeans_Hyein.jpg',
-        '다니엘': 'https://upload.wikimedia.org/wikipedia/commons/7/75/NewJeans_Danielle_3.jpg',
-        '하니': 'https://upload.wikimedia.org/wikipedia/commons/6/6c/220825_Hanni_NewJeans.jpg',
-        '안유진': 'https://upload.wikimedia.org/wikipedia/commons/6/6d/220822_An_Yu-jin_IVE.jpg',
-        '레이': 'https://upload.wikimedia.org/wikipedia/commons/9/90/220822_Rei_IVE.jpg',
-        '리즈': 'https://upload.wikimedia.org/wikipedia/commons/3/30/220822_Liz_IVE.jpg',
-        '이서': 'https://upload.wikimedia.org/wikipedia/commons/7/74/220822_Leeseo_IVE.jpg',
-        '백현': 'https://upload.wikimedia.org/wikipedia/commons/0/07/Byun_Baek-hyun_at_a_fansign_in_July_2019.jpg',
-        '태연': 'https://upload.wikimedia.org/wikipedia/commons/2/22/Kim_Tae-yeon_at_the_6th_Gaon_Chart_Music_Awards.png',
-        '수지': 'https://upload.wikimedia.org/wikipedia/commons/f/f6/Bae_Suzy_at_the_2022_Blue_Dragon_Series_Awards_07.jpg',
-        '쯔위': 'https://upload.wikimedia.org/wikipedia/commons/2/27/Chou_Tzu-yu_at_Music_Bank_in_April_2018.jpg',
-        '나연': 'https://upload.wikimedia.org/wikipedia/commons/4/4c/Im_Na-yeon_at_Music_Bank_in_April_2018.jpg',
-        '카리나': 'https://upload.wikimedia.org/wikipedia/commons/1/18/Aespa%27s_Karina_5.jpg',
-        '윈터': 'https://upload.wikimedia.org/wikipedia/commons/a/a2/230527_Winter_at_K-Pop_Concert.jpg',
-        '지젤': 'https://upload.wikimedia.org/wikipedia/commons/e/e0/230527_Giselle_at_K-Pop_Concert.jpg',
-        '닝닝': 'https://upload.wikimedia.org/wikipedia/commons/1/18/230527_Ningning_at_K-Pop_Concert.jpg',
-        '아이린': 'https://upload.wikimedia.org/wikipedia/commons/d/d1/Irene_Bae_at_the_2018_KBS_Song_Festival_01.png',
-        '슬기': 'https://upload.wikimedia.org/wikipedia/commons/1/11/Seulgi_Kang_at_the_2018_KBS_Song_Festival_01.png',
-        '조이': 'https://upload.wikimedia.org/wikipedia/commons/b/b8/Park_Soo-young_at_the_2018_KBS_Song_Festival_01.png',
-        '예리': 'https://upload.wikimedia.org/wikipedia/commons/f/f5/Kim_Ye-rim_at_the_2018_KBS_Song_Festival_01.png',
-        '제니': 'https://upload.wikimedia.org/wikipedia/commons/b/b5/Jennie_Kim_for_Vogue_Korea%2C_May_2024.jpg',
-        '지수': 'https://upload.wikimedia.org/wikipedia/commons/2/2d/250219_%EB%B8%94%EB%9E%99%ED%95%91%ED%81%AC_%EC%A7%80%EC%88%98_Jisoo.jpg',
-        '로제': 'https://upload.wikimedia.org/wikipedia/commons/e/e4/Roseanne_Park_at_Incheon_International_Airport_on_August_25%2C_2023.jpg',
-        '리사': 'https://upload.wikimedia.org/wikipedia/commons/a/a2/Lalisa_Manobal_at_Incheon_International_Airport_on_August_25%2C_2023.jpg',
-        '사나': 'https://upload.wikimedia.org/wikipedia/commons/2/29/Sana_Minatozaki_2022_%282%29.jpg',
-        '모모': 'https://upload.wikimedia.org/wikipedia/commons/0/08/TWICE_MOMO_April_2024.jpg',
-        '미나': 'https://upload.wikimedia.org/wikipedia/commons/e/e2/Mina_Myoui_at_Music_Bank_in_April_2018.jpg',
-        '정연': 'https://upload.wikimedia.org/wikipedia/commons/f/f6/Yoo_Jeong-yeon_at_Music_Bank_in_April_2018.jpg',
-        '지효': 'https://upload.wikimedia.org/wikipedia/commons/f/f8/Park_Ji-hyo_at_Music_Bank_in_April_2018.jpg',
-        '채영': 'https://upload.wikimedia.org/wikipedia/commons/1/13/Son_Chae-young_at_Music_Bank_in_April_2018.jpg',
-        '다현': 'https://upload.wikimedia.org/wikipedia/commons/0/03/Kim_Da-hyun_at_Music_Bank_in_April_2018.jpg',
-        '은채': 'https://upload.wikimedia.org/wikipedia/commons/1/1a/230107_Hong_Eunchae.jpg'
+        // TWICE
+        '나연': 'https://dbkpop.com/wp-content/uploads/2016/11/twice_nayeon_profile.jpg',
+        '사나': 'https://dbkpop.com/wp-content/uploads/2016/11/twice_sana_profile.jpg',
+        '쯔위': 'https://dbkpop.com/wp-content/uploads/2016/11/twice_tzuyu_profile_eyes_wide_open.jpg',
+        '다현': 'https://dbkpop.com/wp-content/uploads/2016/11/Twice_dahyun_profile_moremore.jpg',
+        '채영': 'https://dbkpop.com/wp-content/uploads/2016/11/Twice_Chaeyoung_profile_Eyes_wide_open.jpg',
+        '지효': 'https://dbkpop.com/wp-content/uploads/2016/11/twice_jihyo_profile-1.jpg',
+        '정연': 'https://dbkpop.com/wp-content/uploads/2016/11/twice_jeongyeon_profile.jpg',
+        '미나': 'https://dbkpop.com/wp-content/uploads/2016/11/twice_mina_profile.jpg',
+        '모모': 'https://dbkpop.com/wp-content/uploads/2016/11/twice_momo_profile.jpg',
+        // IVE
+        '장원영': 'https://dbkpop.com/wp-content/uploads/2023/10/ive_ive_mine_concept_wonyoung.jpg',
+        '안유진': 'https://dbkpop.com/wp-content/uploads/2023/10/ive_ive_mine_concept_yujin.jpg',
+        '가을': 'https://dbkpop.com/wp-content/uploads/2023/10/ive_ive_mine_concept_gaeul.jpg',
+        '레이': 'https://dbkpop.com/wp-content/uploads/2023/10/ive_ive_mine_concept_rei.jpg',
+        '리즈': 'https://dbkpop.com/wp-content/uploads/2023/10/ive_ive_mine_concept_liz.jpg',
+        '이서': 'https://dbkpop.com/wp-content/uploads/2023/10/ive_ive_mine_concept_leeseo.jpg',
+        // NewJeans
+        '민지': 'https://dbkpop.com/wp-content/uploads/2023/04/newjeans_omg_minji_1.jpg',
+        '하니': 'https://dbkpop.com/wp-content/uploads/2023/04/newjeans_omg_hanni_1.jpg',
+        '다니엘': 'https://dbkpop.com/wp-content/uploads/2023/04/newjeans_omg_danielle_1.jpg',
+        '해린': 'https://dbkpop.com/wp-content/uploads/2023/04/newjeans_omg_haerin_1.jpg',
+        '혜인': 'https://dbkpop.com/wp-content/uploads/2023/04/newjeans_omg_hyein_1.jpg',
+        // aespa
+        '카리나': 'https://dbkpop.com/wp-content/uploads/2022/06/aespa_girls_karina_teaser_1.jpg',
+        '윈터': 'https://dbkpop.com/wp-content/uploads/2022/06/aespa_girls_winter_teaser_2.jpg',
+        '지젤': 'https://dbkpop.com/wp-content/uploads/2022/06/aespa_girls_Giselle_Teaser_1.jpg',
+        '닝닝': 'https://dbkpop.com/wp-content/uploads/2022/06/aespa_girls_ningning_teaser_1.jpg',
+        // BLACKPINK
+        '지수': 'https://dbkpop.com/wp-content/uploads/2018/12/blackpink_Jisoo_profile_the_album.jpg',
+        '제니': 'https://dbkpop.com/wp-content/uploads/2018/12/blackpink_jennie_profile.jpg',
+        '로제': 'https://dbkpop.com/wp-content/uploads/2018/12/blackpink_Rose_profile_the_album.jpg',
+        '리사': 'https://dbkpop.com/wp-content/uploads/2018/12/blackpink_lisa_profile_the_album.jpg',
+        // Red Velvet
+        '아이린': 'https://dbkpop.com/wp-content/uploads/2017/10/Red_Velvet_Irene_Profile_Queendom.jpg',
+        '슬기': 'https://dbkpop.com/wp-content/uploads/2017/10/Red_Velvet_Seulgi_Profile_Queendom.jpg',
+        '웬디': 'https://dbkpop.com/wp-content/uploads/2017/10/Red_Velvet_Wendy_profile_Queendom.jpg',
+        '조이': 'https://dbkpop.com/wp-content/uploads/2017/10/Red_Velvet_Joy_profile_Queendom.jpg',
+        '예리': 'https://dbkpop.com/wp-content/uploads/2017/10/Red_Velvet_Yeri_profile_Queendom.jpg',
+        // LE SSERAFIM
+        '카즈하': 'https://dbkpop.com/wp-content/uploads/2023/04/le_sserafim_unforgiven_concept_dewy_sage_kazuha_1.jpg',
+        '김채원': 'https://dbkpop.com/wp-content/uploads/2023/04/le_sserafim_unforgiven_concept_dewy_sage_chaewon_1.jpg',
+        '허윤진': 'https://dbkpop.com/wp-content/uploads/2023/04/le_sserafim_unforgiven_concept_dewy_sage_yunjin_1.jpg',
+        '사쿠라': 'https://dbkpop.com/wp-content/uploads/2023/04/le_sserafim_unforgiven_concept_dewy_sage_sakura_1.jpg',
+        '홍은채': 'https://dbkpop.com/wp-content/uploads/2023/04/le_sserafim_unforgiven_concept_dewy_sage_eunchae_1.jpg',
+        // NMIXX
+        '설윤': 'https://dbkpop.com/wp-content/uploads/2022/02/nmixx_sullyoon_profile.jpg',
+        // ITZY
+        '예지': 'https://dbkpop.com/wp-content/uploads/2019/01/itzy_yeji_profile.jpg',
+        '리아': 'https://dbkpop.com/wp-content/uploads/2019/01/itzy_lia_profile.jpg',
+        '류진': 'https://dbkpop.com/wp-content/uploads/2019/01/itzy_ryujin_profile.jpg',
+        '채령': 'https://dbkpop.com/wp-content/uploads/2019/01/itzy_chaeryeong_profile.jpg',
+        '유나': 'https://dbkpop.com/wp-content/uploads/2019/01/itzy_yuna_profile.jpg',
+        // (G)I-DLE
+        '소연': 'https://dbkpop.com/wp-content/uploads/2018/04/gidle_soyeon_profile-2.jpg',
+        '미연': 'https://dbkpop.com/wp-content/uploads/2018/04/gidle_miyeon_profile-1.jpg',
+        '민니': 'https://dbkpop.com/wp-content/uploads/2018/04/gidle_minnie_profile-1.jpg',
+        '우기': 'https://dbkpop.com/wp-content/uploads/2018/04/gidle_yuqi_profile-1.jpg',
+        '슈화': 'https://dbkpop.com/wp-content/uploads/2018/04/gidle_shuhua_profile-1.jpg',
+        // STAYC
+        '수민': 'https://dbkpop.com/wp-content/uploads/2022/02/stayc_sumin_profile.jpg',
+        '시은': 'https://dbkpop.com/wp-content/uploads/2020/10/stayc_sieun_profile.jpg',
+        '아이사': 'https://dbkpop.com/wp-content/uploads/2022/02/stayc_Isa_profile.jpg',
+        '세은': 'https://dbkpop.com/wp-content/uploads/2022/02/stayc_seeun_profile.jpg',
+        '윤': 'https://dbkpop.com/wp-content/uploads/2022/02/Stayc_Yoon_profile.jpg',
+        '재이': 'https://dbkpop.com/wp-content/uploads/2022/02/stayc_J_profile.jpg'
     };
 
     let count = 0;
-    const proxy = 'https://images.weserv.nl/?url=';
-
     for (const item of items) {
+        // Normalize: "리사 (BLACKPINK)" -> "리사"
         const cleanName = item.name.split('(')[0].trim().toLowerCase();
 
-        const matchKey = Object.keys(idolMap).find(k => {
-            const lowKey = k.toLowerCase();
-            return cleanName.includes(lowKey) || lowKey.includes(cleanName);
-        });
+        // STRICT MATCHING to avoid "제니쯔" matching "제니"
+        const matchKey = Object.keys(idolMap).find(k => k.toLowerCase() === cleanName);
 
         if (matchKey) {
             const originalUrl = idolMap[matchKey];
-            // Use weserv to resize and center on face (a=top is good for portraits)
             const proxiedUrl = `https://images.weserv.nl/?url=${originalUrl.replace(/^https?:\/\//, '')}&w=1000&fit=cover&a=top`;
 
             await supabase.from('worldcup_items').update({ image_url: proxiedUrl }).eq('id', item.id);
