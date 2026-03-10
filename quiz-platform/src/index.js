@@ -44,7 +44,7 @@ export default {
             return handleQuizPlay(url, supabase);
         }
         if (path === '/api/worldcups' && method === 'GET') {
-            return handleWorldcups(supabase);
+            return handleWorldcups(url, supabase);
         }
         if (path === '/api/worldcup-play' && method === 'GET') {
             return handleWorldcupPlay(url, supabase);

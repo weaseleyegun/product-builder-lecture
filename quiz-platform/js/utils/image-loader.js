@@ -16,9 +16,10 @@ const ImageLoader = {
     load(imgEl, primaryUrl, name) {
         if (!imgEl) return;
 
-        // Reset element state
-        imgEl.style.opacity = '0.5'; // dimmed while loading
-        imgEl.style.transition = 'opacity 0.3s ease';
+        // Reset element state to prevent 'image shift' bug
+        imgEl.src = this.DEFAULT_PLACEHOLDER;
+        imgEl.style.opacity = '0.3';
+        imgEl.style.transition = 'opacity 0.2s ease';
 
         const handleSuccess = () => {
             imgEl.style.opacity = '1';

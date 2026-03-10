@@ -32,14 +32,7 @@
             <a href="tier-list.html">🏅 티어 리스트</a>
         </nav>
         <div class="actions">
-            <div class="theme-switch-wrapper">
-                <span class="theme-icon">☀️</span>
-                <label class="theme-switch" for="theme-toggle">
-                    <input type="checkbox" id="theme-toggle">
-                    <div class="slider"></div>
-                </label>
-                <span class="theme-icon">🌙</span>
-            </div>
+            
             <button class="btn-primary" onclick="location.href='login.html'">로그인</button>
         </div>
     </header>
@@ -62,10 +55,9 @@
             <div class="main-sections">
                 <!-- 통합 검색 바 (Global Search) -->
                 <div class="search-container" style="margin-bottom: 2.5rem; position: relative;">
-                    <input type="text" id="global-search" placeholder="J-POP, 애니, 빌보드 등 노래와 월드컵을 검색해보세요!"
+                    <input type="text" id="global-search" placeholder="맞추기, 인기 월드컵, 티어 리스트를 검색해보세요! (예: 싸이월드 감성 노래 맞추기)"
                         style="width: 100%; padding: 1.2rem 2rem; font-size: 1.1rem; border-radius: 50px; border: 2px solid var(--border-color); background: var(--card-bg); color: var(--text-color); box-shadow: var(--shadow); transition: border-color 0.2s; outline: none;">
-                    <span
-                        style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%); font-size: 1.5rem; pointer-events: none; opacity: 0.7;">🔍</span>
+                    <span style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none; display: flex; align-items: center; justify-content: center;"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></span>
                 </div>
 
                 <!-- Section 1: 오늘의 AI 퀴즈 -->
@@ -82,10 +74,8 @@
                             <span class="badge">HOT</span>
                         </div>
                         <div style="display: flex; gap: 1rem; align-items: center;">
-                            <button class="btn-primary"
-                                style="padding: 0.4rem 1rem; font-size: 0.9rem; border-radius: 8px; background-color: #5C7CFA; color: white; border: none;"
-                                onclick="location.href='quiz-create.html'">+ 퀴즈 만들기</button>
-                            <a href="quiz-list.html" class="view-all">전체보기 &rarr;</a>
+                            <button class="btn-create quiz" onclick="location.href='quiz-create.html'">+ 퀴즈 만들기</button>
+                            <a href="quiz-list.html" class="view-all">전체보기 <span class="arrow">&rarr;</span></a>
                         </div>
                     </div>
                     <div class="card-grid" id="daily-quiz-grid">
@@ -107,10 +97,9 @@
                                     <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
                                 </svg></span> 인기 월드컵</h2>
                         <div style="display: flex; gap: 1rem; align-items: center;">
-                            <button class="btn-primary"
-                                style="padding: 0.4rem 1rem; font-size: 0.9rem; border-radius: 8px; background-color: #F59F00; color: white; border: none;"
-                                onclick="location.href='worldcup-create.html'">+ 월드컵 만들기</button>
-                            <a href="worldcup-list.html" class="view-all">전체보기 &rarr;</a>
+                            <button class="btn-create worldcup" onclick="location.href='worldcup-create.html'">+ 월드컵
+                                만들기</button>
+                            <a href="worldcup-list.html" class="view-all">전체보기 <span class="arrow">&rarr;</span></a>
                         </div>
                     </div>
                     <div class="card-grid" id="worldcup-grid">
@@ -134,10 +123,9 @@
                                     <path d="M12 18v-2h-.5"></path>
                                 </svg></span> 티어 리스트</h2>
                         <div style="display: flex; gap: 1rem; align-items: center;">
-                            <button class="btn-primary"
-                                style="padding: 0.4rem 1rem; font-size: 0.9rem; border-radius: 8px; background-color: #AE3EC9; color: white; border: none;"
-                                onclick="location.href='worldcup-create.html'">+ 티어 리스트 만들기</button>
-                            <a href="tier-list.html" class="view-all">전체보기 &rarr;</a>
+                            <button class="btn-create tier" onclick="location.href='worldcup-create.html'">+ 티어 리스트
+                                만들기</button>
+                            <a href="tier-list.html" class="view-all">전체보기 <span class="arrow">&rarr;</span></a>
                         </div>
                     </div>
                     <div class="card-grid" id="tier-grid">
