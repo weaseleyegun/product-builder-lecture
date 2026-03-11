@@ -99,7 +99,10 @@
                 <p style="margin-top: 1.5rem; text-align: center; color: var(--text-muted); font-size: 0.95rem;">
                     구글 폼 작성이 어려우신 경우, 아래의 이메일 주소로 직접 문의 내용을 보내주셔도 좋습니다.<br>
                     <a href="mailto:admin@quiz-rank.com"
-                        style="color: var(--primary-color); text-decoration: none; font-weight: 600; display: inline-block; margin-top: 0.5rem;">admin@quiz-rank.com</a>
+                        onclick="navigator.clipboard.writeText('admin@quiz-rank.com'); alert('이메일 주소가 복사되었습니다: admin@quiz-rank.com\n\n직접 복사된 주소를 메일 앱이나 웹 메일에서 붙여넣기 하여 사용해 주세요.');"
+                        style="color: var(--primary-color); text-decoration: none; font-weight: 600; display: inline-block; margin-top: 0.5rem; padding: 0.4rem 0.8rem; border-radius: 8px; transition: background 0.2s;"
+                        onmouseover="this.style.background='rgba(76, 110, 245, 0.1)'"
+                        onmouseout="this.style.background='transparent'">admin@quiz-rank.com</a>
                 </p>
             </div>
         </div>
