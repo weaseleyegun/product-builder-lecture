@@ -1,4 +1,4 @@
-// quiz.js - Handle YouTube IFrame API and Quiz game logic
+﻿// quiz.js - Handle YouTube IFrame API and Quiz game logic
 
 // Read quiz ID from URL
 var urlParams = new URLSearchParams(window.location.search);
@@ -178,7 +178,7 @@ function loadQuestion(index) {
     if ('mediaSession' in navigator && !isImage) {
         navigator.mediaSession.metadata = new MediaMetadata({
             title: '❓ 노래 제목을 맞춰보세요!',
-            artist: 'QuizRank.io',
+            artist: 'Quiz-Rank.com',
             album: '힌트를 확인하려면 정답을 선택하세요',
             artwork: [{ src: 'https://quizrank.pages.dev/favicon.ico', sizes: '128x128', type: 'image/x-icon' }]
         });

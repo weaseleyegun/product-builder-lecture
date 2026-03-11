@@ -1,9 +1,9 @@
-// js/utils/seo.js - Dynamic meta tag management for SEO
+﻿// js/utils/seo.js - Dynamic meta tag management for SEO
 
 function updateSEOMeta(title, description, thumbnail) {
     if (!title) return;
 
-    const fullTitle = title + ' - QuizRank.io';
+    const fullTitle = title + ' - Quiz-Rank.com';
     const cleanDesc = description ? description.replace(/\[.*?\]/g, '').trim().substring(0, 160) : '재미있는 퀴즈와 이상형 월드컵을 QuizRank에서 즐겨보세요!';
 
     // 1. Update <title>
