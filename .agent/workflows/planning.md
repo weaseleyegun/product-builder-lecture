@@ -15,6 +15,9 @@ description: 간단한 아이디어를 안티그래비티 최적 프롬프트로
 
 ### 1단계: 프로젝트 컨텍스트 수집
 - `progress.md`를 읽어 프로젝트 구조, 기술 스택, 현재 상태를 파악합니다.
+  - 루트: `C:\Users\main\Desktop\Dev\products\progress.md`
+  - 퀴즈 플랫폼: `C:\Users\main\Desktop\Dev\products\quiz-platform\progress.md`
+- `.agent/rules.md`를 읽어 코딩 규칙과 폴더 구조 가이드를 확인합니다.
 - 관련된 기존 코드 파일들을 빠르게 스캔합니다.
 
 ### 2단계: 아이디어 분석 및 확장
