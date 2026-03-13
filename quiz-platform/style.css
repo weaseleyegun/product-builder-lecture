@@ -70,6 +70,20 @@ body {
     margin: 0 1rem;
     font-weight: 600;
     transition: color var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.nav-links a .nav-icon {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.6rem;
+}
+
+.nav-links a .nav-icon svg {
+    width: 1.2rem;
+    height: 1.2rem;
 }
 
 .nav-links a:hover {

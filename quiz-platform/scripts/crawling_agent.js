@@ -23,29 +23,42 @@ function makeOptions(correctAnswer, allAnswers) {
 async function main() {
     console.log(chalk.bold.cyan('\n🚀 데이터 크롤링 에이전트 시작 🚀\n'));
 
-    // 1. 사용자 입력 받기
-    const answers = await inquirer.prompt([
-        {
-            type: 'input',
-            name: 'topic',
-            message: chalk.yellow('1. 수집할 데이터의 주제(프롬프트)를 입력하세요:'),
-            default: '2000년대 싸이월드 BGM'
-        },
-        {
-            type: 'input',
-            name: 'example',
-            message: chalk.yellow('2. 원하는 데이터의 대표 예시를 한 개 입력하세요:'),
-            default: '에픽하이 - Love Love Love'
-        },
-        {
-            type: 'number',
-            name: 'targetCount',
-            message: chalk.yellow('3. 최소 수집할 데이터 개수를 입력하세요 (예: 100):'),
-            default: 10
-        }
-    ]);
+    // CLI 인자 처리
+    const args = process.argv.slice(2);
+    const autoConfirmPos = args.indexOf('--yes');
+    const autoConfirm = autoConfirmPos !== -1;
+    if (autoConfirm) args.splice(autoConfirmPos, 1);
 
-    const { topic, example, targetCount } = answers;
+    let topic = args[0];
+    let example = args[1];
+    let targetCount = parseInt(args[2], 10);
+
+    // 인자가 없으면 Inquirer 프롬프트 띄우기 (기존방식 유지)
+    if (!topic || !example || isNaN(targetCount)) {
+        const answers = await inquirer.prompt([
+            {
+                type: 'input',
+                name: 'topic',
+                message: chalk.yellow('1. 수집할 데이터의 주제(프롬프트)를 입력하세요:'),
+                default: '2000년대 싸이월드 BGM'
+            },
+            {
+                type: 'input',
+                name: 'example',
+                message: chalk.yellow('2. 원하는 데이터의 대표 예시를 한 개 입력하세요:'),
+                default: '에픽하이 - Love Love Love'
+            },
+            {
+                type: 'number',
+                name: 'targetCount',
+                message: chalk.yellow('3. 최소 수집할 데이터 개수를 입력하세요 (예: 100):'),
+                default: 10
+            }
+        ]);
+        topic = answers.topic;
+        example = answers.example;
+        targetCount = answers.targetCount;
+    }
 
     console.log(chalk.blue(`\n[1/5] OpenAI를 통해 '${topic}' 관련 데이터를 추론 및 수집합니다...`));
 
@@ -116,15 +129,21 @@ async function main() {
     console.log(chalk.blue(`\n[3/5] 데이터 기반 매력적인 퀴즈 제목을 추천받습니다...`));
     const suggestedTitles = await generateTitles(topic, validItems);
 
-    const titleAnswer = await inquirer.prompt([
-        {
-            type: 'list',
-            name: 'selectedTitle',
-            message: chalk.yellow('4. 사용할 퀴즈 제목을 선택하세요:'),
-            choices: suggestedTitles
-        }
-    ]);
-    const finalTitle = titleAnswer.selectedTitle;
+    let finalTitle = "";
+    if (autoConfirm && suggestedTitles.length > 0) {
+        finalTitle = suggestedTitles[0];
+        console.log(chalk.yellow(`\n(자동 모드) 첫 번째 제목 자동 선택: ${finalTitle}`));
+    } else {
+        const titleAnswer = await inquirer.prompt([
+            {
+                type: 'list',
+                name: 'selectedTitle',
+                message: chalk.yellow('4. 사용할 퀴즈 제목을 선택하세요:'),
+                choices: suggestedTitles
+            }
+        ]);
+        finalTitle = titleAnswer.selectedTitle;
+    }
 
     // 4. 리포트 생성 및 저장
     console.log(chalk.blue(`\n[4/5] 로컬에 output.json을 저장하고, 요약 리포트를 출력합니다...`));
@@ -151,16 +170,20 @@ async function main() {
     console.log('----------------------\n');
 
     // 5. DB Insert 여부 확인
-    const confirmAnswer = await inquirer.prompt([
-        {
-            type: 'confirm',
-            name: 'proceedToDb',
-            message: chalk.red.bold('5. 위 데이터를 실제 데이터베이스(Supabase)에 저장하시겠습니까?'),
-            default: false
-        }
-    ]);
+    let proceedToDb = autoConfirm;
+    if (!autoConfirm) {
+        const confirmAnswer = await inquirer.prompt([
+            {
+                type: 'confirm',
+                name: 'proceedToDb',
+                message: chalk.red.bold('5. 위 데이터를 실제 데이터베이스(Supabase)에 저장하시겠습니까?'),
+                default: false
+            }
+        ]);
+        proceedToDb = confirmAnswer.proceedToDb;
+    }
 
-    if (!confirmAnswer.proceedToDb) {
+    if (!proceedToDb) {
         console.log(chalk.yellow('\n사용자가 DB 저장을 취소했습니다. 로컬 파일(output.json)만 유지됩니다. 수고하셨습니다!'));
         process.exit(0);
     }
