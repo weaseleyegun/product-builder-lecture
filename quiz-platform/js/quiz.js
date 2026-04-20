@@ -236,7 +236,7 @@ function loadQuestion(index) {
         optionsContainer.style.display = 'block';
 
         var inputHtml = '<div style="display: flex; gap: 1rem; max-width: 500px; margin: 0 auto; flex-direction: column;">';
-        inputHtml += '<input type="text" id="subjective-input" placeholder="정답 (노래 제목)을 입력하세요" style="padding: 1rem; font-size: 1.2rem; border-radius: 12px; border: 2px solid var(--border-color); background: var(--card-bg); color: var(--text-color); outline: none;" onkeydown="if(event.key===\\\'Enter\\\') checkSubjectiveAnswer()">';
+        inputHtml += '<input type="text" id="subjective-input" placeholder="정식 발매명(한국어)으로 입력해 주세요" style="padding: 1rem; font-size: 1.2rem; border-radius: 12px; border: 2px solid var(--border-color); background: var(--card-bg); color: var(--text-color); outline: none;" onkeydown="if(event.key===\\\'Enter\\\') checkSubjectiveAnswer()">';
         inputHtml += '<button id="submit-subjective" class="btn-primary large" onclick="checkSubjectiveAnswer()">정답 제출</button>';
         inputHtml += '<p id="subjective-feedback" style="display: none; font-size: 1.2rem; font-weight: 800; margin-top: 1rem;"></p>';
         inputHtml += '</div>';
