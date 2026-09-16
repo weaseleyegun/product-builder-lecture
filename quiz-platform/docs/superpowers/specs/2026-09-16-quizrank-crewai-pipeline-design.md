@@ -84,7 +84,9 @@ scripts/crewai/
   └── crewai-agent.yml   # 매일 KST 04:00 실행, workflow_dispatch 지원
 ```
 
-GitHub Actions Secrets: `GEMINI_API_KEY`, `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`.
+GitHub Actions Secrets: `GEMINI_API_KEY`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `AGENT_EMAIL`, `AGENT_PASSWORD`.
+
+> **계획 수립 중 확인한 사항:** `quizrank_agent.js`의 `getSupabaseToken_()`을 보면 Service Key가 아니라 **anon key + 이메일/비밀번호 로그인**(`agent@quizrank.com`)으로 유저 토큰을 발급받아 `creator_id = user.id`로 insert한다 (RLS가 인증된 유저 기준으로 걸려있을 가능성이 높음). CrewAI 파이프라인도 새 Service Key를 발급받지 않고 이 기존 인증 패턴을 그대로 재사용한다.
 
 ### 기존 `scripts/` 정리 (범위 확정)
 
