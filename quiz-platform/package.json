@@ -18,6 +18,8 @@
   "scripts": {
     "test": "node --test \"test/*.test.js\"",
     "deploy:frontend": "node scripts/deploy_frontend.mjs",
-    "deploy:frontend:dry": "node scripts/deploy_frontend.mjs --dry"
+    "deploy:frontend:dry": "node scripts/deploy_frontend.mjs --dry",
+    "content:dry": "node scripts/submit_drafts.mjs --dry",
+    "content:submit": "node scripts/submit_drafts.mjs"
   }
 }

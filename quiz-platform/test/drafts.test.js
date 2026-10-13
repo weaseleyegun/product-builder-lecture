@@ -52,7 +52,7 @@ test('valid quiz draft → 201, stored as draft with snake_case question rows', 
     assert.strictEqual(p.status, 'draft'); assert.strictEqual(p.source, 'daily'); assert.strictEqual(p.creator_id, 'admin-id');
     const kids = db.inserts.find((i) => i.table === 'quiz_questions').payload;
     assert.strictEqual(kids.length, 6);
-    assert.deepStrictEqual(Object.keys(kids[0]).sort(), ['answer', 'end_time', 'is_embeddable', 'options', 'quiz_id', 'start_time', 'video_id']);
+    assert.deepStrictEqual(Object.keys(kids[0]).sort(), ['answer', 'end_time', 'explanation', 'is_embeddable', 'options', 'question_text', 'quiz_id', 'start_time', 'video_id']);
     assert.strictEqual(kids[0].quiz_id, QID); assert.strictEqual(kids[0].video_id, 'dQw4w9WgXcQ'); assert.strictEqual(kids[0].start_time, 5);
 });
 
@@ -224,4 +224,45 @@ test('draft list includes review samples: quiz clips and worldcup images', async
     assert.deepStrictEqual(quiz.samples[0], { answer: 'a', videoId: 'dQw4w9WgXcQ', startTime: 5 });
     assert.deepStrictEqual(wc.samples[0], { name: 'n1', image_url: 'https://i.ytimg.com/a.jpg' });
     assert.deepStrictEqual(quiz.preview, ['a', 'b']);
+});
+
+// ── 텍스트 문제 ───────────────────────────────────────
+const textQuiz = () => ({
+    title: '속담 빈칸 채우기 퀴즈 테스트', description: '속'.repeat(320),
+    questions: Array.from({ length: 6 }, (_, i) => ({
+        questionText: `빈칸에 들어갈 말은? (${i}번)`, explanation: '해설입니다. 속담의 뜻을 설명합니다.', answer: `정답${i}번`,
+        options: [`정답${i}번`, `오답가${i}`, `오답나${i}`, `오답다${i}`].map((t, k) => ({ id: 'ABCD'[k], text: t, isCorrect: k === 0 })),
+    })),
+});
+
+test('text quiz draft is stored with question_text/explanation, no video, embeddable', async () => {
+    const { res, db } = await run('POST', '/api/admin/drafts', { kind: 'quiz', draft: textQuiz() }, { db: { insertReturns: { quizzes: [{ id: QID }] } } });
+    assert.strictEqual(res.status, 201);
+    const kids = db.inserts.find((i) => i.table === 'quiz_questions').payload;
+    assert.strictEqual(kids.length, 6);
+    assert.strictEqual(kids[0].video_id, null);
+    assert.strictEqual(kids[0].question_text, '빈칸에 들어갈 말은? (0번)');
+    assert.strictEqual(kids[0].explanation, '해설입니다. 속담의 뜻을 설명합니다.');
+    assert.strictEqual(kids[0].start_time, 0); assert.strictEqual(kids[0].end_time, null);
+    assert.strictEqual(kids[0].is_embeddable, true);
+    assert.deepStrictEqual(Object.keys(kids[0]).sort(), ['answer', 'end_time', 'explanation', 'is_embeddable', 'options', 'question_text', 'quiz_id', 'start_time', 'video_id']);
+});
+
+test('media question still stores its clip and a null question_text', async () => {
+    const { db } = await run('POST', '/api/admin/drafts', { kind: 'quiz', draft: goodQuiz() }, { db: { insertReturns: { quizzes: [{ id: QID }] } } });
+    const kids = db.inserts.find((i) => i.table === 'quiz_questions').payload;
+    assert.strictEqual(kids[0].video_id, 'dQw4w9WgXcQ'); assert.strictEqual(kids[0].start_time, 5); assert.strictEqual(kids[0].end_time, 20);
+    assert.strictEqual(kids[0].question_text, null); assert.strictEqual(kids[0].explanation, null);
+});
+
+test('draft list samples include question text for text questions', async () => {
+    const rows = { quizzes: [{ id: QID, status: 'draft', title: 'Q', description: 'd', source: 'curated', created_at: 'x', quiz_questions: [{ answer: '오는', video_id: null, start_time: 0, question_text: '가는 말이 고와야 ( ) 말이 곱다' }] }] };
+    const { drafts } = await (await run('GET', '/api/admin/drafts', undefined, { db: { rows } })).res.json();
+    assert.deepStrictEqual(drafts[0].samples[0], { answer: '오는', videoId: null, startTime: 0, questionText: '가는 말이 고와야 ( ) 말이 곱다' });
+});
+
+test('quiz draft listing asks the DB for the new columns', async () => {
+    const { db } = await run('GET', '/api/admin/drafts', undefined, { db: { rows: {} } });
+    const sel = db.selects.find((x) => x.table === 'quizzes').columns;
+    assert(sel.includes('question_text'), sel);
 });

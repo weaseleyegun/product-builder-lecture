@@ -124,3 +124,14 @@ test('sitemap lists only published rows on the real domain', async () => {
     assert(!xml.includes('q-hid') && !xml.includes('w-hid'), 'hidden rows leaked into sitemap');
     assert(xml.includes('https://quiz-rank.com/') && !xml.includes('quizrank.pages.dev'));
 });
+
+test('quiz play selects question_text and explanation and passes them through', async () => {
+    const f = makeFake({ rows: {
+        quizzes: [{ id: QID, status: 'published', title: 't' }],
+        quiz_questions: [{ id: 'q1', quiz_id: QID, video_id: null, question_text: '빈칸은?', explanation: '해설', answer: 'a', options: [], is_embeddable: true }],
+    } });
+    const body = await (await handleQuizPlay(U(`/api/quiz-play?id=${QID}&limit=5`), f.client)).json();
+    const cols = f.selects.find((x) => x.table === 'quiz_questions').columns;
+    assert(cols.includes('question_text') && cols.includes('explanation'), cols);
+    assert.strictEqual(body.questions[0].question_text, '빈칸은?'); assert.strictEqual(body.questions[0].explanation, '해설');
+});

@@ -44,6 +44,8 @@ export const LIMITS = {
     clipSeconds: [3, 30],
     worldcupSizes: [8, 16, 32, 64],
     textMax: 60,            // 정답·보기·후보 이름 최대 길이
+    questionTextMax: 200,   // 텍스트 문제의 질문 문장 최대 길이
+    explanation: [10, 300], // 텍스트 문제 해설 길이(필수). 영상 문제는 선택이지만 상한은 같다
     urlMax: 500,            // 이미지 URL 최대 길이
     duplicateDescriptionSimilarity: 0.6,
 };

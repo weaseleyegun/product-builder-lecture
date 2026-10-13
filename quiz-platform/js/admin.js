@@ -42,6 +42,10 @@ document.addEventListener('DOMContentLoaded', function () {
         if (d.kind === 'quiz') {
             return samples.map(function (smp) {
                 const label = escHtml(smp.answer);
+                if (!smp.videoId && smp.questionText) {
+                    // 텍스트 문제: 질문과 정답을 그대로 보여 준다
+                    return '<div style="margin: 0.2rem 0;">❓ ' + escHtml(smp.questionText) + ' → <b>' + label + '</b></div>';
+                }
                 if (/^[\w-]{11}$/.test(String(smp.videoId || ''))) {
                     const t = parseInt(smp.startTime, 10) || 0;
                     return '<a href="https://www.youtube.com/watch?v=' + escHtml(smp.videoId) + '&t=' + t + 's" target="_blank" rel="noopener noreferrer" style="margin-right: 0.8rem;">▶ ' + label + '</a>';

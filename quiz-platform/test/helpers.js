@@ -12,13 +12,14 @@ export function makeFake({ rows = {}, rpc = {}, user, insertReturns = {}, insert
     const log = [];
     const updates = [];
     const inserts = [];
+    const selects = [];
     const authUser = user === undefined ? { id: 'admin-id', email: 'agent@quizrank.com' } : user;
 
     function builder(table) {
         const ops = [];
         let mode = 'select';
         const q = {
-            select(c) { ops.push(['select', c]); log.push(`${table}.select`); return q; },
+            select(c) { ops.push(['select', c]); selects.push({ table, columns: c }); log.push(`${table}.select`); return q; },
             eq(c, v) { ops.push(['eq', c, v]); log.push(`${table}.eq:${c}=${v}`); return q; },
             neq(c, v) { ops.push(['neq', c, v]); log.push(`${table}.neq:${c}=${v}`); return q; },
             order(c) { log.push(`${table}.order:${c}`); return q; },
@@ -58,7 +59,7 @@ export function makeFake({ rows = {}, rpc = {}, user, insertReturns = {}, insert
             return { maybeSingle: () => Promise.resolve({ data: out, error: null }), then: (res, rej) => Promise.resolve({ data: out, error: null }).then(res, rej) };
         },
     };
-    return { log, updates, inserts, client };
+    return { log, updates, inserts, selects, client };
 }
 
 export const req = (method, body) => new Request('https://api.test/x', { method, headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined });

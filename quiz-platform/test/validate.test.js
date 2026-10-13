@@ -216,3 +216,67 @@ test('non-Korean names (Japanese/Chinese/Cyrillic) are valid worldcup items and 
     assert.notStrictEqual(normalize('鬼滅の刃'), '');
     assert.strictEqual(normalize('한글'.normalize('NFD')), normalize('한글'));
 });
+
+// ── 텍스트 문제 (영상/이미지 없이 질문 문장 + 해설) ─────────────────────
+const textQ = (i, extra = {}) => ({
+    questionText: `다음 속담의 빈칸에 들어갈 말은? (${i}번)`, explanation: '이 속담은 말을 곱게 해야 상대도 곱게 대한다는 뜻입니다.',
+    answer: `정답${i}번`,
+    options: [`정답${i}번`, `오답가${i}`, `오답나${i}`, `오답다${i}`].map((t, k) => ({ id: 'ABCD'[k], text: t, isCorrect: k === 0 })), ...extra,
+});
+const goodTextQuiz = () => ({ title: '속담 빈칸 채우기 퀴즈 테스트', description: long, questions: Array.from({ length: 6 }, (_, i) => textQ(i)) });
+
+test('text questions need no video or clip times', () => assert.deepStrictEqual(errs(goodTextQuiz()), []));
+
+test('text and media questions may be mixed in one quiz', () => {
+    const d = goodTextQuiz(); d.questions[0] = q('가수0', ['가수0', '다른A0', '다른B0', '다른C0']);
+    assert.deepStrictEqual(errs(d), []);
+});
+
+test('a question with neither media nor question text is rejected', () => {
+    const d = goodTextQuiz(); delete d.questions[0].questionText;
+    assert(errs(d).some((e) => e.includes('video_id') || e.includes('question_text')));
+    const d2 = goodTextQuiz(); d2.questions[1].questionText = '   ';
+    assert(errs(d2).some((e) => e.includes('question_text') || e.includes('video_id')));
+});
+
+test('text questions require an explanation of 10~300 chars (that is the original value-add)', () => {
+    for (const bad of [undefined, '', '짧음', 'x'.repeat(301), 123, ['해설입니다 해설입니다']]) {
+        const d = goodTextQuiz(); if (bad === undefined) delete d.questions[0].explanation; else d.questions[0].explanation = bad;
+        assert(errs(d).some((e) => e.includes('explanation')), JSON.stringify(bad));
+    }
+});
+
+test('question text is capped at 200 chars, must be a string, and may not contain blocked words', () => {
+    const d = goodTextQuiz(); d.questions[0].questionText = '가'.repeat(201);
+    assert(errs(d).some((e) => e.includes('question_text')));
+    const d2 = goodTextQuiz(); d2.questions[0].questionText = ['x'];
+    assert(errs(d2).some((e) => e.includes('question_text')));
+    const d3 = goodTextQuiz(); d3.questions[0].questionText = '대통령 탄핵에 대한 문제입니다';
+    assert(errs(d3).some((e) => e.includes('blocked')));
+});
+
+test('a question with a video keeps the full media rules even if it also has question text', () => {
+    const d = goodTextQuiz(); d.questions[0].videoId = 'bad';
+    assert(errs(d).some((e) => e.includes('video_id')));
+    const d2 = goodTextQuiz(); d2.questions[0].videoId = 'dQw4w9WgXcQ';   // 영상이 있는데 시간 값이 없음
+    assert(errs(d2).some((e) => e.includes('clip')));
+});
+
+test('explanation on a media question is optional but capped', () => {
+    const d = goodQuiz(); d.questions[0].explanation = 'x'.repeat(301);
+    assert(errs(d).some((e) => e.includes('explanation')));
+    const ok = goodQuiz(); ok.questions[0].explanation = '이 곡은 아티스트의 대표곡입니다.';
+    assert.deepStrictEqual(errs(ok), []);
+});
+
+test('generic words ARE valid answers for text questions (the question sentence makes them answerable) but 1-char answers are not', () => {
+    for (const ok of ['사랑', '바다', '재미', '축구']) {
+        const d = goodTextQuiz(); d.questions[0] = textQ(0, { answer: ok, options: [ok, '가나다라', '마바사아', '자차카타'].map((t, k) => ({ id: 'ABCD'[k], text: t, isCorrect: k === 0 })) });
+        assert.deepStrictEqual(errs(d), [], ok);
+    }
+    const d = goodTextQuiz(); d.questions[0] = textQ(0, { answer: '강', options: ['강', '가나다라', '마바사아', '자차카타'].map((t, k) => ({ id: 'ABCD'[k], text: t, isCorrect: k === 0 })) });
+    assert(errs(d).some((e) => e.includes('generic_answer')), '1글자는 여전히 거절');
+    // 영상 문제에서는 여전히 일반 단어를 거절
+    const m = goodQuiz(); m.questions[0] = q('사랑', ['사랑', '가나다라', '마바사아', '자차카타']);
+    assert(errs(m).some((e) => e.includes('generic_answer')));
+});

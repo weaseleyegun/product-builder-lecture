@@ -58,12 +58,17 @@ export function validateQuizDraft(d, ctx = {}) {
         const tag = `Q${i + 1}`;
         if (!q || typeof q !== 'object') { errors.push(`${tag} 형식 오류`); return; }
 
+        // 유형: 영상/이미지가 있으면 미디어 문제, 없고 질문 문장이 있으면 텍스트 문제
+        const hasMedia = q.videoId !== undefined && q.videoId !== null && q.videoId !== '';
+        const hasQuestionText = isStr(q.questionText) && q.questionText.trim().length > 0;
+        const isTextQuestion = !hasMedia && hasQuestionText;
+
         // 정답
         if (!isStr(q.answer)) { errors.push(`${tag} answer: 문자열이어야 함`); }
         else {
             const an = normalizeText(q.answer);
             if (q.answer.length > LIMITS.textMax) errors.push(`${tag} length: 정답 ${LIMITS.textMax}자 초과`);
-            if (an.length < 2 || GENERIC_WORDS.has(an)) errors.push(`${tag} generic_answer: 맞출 수 없는 일반 단어`);
+            if (an.length < 2 || (!isTextQuestion && GENERIC_WORDS.has(an))) errors.push(`${tag} generic_answer: 맞출 수 없는 일반 단어(또는 2자 미만)`);
             if (isBlocked(q.answer)) errors.push(`${tag} blocked: 정답에 제외어 포함`);
         }
 
@@ -92,10 +97,30 @@ export function validateQuizDraft(d, ctx = {}) {
             }
         }
 
+        // 질문 문장 / 해설
+        if (q.questionText !== undefined && q.questionText !== null) {
+            if (!isStr(q.questionText)) errors.push(`${tag} question_text: 문자열이어야 함`);
+            else {
+                if (q.questionText.length > LIMITS.questionTextMax) errors.push(`${tag} question_text: ${LIMITS.questionTextMax}자 초과`);
+                if (isBlocked(q.questionText)) errors.push(`${tag} blocked: 질문에 제외어 포함`);
+            }
+        }
+        if (q.explanation !== undefined && q.explanation !== null && !isStr(q.explanation)) {
+            errors.push(`${tag} explanation: 문자열이어야 함`);
+        } else if (isTextQuestion) {
+            // 텍스트 문제에서는 해설이 곧 오리지널 콘텐츠이므로 필수
+            const ex = isStr(q.explanation) ? q.explanation.trim() : '';
+            if (!between(ex.length, LIMITS.explanation)) errors.push(`${tag} explanation: 텍스트 문제는 해설 ${LIMITS.explanation[0]}~${LIMITS.explanation[1]}자 필수`);
+        } else if (isStr(q.explanation) && q.explanation.length > LIMITS.explanation[1]) {
+            errors.push(`${tag} explanation: ${LIMITS.explanation[1]}자 초과`);
+        }
+
+        if (isTextQuestion) return;   // 영상/이미지·클립 검사는 미디어 문제에만 적용
+
         // 미디어: YouTube 영상 ID(11자) 또는 허용 호스트의 https 이미지
         const vid = q.videoId;
         const youtube = isStr(vid) && /^[\w-]{11}$/.test(vid);
-        if (!youtube && !allowedHttpsUrl(vid)) errors.push(`${tag} video_id 형식 오류 또는 허용되지 않는 이미지 호스트`);
+        if (!youtube && !allowedHttpsUrl(vid)) errors.push(`${tag} video_id: 영상/이미지(또는 질문 문장)가 필요하고, 형식·호스트가 맞아야 함`);
 
         // 클립 구간: 0 이상의 정수 초, 길이 3~30초
         const st = q.startTime, et = q.endTime;

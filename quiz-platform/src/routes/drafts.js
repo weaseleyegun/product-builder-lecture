@@ -17,8 +17,8 @@ import { LIMITS } from '../quality/constants.js';
 const KINDS = {
     quiz: {
         table: 'quizzes', child: 'quiz_questions', validate: validateQuizDraft, previewKey: 'answer',
-        childSelect: 'answer, video_id, start_time',
-        samples: (kids) => kids.slice(0, 3).map((k) => ({ answer: k.answer, videoId: k.video_id, startTime: k.start_time })),
+        childSelect: 'answer, video_id, start_time, question_text',
+        samples: (kids) => kids.slice(0, 3).map((k) => ({ answer: k.answer, videoId: k.video_id, startTime: k.start_time, questionText: k.question_text })),
         enough: (n) => n >= LIMITS.questions[0],
     },
     worldcup: {
@@ -98,10 +98,20 @@ async function createDraft(request, db, user) {
     const id = parent.data[0].id;
 
     const children = kindName === 'quiz'
-        ? d.questions.map((q) => ({
-            quiz_id: id, video_id: q.videoId, start_time: q.startTime, end_time: q.endTime,
-            answer: q.answer, options: sanitizeOptions(q.options), is_embeddable: true,
-        }))
+        ? d.questions.map((q) => {
+            const media = q.videoId !== undefined && q.videoId !== null && q.videoId !== '';
+            return {
+                quiz_id: id,
+                video_id: media ? q.videoId : null,
+                start_time: media ? q.startTime : 0,
+                end_time: media ? q.endTime : null,
+                answer: q.answer,
+                options: sanitizeOptions(q.options),
+                question_text: typeof q.questionText === 'string' && q.questionText.trim() ? q.questionText.trim() : null,
+                explanation: typeof q.explanation === 'string' && q.explanation.trim() ? q.explanation.trim() : null,
+                is_embeddable: true,
+            };
+        })
         : d.items.map((it) => ({ worldcup_id: id, name: it.name, image_url: it.image_url }));
 
     const kids = await db.from(kind.child).insert(children);

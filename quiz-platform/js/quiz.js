@@ -70,7 +70,7 @@ async function fetchQuizData() {
             }
 
             // 올바르지 않은 보기인 경우 현재 퀴즈의 다른 풀에서 정답 포함 동적 보기 생성
-            if (isBadOption && q.answer && allAnswers.length > 3) {
+            if (isBadOption && q.video_id && q.answer && allAnswers.length > 3) {
                 var correctAnswer = extractTitle(q.answer);
                 var wrongs = allAnswers.filter(function (a) { return a !== correctAnswer; })
                     .sort(function () { return Math.random() - 0.5; })
@@ -89,13 +89,22 @@ async function fetchQuizData() {
                 id: q.id,
                 quizId: quizId,
                 title: quizTitle + ' (' + (index + 1) + '번 문제)',
-                videoId: q.video_id,
+                videoId: q.video_id || null,
+                questionText: q.question_text || null,
+                explanation: q.explanation || null,
+                isText: !q.video_id && !!q.question_text,
                 startSeconds: q.start_time,
                 endSeconds: q.end_time || (q.start_time + 5),
                 options: options
             };
         });
         console.log('✅ API에서 퀴즈 데이터 로드 성공:', allQuizQuestions.length, '문제');
+
+        // 영상/이미지 문제가 하나도 없는 퀴즈(텍스트 퀴즈)는 '노래 맞추기' 제목을 쓰지 않는다
+        var roundHeading = document.getElementById('round-heading');
+        if (roundHeading && allQuizQuestions.length > 0 && allQuizQuestions.every(function (q) { return q.isText; })) {
+            roundHeading.innerText = '📝 퀴즈';
+        }
 
         // Update round selection screen
         document.getElementById('round-quiz-title').innerText = quizTitle + ' (' + allQuizQuestions.length + '문제 보유)';
@@ -172,11 +181,19 @@ function loadQuestion(index) {
     document.getElementById('question-title').innerText = question.title;
     document.getElementById('next-btn').style.display = 'none';
 
-    var isImage = question.videoId.startsWith('http');
-    document.getElementById('question-title').innerText = isImage ? '사진을 보고 누군지 맞혀보세요!' : '노래의 이 부분을 듣고 제목을 맞혀보세요!';
+    // 문제 유형: 영상(YouTube) / 이미지(http…) / 텍스트(영상 없이 질문 문장 + 해설)
+    var isText = !question.videoId;
+    var isImage = !isText && question.videoId.startsWith('http');
+    var oldExplanation = document.getElementById('answer-explanation');
+    if (oldExplanation) oldExplanation.remove();
+    var ytBox = document.querySelector('.yt-placeholder');
+    if (ytBox) ytBox.style.display = isText ? 'none' : '';
+    document.getElementById('question-title').innerText = isText
+        ? question.questionText
+        : (isImage ? '사진을 보고 누군지 맞혀보세요!' : '노래의 이 부분을 듣고 제목을 맞혀보세요!');;
 
     // SECURITY: Hide song title from Chrome Media Hub / Lock screen to prevent spoilers
-    if ('mediaSession' in navigator && !isImage) {
+    if ('mediaSession' in navigator && !isImage && !isText) {
         navigator.mediaSession.metadata = new MediaMetadata({
             title: '❓ 노래 제목을 맞춰보세요!',
             artist: 'Quiz-Rank.com',
@@ -198,7 +215,11 @@ function loadQuestion(index) {
             playerDiv.parentNode.insertBefore(imagePlayer, playerDiv.nextSibling);
         }
 
-        if (isImage) {
+        if (isText) {
+            playerDiv.style.display = 'none';
+            imagePlayer.style.display = 'none';
+            if (mediaControls) mediaControls.style.display = 'none';
+        } else if (isImage) {
             playerDiv.style.display = 'none';
             imagePlayer.style.display = 'block';
             imagePlayer.src = question.videoId;
@@ -228,7 +249,7 @@ function loadQuestion(index) {
         question.options.forEach(function (opt) {
             var btn = document.createElement('button');
             btn.className = 'btn-option';
-            btn.innerText = extractTitle(opt.text);
+            btn.innerText = isText ? opt.text : extractTitle(opt.text);
             btn.onclick = function () { handleAnswer(btn, opt.isCorrect); };
             optionsContainer.appendChild(btn);
         });
@@ -244,8 +265,11 @@ function loadQuestion(index) {
         optionsContainer.innerHTML = inputHtml;
     }
 
-    // Load or cue YouTube video
-    if (!player) {
+    // Load or cue YouTube video (텍스트 문제는 재생할 미디어가 없다)
+    if (isText) {
+        if (player && typeof player.stopVideo === 'function') player.stopVideo();
+        clearTimeout(playTimer);
+    } else if (!player) {
         player = new YT.Player('player', {
             height: '360',
             width: '640',
@@ -324,20 +348,21 @@ function showAnswerResult(isCorrect) {
 
     // Reveal video or image after answering
     var currentQuestion = activeQuizData[currentQuestionIndex];
-    var isImage = currentQuestion.videoId.startsWith('http');
+    var isText = !currentQuestion.videoId;
+    var isImage = !isText && currentQuestion.videoId.startsWith('http');
     var playerDiv = document.getElementById('player');
     var imagePlayer = document.getElementById('image-player');
 
     if (isImage && imagePlayer) {
         imagePlayer.style.filter = 'none';
-    } else if (playerDiv) {
+    } else if (playerDiv && !isText) {
         playerDiv.style.opacity = '1';
         playerDiv.style.filter = 'none';
         playerDiv.style.pointerEvents = 'auto';
     }
 
     // Reveal actual metadata to Media Session after answering
-    if ('mediaSession' in navigator && !isImage) {
+    if ('mediaSession' in navigator && !isImage && !isText) {
         navigator.mediaSession.metadata = new MediaMetadata({
             title: extractTitle(currentQuestion.answer),
             artist: '정답 확인 완료',
@@ -348,7 +373,7 @@ function showAnswerResult(isCorrect) {
     // Add direct YouTube link below video (only if not image)
     var ytPlaceholder = document.querySelector('.yt-placeholder');
     var existingLink = document.querySelector('.youtube-link-reveal');
-    if (!isImage && !existingLink && ytPlaceholder) {
+    if (!isImage && !isText && !existingLink && ytPlaceholder) {
         var linkDiv = document.createElement('div');
         linkDiv.className = 'youtube-link-reveal';
         linkDiv.innerHTML = '<a href="https://www.youtube.com/watch?v=' + currentQuestion.videoId + '&t=' + currentQuestion.startSeconds + 's" target="_blank" style="color: var(--primary-color); font-weight: bold; text-decoration: underline; margin-top: 0.5rem; font-size: 0.9rem; display: block;">🔗 유튜브 원본 영상 보러가기</a>';
@@ -357,6 +382,17 @@ function showAnswerResult(isCorrect) {
 
     // Show next question button
     var nextBtn = document.getElementById('next-btn');
+
+    // 해설: 정답을 고른 뒤에 보여 준다 (textContent 사용 — 서버 데이터를 HTML로 넣지 않는다)
+    var prevExplanation = document.getElementById('answer-explanation');
+    if (prevExplanation) prevExplanation.remove();
+    if (currentQuestion.explanation && nextBtn && nextBtn.parentNode) {
+        var explanationBox = document.createElement('div');
+        explanationBox.id = 'answer-explanation';
+        explanationBox.style.cssText = 'margin: 1.2rem auto 0; max-width: 640px; padding: 1rem 1.2rem; border-left: 4px solid var(--accent, #7950F2); background: rgba(255,255,255,0.06); border-radius: 8px; text-align: left; line-height: 1.7; font-size: 1rem;';
+        explanationBox.textContent = '💡 ' + currentQuestion.explanation;
+        nextBtn.parentNode.insertBefore(explanationBox, nextBtn);
+    }
 
     if (typeof isMultiplayerActive === 'function' && isMultiplayerActive() && typeof isHost !== 'undefined' && !isHost) {
         nextBtn.style.display = 'none';
@@ -451,7 +487,7 @@ window.checkSubjectiveAnswer = function () {
 
     var question = activeQuizData[currentQuestionIndex];
     var correctOption = question.options.find(function (o) { return o.isCorrect; });
-    var correctTitle = extractTitle(correctOption.text);
+    var correctTitle = question.isText ? correctOption.text : extractTitle(correctOption.text);
 
     var normalizedUser = normalizeTitle(userAnswer);
     var normalizedCorrect = normalizeTitle(correctTitle);

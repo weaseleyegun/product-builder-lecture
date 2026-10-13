@@ -64,7 +64,7 @@ async function handleQuizPlay(url, supabase) {
     // Fetch only embeddable questions for this quiz
     const { data: questions, error: questionsError } = await supabase
         .from('quiz_questions')
-        .select('id, video_id, start_time, end_time, answer, options')
+        .select('id, video_id, start_time, end_time, answer, options, question_text, explanation')
         .eq('quiz_id', actualId)
         .neq('is_embeddable', false);
 
