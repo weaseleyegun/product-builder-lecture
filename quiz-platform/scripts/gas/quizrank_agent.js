@@ -1421,6 +1421,9 @@ function sbPatch_(table, query, payload, token) {
 }
 
 var LINK_CHECK_MAX_MS = 270000;   // GAS 실행 제한(6분)에 걸리기 전에 스스로 멈춘다
+// 같은 요청에 넣는 대조 영상(항상 존재하는 영상). 대조 영상은 오는데 나머지가 안 오면 '정말 삭제됨',
+// 대조 영상조차 안 오면 YouTube API 이상으로 보고 그 퀴즈는 건너뛴다.
+var LINK_CHECK_CONTROL_ID = 'dQw4w9WgXcQ';
 
 function checkPublishedVideos(dryRun) {
     var t0 = new Date().getTime();
@@ -1438,11 +1441,13 @@ function checkPublishedVideos(dryRun) {
 
         // 재생 가능 = 공개 또는 일부 공개(unlisted)이면서 임베드 허용. (일부 공개 영상도 임베드는 된다)
         var okIds = {}, apiSuspect = false;
-        for (var i = 0; i < ytQs.length; i += 50) {
-            var ids = ytQs.slice(i, i + 50).map(function (q) { return q.video_id; });
+        for (var i = 0; i < ytQs.length; i += 49) {
+            var ids = ytQs.slice(i, i + 49).map(function (q) { return q.video_id; });
+            ids.push(LINK_CHECK_CONTROL_ID);
             var resp = YouTube.Videos.list('status', { id: ids.join(','), maxResults: 50 });
             var items = resp.items || [];
-            if (items.length === 0) apiSuspect = true;   // 50개를 물었는데 하나도 안 오면 영상이 전부 사라진 게 아니라 API 이상일 가능성이 높다
+            var controlSeen = items.some(function (it) { return it.id === LINK_CHECK_CONTROL_ID; });
+            if (!controlSeen) apiSuspect = true;   // 항상 있어야 하는 대조 영상이 없으면 영상 삭제가 아니라 API 이상
             items.forEach(function (it) {
                 var st = it.status || {};
                 if ((st.privacyStatus === 'public' || st.privacyStatus === 'unlisted') && st.embeddable === true) okIds[it.id] = true;
@@ -1450,7 +1455,7 @@ function checkPublishedVideos(dryRun) {
         }
         if (apiSuspect) {
             summary.skipped++;
-            Logger.log('⚠️ "' + quiz.title + '": YouTube 응답이 비어 있어 점검을 건너뜀(변경 없음)');
+            Logger.log('⚠️ "' + quiz.title + '": 대조 영상이 조회되지 않아(YouTube API 이상 의심) 점검을 건너뜀(변경 없음)');
             continue;
         }
         summary.checked += ytQs.length;
