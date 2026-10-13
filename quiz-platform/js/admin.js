@@ -36,6 +36,27 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // 검수자가 실제로 승인하는 대상을 볼 수 있게 한다: 퀴즈는 YouTube 클립 링크, 월드컵은 후보 이미지(모두 이스케이프)
+    function renderSamples(d) {
+        const samples = Array.isArray(d.samples) ? d.samples : [];
+        if (d.kind === 'quiz') {
+            return samples.map(function (smp) {
+                const label = escHtml(smp.answer);
+                if (/^[\w-]{11}$/.test(String(smp.videoId || ''))) {
+                    const t = parseInt(smp.startTime, 10) || 0;
+                    return '<a href="https://www.youtube.com/watch?v=' + escHtml(smp.videoId) + '&t=' + t + 's" target="_blank" rel="noopener noreferrer" style="margin-right: 0.8rem;">▶ ' + label + '</a>';
+                }
+                if (String(smp.videoId || '').indexOf('https://') === 0) {
+                    return '<a href="' + escHtml(smp.videoId) + '" target="_blank" rel="noopener noreferrer" style="margin-right: 0.8rem;">🖼 ' + label + '</a>';
+                }
+                return '<span style="margin-right: 0.8rem;">' + label + '</span>';
+            }).join('');
+        }
+        return samples.filter(function (smp) { return String(smp.image_url || '').indexOf('https://') === 0; }).map(function (smp) {
+            return '<img src="' + escHtml(smp.image_url) + '" title="' + escHtml(smp.name) + '" alt="' + escHtml(smp.name) + '" loading="lazy" referrerpolicy="no-referrer" style="width: 56px; height: 56px; object-fit: cover; border-radius: 8px; margin: 2px;">';
+        }).join('');
+    }
+
     async function initDrafts() {
         const section = document.getElementById('draft-section');
         const listEl = document.getElementById('draft-list');
@@ -60,7 +81,8 @@ document.addEventListener('DOMContentLoaded', function () {
                         '<div style="font-size: 0.8rem; color: var(--text-muted);">' + escHtml(kindLabel) + ' · ' + escHtml(d.source) + ' · ' + escHtml((d.created_at || '').slice(0, 16).replace('T', ' ')) + '</div>' +
                         '<div style="font-weight: 700; margin: 0.3rem 0;">' + escHtml(d.title) + '</div>' +
                         '<div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">' + escHtml((d.description || '').slice(0, 300)) + '</div>' +
-                        '<div style="font-size: 0.85rem; margin-bottom: 0.8rem;"><b>' + (d.kind === 'quiz' ? '정답 미리보기' : '후보 미리보기') + ':</b> ' + preview + '</div>' +
+                        '<div style="font-size: 0.85rem; margin-bottom: 0.5rem;"><b>' + (d.kind === 'quiz' ? '정답 미리보기' : '후보 미리보기') + ':</b> ' + preview + '</div>' +
+                        '<div style="font-size: 0.85rem; margin-bottom: 0.8rem;">' + renderSamples(d) + '</div>' +
                         '<button class="btn-primary" data-act="publish" data-kind="' + escHtml(d.kind) + '" data-id="' + escHtml(d.id) + '" style="margin-right: 0.5rem;">공개</button>' +
                         '<button class="btn-secondary" data-act="reject" data-kind="' + escHtml(d.kind) + '" data-id="' + escHtml(d.id) + '">반려</button>' +
                         '</div>';

@@ -1410,52 +1410,70 @@ function insertWorldcupToDB_(data, token, userId) {
 // 문제 단위로 is_embeddable=false 처리(플레이 API가 이미 제외함)하고, 남은 문제가 QUIZ_MIN_QUESTIONS 미만이면 퀴즈를 숨긴다.
 // 쿼터: Videos.list 50개당 1 unit. 주 1회 실행 권장(setupWeeklyLinkCheckTrigger).
 function sbPatch_(table, query, payload, token) {
-    var resp = UrlFetchApp.fetch(SUPABASE_URL + '/rest/v1/' + table + '?' + query, {
+    // 변경된 행 수를 확인할 수 있게 representation으로 받는다(select=id로 큰 컬럼은 받지 않음).
+    var resp = UrlFetchApp.fetch(SUPABASE_URL + '/rest/v1/' + table + '?' + query + '&select=id', {
         method: 'patch', contentType: 'application/json',
-        headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + token, 'Prefer': 'return=minimal' },
+        headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + token, 'Prefer': 'return=representation' },
         payload: JSON.stringify(payload), muteHttpExceptions: true
     });
     if (resp.getResponseCode() >= 300) throw new Error('PATCH 실패(' + table + '): ' + resp.getContentText().substring(0, 200));
+    try { return JSON.parse(resp.getContentText()).length; } catch (e) { return -1; }
 }
 
-function checkPublishedVideos(dryRun) {
-    var token = getSupabaseToken_().token;
-    var quizzes = sbSelect_('quizzes', 'select=id,title&status=eq.published', token);
-    var summary = { quizzes: quizzes.length, checked: 0, brokenQuestions: 0, hiddenQuizzes: 0 };
+var LINK_CHECK_MAX_MS = 270000;   // GAS 실행 제한(6분)에 걸리기 전에 스스로 멈춘다
 
-    quizzes.forEach(function (quiz) {
+function checkPublishedVideos(dryRun) {
+    var t0 = new Date().getTime();
+    var token = getSupabaseToken_().token;
+    var quizzes = sbSelect_('quizzes', 'select=id,title&status=eq.published&order=created_at.asc&limit=500', token);
+    var summary = { quizzes: quizzes.length, checked: 0, brokenQuestions: 0, hiddenQuizzes: 0, skipped: 0, truncated: false };
+
+    for (var qi = 0; qi < quizzes.length; qi++) {
+        var quiz = quizzes[qi];
+        if (new Date().getTime() - t0 > LINK_CHECK_MAX_MS) { summary.truncated = true; Logger.log('⏱ 실행 시간 상한 도달 — 나머지 퀴즈는 다음 실행에서 점검'); break; }
+
         var qs = sbSelect_('quiz_questions', 'select=id,video_id&quiz_id=eq.' + quiz.id + '&is_embeddable=neq.false', token);
         var ytQs = qs.filter(function (q) { return /^[\w-]{11}$/.test(q.video_id || ''); });   // 이미지(https) 문제는 제외
-        if (ytQs.length === 0) return;
+        if (ytQs.length === 0) continue;
 
-        var okIds = {};
+        // 재생 가능 = 공개 또는 일부 공개(unlisted)이면서 임베드 허용. (일부 공개 영상도 임베드는 된다)
+        var okIds = {}, apiSuspect = false;
         for (var i = 0; i < ytQs.length; i += 50) {
             var ids = ytQs.slice(i, i + 50).map(function (q) { return q.video_id; });
             var resp = YouTube.Videos.list('status', { id: ids.join(','), maxResults: 50 });
-            (resp.items || []).forEach(function (it) {
-                if (it.status && it.status.privacyStatus === 'public' && it.status.embeddable === true) okIds[it.id] = true;
+            var items = resp.items || [];
+            if (items.length === 0) apiSuspect = true;   // 50개를 물었는데 하나도 안 오면 영상이 전부 사라진 게 아니라 API 이상일 가능성이 높다
+            items.forEach(function (it) {
+                var st = it.status || {};
+                if ((st.privacyStatus === 'public' || st.privacyStatus === 'unlisted') && st.embeddable === true) okIds[it.id] = true;
             });
+        }
+        if (apiSuspect) {
+            summary.skipped++;
+            Logger.log('⚠️ "' + quiz.title + '": YouTube 응답이 비어 있어 점검을 건너뜀(변경 없음)');
+            continue;
         }
         summary.checked += ytQs.length;
 
         var broken = ytQs.filter(function (q) { return !okIds[q.video_id]; });
-        if (broken.length === 0) return;
+        if (broken.length === 0) continue;
         summary.brokenQuestions += broken.length;
         Logger.log('⚠️ "' + quiz.title + '": 재생 불가 ' + broken.length + '/' + ytQs.length + '개');
 
         var remaining = qs.length - broken.length;
-        if (dryRun) { if (remaining < QUIZ_MIN_QUESTIONS) { summary.hiddenQuizzes++; Logger.log('   (dry-run) 남은 문제 ' + remaining + '개 → 숨김 대상'); } return; }
+        if (dryRun) { if (remaining < QUIZ_MIN_QUESTIONS) { summary.hiddenQuizzes++; Logger.log('   (dry-run) 남은 문제 ' + remaining + '개 → 숨김 대상'); } continue; }
 
         for (var j = 0; j < broken.length; j += 40) {
             var chunk = broken.slice(j, j + 40).map(function (q) { return q.id; });
-            sbPatch_('quiz_questions', 'id=in.(' + chunk.join(',') + ')', { is_embeddable: false }, token);
+            var changed = sbPatch_('quiz_questions', 'id=in.(' + chunk.join(',') + ')', { is_embeddable: false }, token);
+            if (changed !== chunk.length) Logger.log('   ⚠️ 문제 갱신 ' + changed + '/' + chunk.length + '개만 반영됨(권한/정책 확인 필요)');
         }
         if (remaining < QUIZ_MIN_QUESTIONS) {
             sbPatch_('quizzes', 'id=eq.' + quiz.id, { status: 'hidden', hidden_reason: 'broken_video' }, token);
             summary.hiddenQuizzes++;
             Logger.log('   → 남은 문제 ' + remaining + '개라 퀴즈를 숨김 처리');
         }
-    });
+    }
 
     Logger.log('🔗 영상 점검 완료' + (dryRun ? ' (dry-run, 변경 없음)' : '') + ': ' + JSON.stringify(summary));
     return summary;

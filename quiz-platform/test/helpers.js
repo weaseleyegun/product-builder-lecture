@@ -6,8 +6,9 @@
 //   user           : auth.getUser가 돌려줄 사용자. null이면 인증 실패. 기본은 관리자.
 //   insertReturns  : { table: [row, ...] }  insert(...).select() 결과. 기본 [{ id: 'new-<table>' }]
 //   insertErrors   : { table: { message } } 해당 테이블 insert를 실패시킴
+//   updateErrors   : { table: { message } } 해당 테이블 update를 실패시킴
 // 반환: { client, log, updates, inserts }
-export function makeFake({ rows = {}, rpc = {}, user, insertReturns = {}, insertErrors = {} } = {}) {
+export function makeFake({ rows = {}, rpc = {}, user, insertReturns = {}, insertErrors = {}, updateErrors = {} } = {}) {
     const log = [];
     const updates = [];
     const inserts = [];
@@ -34,6 +35,7 @@ export function makeFake({ rows = {}, rpc = {}, user, insertReturns = {}, insert
                 if (insertErrors[table]) return { data: null, error: insertErrors[table] };
                 return { data: insertReturns[table] || [{ id: `new-${table}` }], error: null };
             }
+            if (mode === 'update' && updateErrors[table]) return { data: null, error: updateErrors[table] };
             let data = rows[table] || [];
             for (const [op, c, v] of ops) {
                 if (op === 'eq') data = data.filter((r) => r[c] === v);

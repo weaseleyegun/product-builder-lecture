@@ -4,10 +4,12 @@
 // draft.worldcup  = { title, description, items: [{ name, image_url }] }
 // ctx             = { existingTitles: string[], existingDescriptions: string[] }
 // 반환            = { ok, errors: string[], warnings: string[] }   (errors에 하나라도 있으면 ok=false)
+//
+// 모든 필드는 신뢰하지 않는다: 타입·길이·범위를 먼저 확인하고, 금지어는 NFKC 정규화(자모 분해/제로폭 문자 회피 방지) 후 검사한다.
 
-import { GENERIC_WORDS, BLOCKED_PATTERN, ALLOWED_IMAGE_HOSTS, LIMITS } from './constants.js';
+import { normalizeText, isBlocked, GENERIC_WORDS, ALLOWED_IMAGE_HOSTS, LIMITS } from './constants.js';
 
-export const normalize = (t) => String(t ?? '').toLowerCase().replace(/[^0-9a-z가-힣]/g, '');
+export const normalize = normalizeText;
 
 // 3-gram Jaccard 유사도 (0~1)
 export function jaccard3(a, b) {
@@ -22,18 +24,24 @@ export function jaccard3(a, b) {
 const isStr = (v) => typeof v === 'string';
 const between = (n, [lo, hi]) => typeof n === 'number' && n >= lo && n <= hi;
 
+// https URL이고 호스트가 허용 목록에 있는지
+function allowedHttpsUrl(value) {
+    if (!isStr(value) || value.length > LIMITS.urlMax) return false;
+    try { const u = new URL(value); return u.protocol === 'https:' && ALLOWED_IMAGE_HOSTS.includes(u.hostname); } catch { return false; }
+}
+
 function checkText(d, ctx, errors) {
     const title = isStr(d.title) ? d.title : '';
     const desc = isStr(d.description) ? d.description : '';
     if (!between(title.length, LIMITS.title)) errors.push(`title: ${LIMITS.title[0]}~${LIMITS.title[1]}자`);
-    if (BLOCKED_PATTERN.test(title)) errors.push('blocked: 제목에 제외어 포함');   // 설명문 본문은 검사하지 않음(일반 문장에 우연히 포함 가능)
+    if (isBlocked(title)) errors.push('blocked: 제목에 제외어 포함');   // 설명문 본문은 검사하지 않음(일반 문장에 우연히 포함 가능)
     if (!between(desc.length, LIMITS.description)) errors.push(`description: ${LIMITS.description[0]}~${LIMITS.description[1]}자`);
 
-    const nt = normalize(title);
-    if (nt && (ctx.existingTitles || []).some((t) => normalize(t) === nt)) errors.push('duplicate_title');
+    const nt = normalizeText(title);
+    if (nt && (ctx.existingTitles || []).some((t) => normalizeText(t) === nt)) errors.push('duplicate_title');
 
-    const nd = normalize(desc);
-    if (nd && (ctx.existingDescriptions || []).some((x) => jaccard3(normalize(x), nd) >= LIMITS.duplicateDescriptionSimilarity)) {
+    const nd = normalizeText(desc);
+    if (nd && (ctx.existingDescriptions || []).some((x) => jaccard3(normalizeText(x), nd) >= LIMITS.duplicateDescriptionSimilarity)) {
         errors.push('duplicate_description: 기존 설명과 너무 비슷함(템플릿 문구 금지)');
     }
 }
@@ -50,14 +58,32 @@ export function validateQuizDraft(d, ctx = {}) {
         const tag = `Q${i + 1}`;
         if (!q || typeof q !== 'object') { errors.push(`${tag} 형식 오류`); return; }
 
-        const answerNorm = normalize(q.answer);
-        if (answerNorm.length < 2 || GENERIC_WORDS.has(answerNorm)) errors.push(`${tag} generic_answer: 맞출 수 없는 일반 단어`);
-        if (BLOCKED_PATTERN.test(String(q.answer ?? ''))) errors.push(`${tag} blocked: 정답에 제외어 포함`);
+        // 정답
+        if (!isStr(q.answer)) { errors.push(`${tag} answer: 문자열이어야 함`); }
+        else {
+            const an = normalizeText(q.answer);
+            if (q.answer.length > LIMITS.textMax) errors.push(`${tag} length: 정답 ${LIMITS.textMax}자 초과`);
+            if (an.length < 2 || GENERIC_WORDS.has(an)) errors.push(`${tag} generic_answer: 맞출 수 없는 일반 단어`);
+            if (isBlocked(q.answer)) errors.push(`${tag} blocked: 정답에 제외어 포함`);
+        }
 
+        // 보기
         const opts = Array.isArray(q.options) ? q.options : [];
-        const texts = opts.map((o) => normalize(o && o.text));
+        const okShape = opts.every((o) => o && typeof o === 'object' && isStr(o.text));
+        if (!okShape) errors.push(`${tag} options: text는 문자열이어야 함`);
+        const texts = opts.map((o) => normalizeText(o && o.text));
         if (opts.length !== 4 || new Set(texts).size !== 4 || texts.some((t) => !t)) errors.push(`${tag} options: 서로 다른 4개 필요`);
-        if (opts.filter((o) => o && o.isCorrect === true).length !== 1) errors.push(`${tag} options: 정답 1개`);
+        const correct = opts.filter((o) => o && o.isCorrect === true);
+        if (correct.length !== 1) errors.push(`${tag} options: 정답 1개`);
+        else if (isStr(q.answer) && isStr(correct[0].text) && normalizeText(correct[0].text) !== normalizeText(q.answer)) {
+            errors.push(`${tag} answer_mismatch: 정답과 정답 보기의 내용이 다름`);
+        }
+        opts.forEach((o) => {
+            if (o && isStr(o.text)) {
+                if (o.text.length > LIMITS.textMax) errors.push(`${tag} length: 보기 ${LIMITS.textMax}자 초과`);
+                if (isBlocked(o.text)) errors.push(`${tag} blocked: 보기에 제외어 포함`);
+            }
+        });
         for (let a = 0; a < texts.length; a++) {
             for (let b = a + 1; b < texts.length; b++) {
                 if (texts[a] && texts[b] && (texts[a].includes(texts[b]) || texts[b].includes(texts[a]))) {
@@ -66,10 +92,15 @@ export function validateQuizDraft(d, ctx = {}) {
             }
         }
 
-        const vid = String(q.videoId ?? '');
-        if (!/^[\w-]{11}$/.test(vid) && !/^https:\/\//.test(vid)) errors.push(`${tag} video_id 형식 오류`);
-        const len = Number(q.endTime) - Number(q.startTime);
-        if (!(len >= LIMITS.clipSeconds[0] && len <= LIMITS.clipSeconds[1])) errors.push(`${tag} clip: ${LIMITS.clipSeconds[0]}~${LIMITS.clipSeconds[1]}초`);
+        // 미디어: YouTube 영상 ID(11자) 또는 허용 호스트의 https 이미지
+        const vid = q.videoId;
+        const youtube = isStr(vid) && /^[\w-]{11}$/.test(vid);
+        if (!youtube && !allowedHttpsUrl(vid)) errors.push(`${tag} video_id 형식 오류 또는 허용되지 않는 이미지 호스트`);
+
+        // 클립 구간: 0 이상의 정수 초, 길이 3~30초
+        const st = q.startTime, et = q.endTime;
+        const intsOk = Number.isInteger(st) && Number.isInteger(et) && st >= 0 && et >= 0;
+        if (!intsOk || !between(et - st, LIMITS.clipSeconds)) errors.push(`${tag} clip: 0 이상 정수 초, 길이 ${LIMITS.clipSeconds[0]}~${LIMITS.clipSeconds[1]}초`);
     });
 
     return { ok: errors.length === 0, errors, warnings };
@@ -83,17 +114,17 @@ export function validateWorldcupDraft(d, ctx = {}) {
     const items = Array.isArray(d.items) ? d.items : [];
     if (!LIMITS.worldcupSizes.includes(items.length)) errors.push(`size: 후보는 ${LIMITS.worldcupSizes.join('/')}개`);
 
-    const names = items.map((x) => normalize(x && x.name));
+    const names = items.map((x) => normalizeText(x && x.name));
     if (new Set(names).size !== names.length) errors.push('duplicate_item: 후보 이름 중복');
 
     items.forEach((x, i) => {
         const tag = `item${i + 1}`;
-        const nm = names[i];
+        if (!x || typeof x !== 'object' || !isStr(x.name)) { errors.push(`${tag} name: 문자열이어야 함`); return; }
+        if (x.name.length > LIMITS.textMax) errors.push(`${tag} length: 이름 ${LIMITS.textMax}자 초과`);
+        const nm = normalizeText(x.name);
         if (!nm || GENERIC_WORDS.has(nm)) errors.push(`${tag} generic_name`);
-        if (BLOCKED_PATTERN.test(String(x && x.name ? x.name : ''))) errors.push(`${tag} blocked: 이름에 제외어 포함`);
-        let host = '';
-        try { const u = new URL(String(x && x.image_url)); host = u.protocol === 'https:' ? u.hostname : ''; } catch { /* invalid url */ }
-        if (!ALLOWED_IMAGE_HOSTS.includes(host)) errors.push(`${tag} image_url: https + 허용 도메인만`);
+        if (isBlocked(x.name)) errors.push(`${tag} blocked: 이름에 제외어 포함`);
+        if (!allowedHttpsUrl(x.image_url)) errors.push(`${tag} image_url: https + 허용 도메인 + ${LIMITS.urlMax}자 이하만`);
     });
 
     return { ok: errors.length === 0, errors, warnings };

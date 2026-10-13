@@ -121,14 +121,14 @@ test('GET lists drafts of both kinds with a preview', async () => {
 
 // ── 공개 / 반려 ───────────────────────────────────────
 test('publish → status published + published_at; only drafts can be published', async () => {
-    const rows = { quizzes: [{ id: QID, status: 'draft' }] };
+    const rows = { quizzes: [{ id: QID, status: 'draft', quiz_questions: [{ count: 6 }] }] };
     const ok = await run('POST', `/api/admin/drafts/quiz/${QID}/publish`, undefined, { db: { rows } });
     assert.strictEqual(ok.res.status, 200);
     const p = ok.db.updates[0].payload;
     assert.strictEqual(p.status, 'published'); assert(/^\d{4}-\d\d-\d\dT/.test(p.published_at));
     assert(ok.db.log.includes('quizzes.eq:status=draft'), 'must guard on status=draft');
 
-    const already = await run('POST', `/api/admin/drafts/quiz/${QID}/publish`, undefined, { db: { rows: { quizzes: [{ id: QID, status: 'published' }] } } });
+    const already = await run('POST', `/api/admin/drafts/quiz/${QID}/publish`, undefined, { db: { rows: { quizzes: [{ id: QID, status: 'published', quiz_questions: [{ count: 6 }] }] } } });
     assert.strictEqual(already.res.status, 404);
     const bad = await run('POST', '/api/admin/drafts/quiz/not-a-uuid/publish');
     assert.strictEqual(bad.res.status, 400);
@@ -152,4 +152,76 @@ test('reject requires a reason and hides the draft', async () => {
 test('unknown draft route → 404', async () => {
     assert.strictEqual((await run('GET', '/api/admin/drafts/whatever/zzz')).res.status, 404);
     assert.strictEqual((await run('DELETE', '/api/admin/drafts')).res.status, 405);
+});
+
+// ── 리뷰 반영 ─────────────────────────────────────────
+test('kind must be a plain string: arrays and prototype keys are rejected before any DB write', async () => {
+    for (const kind of [['quiz'], { toString: () => 'quiz' }, '__proto__', 'constructor', 'toString', 7, null]) {
+        const { res, db } = await run('POST', '/api/admin/drafts', { kind, draft: goodQuiz() });
+        assert.strictEqual(res.status, 400, JSON.stringify(kind));
+        assert.strictEqual(db.inserts.length, 0);
+    }
+    // URL 경로의 kind도 마찬가지
+    for (const kind of ['__proto__', 'constructor']) {
+        assert.strictEqual((await run('POST', `/api/admin/drafts/${kind}/${QID}/publish`)).res.status, 400, kind);
+    }
+});
+
+test('publish refuses a draft with no (or too few) children', async () => {
+    for (const kids of [[], [{ count: 0 }], [{ count: 2 }]]) {
+        const r = await run('POST', `/api/admin/drafts/quiz/${QID}/publish`, undefined, { db: { rows: { quizzes: [{ id: QID, status: 'draft', quiz_questions: kids }] } } });
+        assert.strictEqual(r.res.status, 409, JSON.stringify(kids));
+        assert(!r.db.updates.some((u) => u.payload.status === 'published'));
+    }
+    const WID = '22222222-2222-2222-2222-222222222222';
+    const bad = await run('POST', `/api/admin/drafts/worldcup/${WID}/publish`, undefined, { db: { rows: { worldcups: [{ id: WID, status: 'draft', worldcup_items: [{ count: 9 }] }] } } });
+    assert.strictEqual(bad.res.status, 409, 'worldcup size must be 8/16/32/64');
+    const good = await run('POST', `/api/admin/drafts/worldcup/${WID}/publish`, undefined, { db: { rows: { worldcups: [{ id: WID, status: 'draft', worldcup_items: [{ count: 16 }] }] } } });
+    assert.strictEqual(good.res.status, 200);
+});
+
+test('if hiding the half-built parent also fails, the error says so (not silently swallowed)', async () => {
+    const { res } = await run('POST', '/api/admin/drafts', { kind: 'quiz', draft: goodQuiz() }, { db: { insertErrors: { quiz_questions: { message: 'boom' } }, updateErrors: { quizzes: { message: 'rls denied' } } } });
+    assert.strictEqual(res.status, 500);
+    const msg = (await res.json()).error;
+    assert(msg.includes('boom') && msg.includes('rls denied'), msg);
+});
+
+test('rows hidden because their insert failed do not block a retry with the same title', async () => {
+    const d = goodQuiz();
+    const rows = { quizzes: [{ title: d.title, description: d.description, status: 'hidden', hidden_reason: 'insert_failed' }] };
+    const { res } = await run('POST', '/api/admin/drafts', { kind: 'quiz', draft: d }, { db: { rows } });
+    assert.strictEqual(res.status, 201);
+    // 하지만 사람이 반려/숨긴 것(다른 사유)은 계속 중복으로 막는다
+    const rows2 = { quizzes: [{ title: d.title, description: d.description, status: 'hidden', hidden_reason: 'rejected: x' }] };
+    assert.strictEqual((await run('POST', '/api/admin/drafts', { kind: 'quiz', draft: d }, { db: { rows: rows2 } })).res.status, 422);
+});
+
+test('options are sanitized before storing: only id/text/isCorrect, ids forced to A-D', async () => {
+    const d = goodQuiz();
+    d.questions[0].options = d.questions[0].options.map((o, i) => ({ ...o, id: 'Z' + i, evil: '<script>alert(1)</script>', extra: { a: 1 } }));
+    const { res, db } = await run('POST', '/api/admin/drafts', { kind: 'quiz', draft: d });
+    assert.strictEqual(res.status, 201);
+    const kids = db.inserts.find((i) => i.table === 'quiz_questions').payload;
+    assert.deepStrictEqual(kids[0].options.map((o) => Object.keys(o).sort().join()), Array(4).fill('id,isCorrect,text'));
+    assert.deepStrictEqual(kids[0].options.map((o) => o.id), ['A', 'B', 'C', 'D']);
+});
+
+test('oversized request bodies are rejected with 413', async () => {
+    const d = goodQuiz(); d.pad = 'x'.repeat(300 * 1024);
+    const { res, db } = await run('POST', '/api/admin/drafts', { kind: 'quiz', draft: d });
+    assert.strictEqual(res.status, 413);
+    assert.strictEqual(db.inserts.length, 0);
+});
+
+test('draft list includes review samples: quiz clips and worldcup images', async () => {
+    const rows = {
+        quizzes: [{ id: QID, status: 'draft', title: 'Q', description: 'd', source: 'daily', created_at: 'x', quiz_questions: [{ answer: 'a', video_id: 'dQw4w9WgXcQ', start_time: 5 }, { answer: 'b', video_id: 'https://cdn.myanimelist.net/a.jpg', start_time: 0 }] }],
+        worldcups: [{ id: 'w1', status: 'draft', title: 'W', description: 'd', source: 'daily', created_at: 'x', worldcup_items: [{ name: 'n1', image_url: 'https://i.ytimg.com/a.jpg' }] }],
+    };
+    const { drafts } = await (await run('GET', '/api/admin/drafts', undefined, { db: { rows } })).res.json();
+    const quiz = drafts.find((d) => d.kind === 'quiz'), wc = drafts.find((d) => d.kind === 'worldcup');
+    assert.deepStrictEqual(quiz.samples[0], { answer: 'a', videoId: 'dQw4w9WgXcQ', startTime: 5 });
+    assert.deepStrictEqual(wc.samples[0], { name: 'n1', image_url: 'https://i.ytimg.com/a.jpg' });
+    assert.deepStrictEqual(quiz.preview, ['a', 'b']);
 });

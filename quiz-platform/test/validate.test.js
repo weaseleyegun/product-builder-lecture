@@ -153,3 +153,66 @@ test('normalize / jaccard3', () => {
     assert.strictEqual(jaccard3('', ''), 1);
     assert.strictEqual(jaccard3('ab', 'cd'), 0);
 });
+
+// ── 리뷰 반영: 정답/보기 일치, 타입, 길이, 유니코드 회피 ───────────────
+test('answer must equal the correct option text', () => {
+    const d = goodQuiz(); d.questions[0].answer = '가수0'; d.questions[0].options[0].text = '완전다른이름';
+    d.questions[0].options[0].isCorrect = true;
+    assert(errs(d).some((e) => e.includes('answer_mismatch')));
+});
+
+test('time values must be non-negative integers (null / string / negative / fractional rejected)', () => {
+    for (const [s, e] of [[null, 20], ['5', 20], [-20, 0], [5.5, 20], [5, null], [5, '20'], [5, Infinity], [NaN, 20]]) {
+        const d = goodQuiz(); d.questions[0].startTime = s; d.questions[0].endTime = e;
+        assert(errs(d).some((x) => x.includes('clip')), JSON.stringify([s, e]));
+    }
+});
+
+test('non-string answer / option text / videoId do not throw and are rejected', () => {
+    const d = goodQuiz();
+    d.questions[0].answer = ['가수0'];
+    d.questions[1].options[0].text = 123;
+    d.questions[2].videoId = ['dQw4w9WgXcQ'];
+    assert.doesNotThrow(() => validateQuizDraft(d, ctx));
+    assert.strictEqual(validateQuizDraft(d, ctx).ok, false);
+});
+
+test('length caps: answer, option text, worldcup name, image url', () => {
+    const d = goodQuiz(); const big = '가'.repeat(61);
+    d.questions[0] = q(big, [big, 'AA11', 'BB22', 'CC33']);
+    assert(errs(d).some((e) => e.includes('length')));
+    const items = wcItems(8); items[0].name = big; items[1].image_url = 'https://i.ytimg.com/' + 'a'.repeat(600);
+    const e = validateWorldcupDraft(wc(items), ctx).errors;
+    assert(e.some((x) => x.includes('length'))); assert(e.some((x) => x.includes('image_url')));
+});
+
+test('image question urls must be https on an allowed host', () => {
+    const d = goodQuiz(); d.questions[0].videoId = 'https://evil.example.com/a.jpg';
+    assert(errs(d).some((e) => e.includes('video_id')));
+    const ok = goodQuiz(); ok.questions[0].videoId = 'https://cdn.myanimelist.net/images/a.jpg';
+    assert.deepStrictEqual(errs(ok), []);
+});
+
+test('blocked words are caught in option texts too', () => {
+    const d = goodQuiz(); d.questions[0].options[1].text = '삼성전기 주가';
+    assert(errs(d).some((e) => e.includes('blocked')));
+});
+
+test('zero-width characters and decomposed Hangul cannot evade the blocked-word / duplicate checks', () => {
+    const d = goodQuiz(); d.title = '사\u200b망 퀴즈 맞추기 도전하기';
+    assert(errs(d).some((e) => e.includes('blocked')), 'zero-width');
+    const d2 = goodQuiz(); d2.title = '대통령 퀴즈 맞추기 도전하기'.normalize('NFD');
+    assert(errs(d2).some((e) => e.includes('blocked')), 'NFD hangul');
+    const d3 = goodQuiz(); const t = '오늘의 한국 노래 퀴즈 도전';
+    const c = { existingTitles: [t.normalize('NFD')], existingDescriptions: [] };
+    d3.title = t;
+    assert(errs(d3, c).includes('duplicate_title'), 'NFD duplicate title');
+});
+
+test('non-Korean names (Japanese/Chinese/Cyrillic) are valid worldcup items and normalize non-empty', () => {
+    const names = ['鬼滅の刃', 'ナルト', '进击的巨人', 'Привет', 'Pokémon', '葬送のフリーレン', 'ワンピース', 'ドラゴンボール'];
+    const items = names.map((n, i) => ({ name: n, image_url: `https://cdn.myanimelist.net/images/${i}.jpg` }));
+    assert.deepStrictEqual(validateWorldcupDraft(wc(items), ctx).errors, []);
+    assert.notStrictEqual(normalize('鬼滅の刃'), '');
+    assert.strictEqual(normalize('한글'.normalize('NFD')), normalize('한글'));
+});
