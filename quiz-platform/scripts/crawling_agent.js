@@ -193,7 +193,7 @@ async function main() {
     // 로그인 (bulk_add_cyworld_lol.js 참고)
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: 'agent@quizrank.com',
-        password: 'seed_password_1234!'
+        password: process.env.ADMIN_PASSWORD
     });
 
     if (authError) {

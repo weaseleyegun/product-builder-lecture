@@ -52,7 +52,7 @@ async function run() {
 
     await supabase.auth.signInWithPassword({
         email: 'agent@quizrank.com',
-        password: 'seed_password_1234!'
+        password: process.env.ADMIN_PASSWORD
     });
 
     // 1. Fetch only problematic quiz questions (e.g. Cyworld BGM) to speed up execution

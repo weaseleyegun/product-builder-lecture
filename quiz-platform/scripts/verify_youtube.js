@@ -39,7 +39,7 @@ async function run() {
     // Authenticate as agent for write access
     await supabase.auth.signInWithPassword({
         email: 'agent@quizrank.com',
-        password: 'seed_password_1234!'
+        password: process.env.ADMIN_PASSWORD
     });
 
     // Fetch all quiz questions

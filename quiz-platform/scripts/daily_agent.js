@@ -23,7 +23,11 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 // [DB 인증 우회 유틸리티]: 자동화 스크립트로서 쓰기 권한을 얻기 위해 로그인
 async function authenticateAgent() {
     const adminEmail = "agent@quizrank.com";
-    const adminPassword = "seed_password_1234!";
+    const adminPassword = process.env.ADMIN_PASSWORD;
+    if (!adminPassword) {
+        console.error("오류: ADMIN_PASSWORD가 .dev.vars에 설정되지 않았습니다.");
+        process.exit(1);
+    }
 
     let { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: adminEmail,
@@ -40,7 +44,7 @@ async function authenticateAgent() {
         if (signUpError) {
             console.error("❌ 에이전트 로그인/생성 실패:", signUpError.message);
             console.log("\n💡 [해결 방법]: Supabase에서 짧은 시간 내 여러 번 계정을 만들려다 발생한 에러(Rate Limit)일 수 있습니다.");
-            console.log("Supabase 대시보드 [Authentication] -> [Users] -> [Add user] 에서 수동으로 'agent@quizrank.com', 비밀번호 'seed_password_1234!' 계정을 직접 하나 만들어두시면 이 에러를 완벽하게 피하고 자동 로그인됩니다.");
+            console.log("Supabase 대시보드 [Authentication] -> [Users] -> [Add user] 에서 수동으로 'agent@quizrank.com', 비밀번호(.dev.vars의 ADMIN_PASSWORD) 계정을 직접 하나 만들어두시면 이 에러를 완벽하게 피하고 자동 로그인됩니다.");
             return null;
         }
         authData = signUpData;

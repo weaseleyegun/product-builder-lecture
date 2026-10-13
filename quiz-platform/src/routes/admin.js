@@ -1,6 +1,7 @@
 // admin.js - Admin API route handlers (Server-side JWT verification)
 
 import { jsonResponse, errorResponse } from '../helpers/cors.js';
+import { signInAsAdmin } from '../helpers/auth.js';
 
 // ── Auth guard ───────────────────────────────────────────────────────────────
 // Extracts Bearer token from Authorization header and verifies it with Supabase.
@@ -57,10 +58,7 @@ async function handleUpdateQuiz(request, url, supabase, env) {
         const body = await request.json();
         const { title, description, thumbnail_url } = body;
 
-        await supabase.auth.signInWithPassword({
-            email: 'agent@quizrank.com',
-            password: env.ADMIN_PASSWORD || 'seed_password_1234!'
-        });
+        await signInAsAdmin(supabase, env);
 
         const { error: updateErr } = await supabase
             .from('quizzes')
@@ -88,10 +86,7 @@ async function handleUpdateWorldcup(request, url, supabase, env) {
         const body = await request.json();
         const { title, description, thumbnail_url } = body;
 
-        await supabase.auth.signInWithPassword({
-            email: 'agent@quizrank.com',
-            password: env.ADMIN_PASSWORD || 'seed_password_1234!'
-        });
+        await signInAsAdmin(supabase, env);
 
         const { error: updateErr } = await supabase
             .from('worldcups')
@@ -114,10 +109,7 @@ async function handleDeleteQuiz(request, url, supabase, env) {
     if (err) return err;
 
     try {
-        await supabase.auth.signInWithPassword({
-            email: 'agent@quizrank.com',
-            password: env.ADMIN_PASSWORD || 'seed_password_1234!'
-        });
+        await signInAsAdmin(supabase, env);
         const { error: deleteErr } = await supabase.from('quizzes').delete().eq('id', id);
         if (deleteErr) return errorResponse('DB Delete Error: ' + deleteErr.message, 500);
         return jsonResponse({ success: true, message: 'Quiz deleted successfully' });
@@ -135,10 +127,7 @@ async function handleDeleteWorldcup(request, url, supabase, env) {
     if (err) return err;
 
     try {
-        await supabase.auth.signInWithPassword({
-            email: 'agent@quizrank.com',
-            password: env.ADMIN_PASSWORD || 'seed_password_1234!'
-        });
+        await signInAsAdmin(supabase, env);
         const { error: deleteErr } = await supabase.from('worldcups').delete().eq('id', id);
         if (deleteErr) return errorResponse('DB Delete Error: ' + deleteErr.message, 500);
         return jsonResponse({ success: true, message: 'Worldcup deleted successfully' });

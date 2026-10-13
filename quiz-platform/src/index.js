@@ -50,10 +50,10 @@ export default {
             return handleWorldcupPlay(url, supabase);
         }
         if (path === '/api/user-created-content' && method === 'POST') {
-            return handleUserCreatedContent(request, supabase);
+            return handleUserCreatedContent(request, supabase, env);
         }
         if (path === '/api/user-created-quiz' && method === 'POST') {
-            return handleUserCreatedQuiz(request, supabase);
+            return handleUserCreatedQuiz(request, supabase, env);
         }
         if (path === '/api/quiz-result' && method === 'POST') {
             return handleQuizResult(request, supabase);

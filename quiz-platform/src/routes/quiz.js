@@ -1,6 +1,7 @@
 // quiz.js - Quiz API route handlers
 
 import { jsonResponse, errorResponse } from '../helpers/cors.js';
+import { signInAsAdmin } from '../helpers/auth.js';
 
 // GET /api/daily-quiz?sort=rank|latest|correct_asc|correct_desc
 async function handleDailyQuiz(url, supabase) {
@@ -140,7 +141,7 @@ async function handleQuizResult(request, supabase) {
 }
 
 // POST /api/user-created-quiz - Submit user-created quiz
-async function handleUserCreatedQuiz(request, supabase) {
+async function handleUserCreatedQuiz(request, supabase, env) {
     try {
         const body = await request.json();
         const { title, description, questions } = body;
@@ -160,10 +161,7 @@ async function handleUserCreatedQuiz(request, supabase) {
         const creatorId = userData.user.id;
 
         // Authenticate as Admin to bypass RLS (since RLS policies for INSERT are strict in current setup)
-        await supabase.auth.signInWithPassword({
-            email: 'agent@quizrank.com',
-            password: 'seed_password_1234!'
-        });
+        await signInAsAdmin(supabase, env);
 
         // Insert quiz
         const { data: quizData, error: quizError } = await supabase

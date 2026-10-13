@@ -1,6 +1,7 @@
 // worldcup.js - Worldcup API route handlers
 
 import { jsonResponse, errorResponse } from '../helpers/cors.js';
+import { signInAsAdmin } from '../helpers/auth.js';
 
 // GET /api/worldcups?sort=rank|latest - Fetch worldcup list for main page
 async function handleWorldcups(url, supabase) {
@@ -59,7 +60,7 @@ async function handleWorldcupPlay(url, supabase) {
 }
 
 // POST /api/user-created-content - Submit user-created worldcup
-async function handleUserCreatedContent(request, supabase) {
+async function handleUserCreatedContent(request, supabase, env) {
     try {
         const body = await request.json();
         const { title, description, items } = body;
@@ -79,10 +80,7 @@ async function handleUserCreatedContent(request, supabase) {
         const creatorId = userData.user.id;
 
         // Authenticate to bypass RLS
-        await supabase.auth.signInWithPassword({
-            email: 'agent@quizrank.com',
-            password: 'seed_password_1234!'
-        });
+        await signInAsAdmin(supabase, env);
 
         // Insert worldcup
         const { data: cupData, error: cupError } = await supabase
