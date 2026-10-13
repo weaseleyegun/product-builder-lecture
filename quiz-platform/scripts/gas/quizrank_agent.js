@@ -182,13 +182,13 @@ function dailyAutoAgent() {
                 : buildQuizFromVideos_(trendingVideos);
             if (quizData && quizData.questions.length >= QUIZ_MIN_QUESTIONS) {
                 var quizId = insertQuizToDB_(quizData, token, userId);
-                results.quiz = { status: '✅', title: quizData.title, id: quizId };
+                results.quiz = { status: '📝 초안', title: quizData.title, id: quizId };
             } else {
                 Logger.log('⚠️ 유효 문항 부족 → 키워드 검색 퀴즈 시도');
                 var keywordQuiz = buildQuizFromKeywords_();
                 if (keywordQuiz && keywordQuiz.questions.length >= QUIZ_MIN_QUESTIONS) {
                     var quizId2 = insertQuizToDB_(keywordQuiz, token, userId);
-                    results.quiz = { status: '✅', title: keywordQuiz.title, id: quizId2 };
+                    results.quiz = { status: '📝 초안', title: keywordQuiz.title, id: quizId2 };
                 } else {
                     results.quiz.status = '⚠️ 영상 부족';
                 }
@@ -206,13 +206,13 @@ function dailyAutoAgent() {
                 : buildWorldcupFromVideos_(trendingVideos);
             if (wcData && wcData.items.length >= 8) {
                 var wcId = insertWorldcupToDB_(wcData, token, userId);
-                results.worldcup = { status: '✅', title: wcData.title, id: wcId };
+                results.worldcup = { status: '📝 초안', title: wcData.title, id: wcId };
             } else {
                 Logger.log('⚠️ 월드컵 후보 부족 → 애니 월드컵 시도');
                 var animeWc = buildAnimeWorldcup_();
                 if (animeWc && animeWc.items.length >= 8) {
                     var wcId2 = insertWorldcupToDB_(animeWc, token, userId);
-                    results.worldcup = { status: '✅', title: animeWc.title, id: wcId2 };
+                    results.worldcup = { status: '📝 초안', title: animeWc.title, id: wcId2 };
                 } else {
                     results.worldcup.status = '⚠️ 데이터 부족';
                 }
@@ -228,7 +228,7 @@ function dailyAutoAgent() {
             var dogWc = buildDogWorldcup_();
             if (dogWc && dogWc.items.length >= 8) {
                 var tierId = insertWorldcupToDB_(dogWc, token, userId);
-                results.tierlist = { status: '✅', title: dogWc.title, id: tierId };
+                results.tierlist = { status: '📝 초안', title: dogWc.title, id: tierId };
             } else {
                 results.tierlist.status = '⚠️ 데이터 부족';
             }
@@ -1354,36 +1354,125 @@ function sbDelete_(table, query, token) {
     });
 }
 
-// ── DB 적재 ──
-function insertQuizToDB_(data, token, userId) {
-    Logger.log('💾 퀴즈 적재: "' + data.title + '"');
-    var quiz = sbInsert_('quizzes', { title: data.title, description: data.description || '', creator_id: userId }, token);
-    var quizId = quiz[0].id;
+// ── 초안 등록 ──
+// 콘텐츠는 DB에 직접 넣지 않는다. 워커의 /api/admin/drafts 가 품질 검증(src/quality/validate.js)을 한 뒤
+// status='draft'로 저장하고, 관리자 대시보드에서 사람이 공개해야 사이트에 노출된다.
+var WORKER_URL = 'https://quiz-platform-worker.rlaehrjs03.workers.dev';
 
-    var rows = data.questions.map(function (q) {
-        var st = q.startTime != null ? q.startTime : 30;
-        var et = q.endTime != null ? q.endTime : 45;
-        return { quiz_id: quizId, video_id: q.videoId, start_time: st, end_time: et, answer: q.answer, options: q.options, is_embeddable: true };
+function postDraft_(kind, draft, token) {
+    var resp = UrlFetchApp.fetch(WORKER_URL + '/api/admin/drafts', {
+        method: 'post', contentType: 'application/json',
+        headers: { 'Authorization': 'Bearer ' + token },
+        payload: JSON.stringify({ kind: kind, draft: draft, source: 'daily' }),
+        muteHttpExceptions: true
     });
-    for (var i = 0; i < rows.length; i += 20) sbInsert_('quiz_questions', rows.slice(i, i + 20), token);
+    var code = resp.getResponseCode();
+    var body = {};
+    try { body = JSON.parse(resp.getContentText()); } catch (e) { /* not json */ }
+    if (code === 201) return body.id;
+    if (code === 422) throw new Error('품질 검증 실패: ' + (body.errors || []).slice(0, 6).join(' / '));
+    if (code === 429) throw new Error('검수 대기 초안이 너무 많음 (대시보드에서 먼저 처리)');
+    throw new Error('초안 전송 실패(' + code + '): ' + resp.getContentText().substring(0, 200));
+}
 
-    Logger.log('✅ 퀴즈 완료: ' + quizId);
-    return quizId;
+function insertQuizToDB_(data, token, userId) {
+    Logger.log('📝 퀴즈 초안 전송: "' + data.title + '"');
+    var draft = {
+        title: data.title,
+        description: data.description || '',
+        questions: data.questions.map(function (q) {
+            return {
+                answer: q.answer, options: q.options, videoId: q.videoId,
+                startTime: q.startTime != null ? q.startTime : 30,
+                endTime: q.endTime != null ? q.endTime : 45
+            };
+        })
+    };
+    var id = postDraft_('quiz', draft, token);
+    Logger.log('✅ 퀴즈 초안 등록(검수 대기): ' + id);
+    return id;
 }
 
 function insertWorldcupToDB_(data, token, userId) {
-    Logger.log('💾 월드컵 적재: "' + data.title + '"');
-    var cup = sbInsert_('worldcups', { title: data.title, description: data.description || '', play_count: 0, creator_id: userId }, token);
-    var cupId = cup[0].id;
-
-    var rows = data.items.map(function (item) {
-        return { worldcup_id: cupId, name: item.name, image_url: item.image_url };
-    });
-    sbInsert_('worldcup_items', rows, token);
-
-    Logger.log('✅ 적재 완료: ' + cupId + ' (' + rows.length + '개)');
-    return cupId;
+    Logger.log('📝 월드컵 초안 전송: "' + data.title + '"');
+    var draft = {
+        title: data.title,
+        description: data.description || '',
+        items: data.items.map(function (item) { return { name: item.name, image_url: item.image_url }; })
+    };
+    var id = postDraft_('worldcup', draft, token);
+    Logger.log('✅ 월드컵 초안 등록(검수 대기): ' + id + ' (' + draft.items.length + '개)');
+    return id;
 }
+
+// ── 공개된 퀴즈의 영상 상태 점검 ──
+// 삭제·비공개·임베드 금지된 영상이 문제에 남으면 플레이가 막힌다.
+// 문제 단위로 is_embeddable=false 처리(플레이 API가 이미 제외함)하고, 남은 문제가 QUIZ_MIN_QUESTIONS 미만이면 퀴즈를 숨긴다.
+// 쿼터: Videos.list 50개당 1 unit. 주 1회 실행 권장(setupWeeklyLinkCheckTrigger).
+function sbPatch_(table, query, payload, token) {
+    var resp = UrlFetchApp.fetch(SUPABASE_URL + '/rest/v1/' + table + '?' + query, {
+        method: 'patch', contentType: 'application/json',
+        headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + token, 'Prefer': 'return=minimal' },
+        payload: JSON.stringify(payload), muteHttpExceptions: true
+    });
+    if (resp.getResponseCode() >= 300) throw new Error('PATCH 실패(' + table + '): ' + resp.getContentText().substring(0, 200));
+}
+
+function checkPublishedVideos(dryRun) {
+    var token = getSupabaseToken_().token;
+    var quizzes = sbSelect_('quizzes', 'select=id,title&status=eq.published', token);
+    var summary = { quizzes: quizzes.length, checked: 0, brokenQuestions: 0, hiddenQuizzes: 0 };
+
+    quizzes.forEach(function (quiz) {
+        var qs = sbSelect_('quiz_questions', 'select=id,video_id&quiz_id=eq.' + quiz.id + '&is_embeddable=neq.false', token);
+        var ytQs = qs.filter(function (q) { return /^[\w-]{11}$/.test(q.video_id || ''); });   // 이미지(https) 문제는 제외
+        if (ytQs.length === 0) return;
+
+        var okIds = {};
+        for (var i = 0; i < ytQs.length; i += 50) {
+            var ids = ytQs.slice(i, i + 50).map(function (q) { return q.video_id; });
+            var resp = YouTube.Videos.list('status', { id: ids.join(','), maxResults: 50 });
+            (resp.items || []).forEach(function (it) {
+                if (it.status && it.status.privacyStatus === 'public' && it.status.embeddable === true) okIds[it.id] = true;
+            });
+        }
+        summary.checked += ytQs.length;
+
+        var broken = ytQs.filter(function (q) { return !okIds[q.video_id]; });
+        if (broken.length === 0) return;
+        summary.brokenQuestions += broken.length;
+        Logger.log('⚠️ "' + quiz.title + '": 재생 불가 ' + broken.length + '/' + ytQs.length + '개');
+
+        var remaining = qs.length - broken.length;
+        if (dryRun) { if (remaining < QUIZ_MIN_QUESTIONS) { summary.hiddenQuizzes++; Logger.log('   (dry-run) 남은 문제 ' + remaining + '개 → 숨김 대상'); } return; }
+
+        for (var j = 0; j < broken.length; j += 40) {
+            var chunk = broken.slice(j, j + 40).map(function (q) { return q.id; });
+            sbPatch_('quiz_questions', 'id=in.(' + chunk.join(',') + ')', { is_embeddable: false }, token);
+        }
+        if (remaining < QUIZ_MIN_QUESTIONS) {
+            sbPatch_('quizzes', 'id=eq.' + quiz.id, { status: 'hidden', hidden_reason: 'broken_video' }, token);
+            summary.hiddenQuizzes++;
+            Logger.log('   → 남은 문제 ' + remaining + '개라 퀴즈를 숨김 처리');
+        }
+    });
+
+    Logger.log('🔗 영상 점검 완료' + (dryRun ? ' (dry-run, 변경 없음)' : '') + ': ' + JSON.stringify(summary));
+    return summary;
+}
+
+/** 🧪 영상 점검 (변경 없이 결과만 확인) */
+function testCheckPublishedVideos() { return checkPublishedVideos(true); }
+
+/** 매주 월요일 새벽 4시에 영상 점검 실행 */
+function setupWeeklyLinkCheckTrigger() {
+    ScriptApp.getProjectTriggers().forEach(function (t) {
+        if (t.getHandlerFunction() === 'checkPublishedVideos') ScriptApp.deleteTrigger(t);
+    });
+    ScriptApp.newTrigger('checkPublishedVideos').timeBased().onWeekDay(ScriptApp.WeekDay.MONDAY).atHour(4).create();
+    Logger.log('✅ 매주 월요일 04시 영상 점검 트리거 설정 완료');
+}
+
 
 // ── 저장 용량 관리 ──
 // 행 수를 세어 반환 (HEAD + Prefer: count=exact → Content-Range 헤더)

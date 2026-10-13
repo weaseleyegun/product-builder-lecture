@@ -8,6 +8,7 @@ import { handleUpdateQuiz, handleUpdateWorldcup, handleDeleteQuiz, handleDeleteW
 import { handleSitemap } from './helpers/sitemap.js';
 import { handlePlayStart } from './routes/play.js';
 import { handleThumbnail } from './routes/thumb.js';
+import { handleDrafts } from './routes/drafts.js';
 
 export default {
     async fetch(request, env, ctx) {
@@ -65,6 +66,9 @@ export default {
         }
         if (path === '/api/quiz-result' && method === 'POST') {
             return handleQuizResult(request, supabase);
+        }
+        if (path === '/api/admin/drafts' || path.startsWith('/api/admin/drafts/')) {
+            return handleDrafts(request, url, supabase, env);
         }
         if (path.startsWith('/api/admin/quiz/')) {
             if (method === 'PUT') return handleUpdateQuiz(request, url, supabase, env);

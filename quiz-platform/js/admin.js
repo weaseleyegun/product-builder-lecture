@@ -25,6 +25,81 @@ document.addEventListener('DOMContentLoaded', function () {
         fetchAllContent();
     }
 
+    // 1-1. 검수 대기 초안 (관리자 전용)
+    if (document.getElementById('draft-list') && userEmail === 'agent@quizrank.com') {
+        initDrafts();
+    }
+
+    function escHtml(s) {
+        return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+    }
+
+    async function initDrafts() {
+        const section = document.getElementById('draft-section');
+        const listEl = document.getElementById('draft-list');
+        const countEl = document.getElementById('draft-count');
+        section.style.display = 'block';
+
+        async function load() {
+            listEl.innerHTML = '<p style="color: var(--text-muted);">초안을 불러오는 중...</p>';
+            try {
+                const res = await fetch(API_BASE_URL + '/api/admin/drafts', { headers: { Authorization: 'Bearer ' + token } });
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const drafts = (await res.json()).drafts || [];
+                countEl.textContent = '(' + drafts.length + '개)';
+                if (drafts.length === 0) {
+                    listEl.innerHTML = '<p style="color: var(--text-muted);">검수 대기 중인 초안이 없습니다. 👍</p>';
+                    return;
+                }
+                listEl.innerHTML = drafts.map(function (d) {
+                    const kindLabel = d.kind === 'quiz' ? '퀴즈 · ' + d.count + '문제' : '월드컵 · 후보 ' + d.count + '개';
+                    const preview = (d.preview || []).map(escHtml).join(' · ');
+                    return '<div class="draft-card" style="padding: 1rem; margin-bottom: 1rem; border: 1px solid var(--border-color); border-radius: 10px;">' +
+                        '<div style="font-size: 0.8rem; color: var(--text-muted);">' + escHtml(kindLabel) + ' · ' + escHtml(d.source) + ' · ' + escHtml((d.created_at || '').slice(0, 16).replace('T', ' ')) + '</div>' +
+                        '<div style="font-weight: 700; margin: 0.3rem 0;">' + escHtml(d.title) + '</div>' +
+                        '<div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">' + escHtml((d.description || '').slice(0, 300)) + '</div>' +
+                        '<div style="font-size: 0.85rem; margin-bottom: 0.8rem;"><b>' + (d.kind === 'quiz' ? '정답 미리보기' : '후보 미리보기') + ':</b> ' + preview + '</div>' +
+                        '<button class="btn-primary" data-act="publish" data-kind="' + escHtml(d.kind) + '" data-id="' + escHtml(d.id) + '" style="margin-right: 0.5rem;">공개</button>' +
+                        '<button class="btn-secondary" data-act="reject" data-kind="' + escHtml(d.kind) + '" data-id="' + escHtml(d.id) + '">반려</button>' +
+                        '</div>';
+                }).join('');
+            } catch (e) {
+                listEl.innerHTML = '<p style="color: #ff6b6b;">초안을 불러오지 못했습니다: ' + escHtml(e.message) + '</p>';
+            }
+        }
+
+        listEl.addEventListener('click', async function (ev) {
+            const btn = ev.target.closest('button[data-act]');
+            if (!btn) return;
+            const act = btn.dataset.act, kind = btn.dataset.kind, id = btn.dataset.id;
+            let body;
+            if (act === 'reject') {
+                const reason = prompt('반려 사유를 입력하세요 (200자 이내)');
+                if (!reason || !reason.trim()) return;
+                body = JSON.stringify({ reason: reason.trim() });
+            } else if (!confirm('이 초안을 사이트에 공개할까요?')) {
+                return;
+            }
+            btn.disabled = true;
+            try {
+                const res = await fetch(API_BASE_URL + '/api/admin/drafts/' + kind + '/' + id + '/' + act, {
+                    method: 'POST',
+                    headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+                    body: body
+                });
+                if (!res.ok) throw new Error((await res.json().catch(function () { return {}; })).error || ('HTTP ' + res.status));
+                await load();
+            } catch (e) {
+                alert('처리 실패: ' + e.message);
+                btn.disabled = false;
+            }
+        });
+
+        load();
+    }
+
     function parseJwt(token) {
         try {
             var base64Url = token.split('.')[1];
