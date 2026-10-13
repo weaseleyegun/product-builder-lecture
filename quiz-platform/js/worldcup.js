@@ -27,6 +27,7 @@ async function initSetup() {
 
         var data = await response.json();
         var worldcupInfo = data.worldcup;
+        if (typeof registerPlay === 'function') registerPlay('worldcup', worldcupInfo.id);
 
         // SEO: Update Meta Tags
         if (typeof updateSEOMeta === 'function') {

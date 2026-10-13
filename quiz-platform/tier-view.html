@@ -336,6 +336,7 @@
                 const data = await response.json();
                 const tierInfo = data.worldcup;
                 const items = data.items;
+                if (typeof registerPlay === 'function') registerPlay('worldcup', tierInfo.id);
 
                 // Update Header
                 document.querySelector('.tier-header h1').textContent = tierInfo.title;

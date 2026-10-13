@@ -6,6 +6,8 @@ import { handleDailyQuiz, handleQuizPlay, handleQuizResult, handleUserCreatedQui
 import { handleWorldcups, handleWorldcupPlay, handleUserCreatedContent } from './routes/worldcup.js';
 import { handleUpdateQuiz, handleUpdateWorldcup, handleDeleteQuiz, handleDeleteWorldcup } from './routes/admin.js';
 import { handleSitemap } from './helpers/sitemap.js';
+import { handlePlayStart } from './routes/play.js';
+import { handleThumbnail } from './routes/thumb.js';
 
 export default {
     async fetch(request, env, ctx) {
@@ -36,6 +38,12 @@ export default {
                 SUPABASE_URL: env.SUPABASE_URL,
                 SUPABASE_ANON_KEY: env.SUPABASE_ANON_KEY
             });
+        }
+        if (path.startsWith('/api/thumb/') && method === 'GET') {
+            return handleThumbnail(url, supabase);
+        }
+        if (path === '/api/play-start' && method === 'POST') {
+            return handlePlayStart(request, supabase);
         }
         if (path === '/api/daily-quiz' && method === 'GET') {
             return handleDailyQuiz(url, supabase);

@@ -2,15 +2,18 @@
 
 import { jsonResponse, errorResponse } from '../helpers/cors.js';
 import { signInAsAdmin } from '../helpers/auth.js';
+import { parsePaging, withThumbUrl } from '../helpers/list.js';
 
-// GET /api/daily-quiz?sort=rank|latest|correct_asc|correct_desc
+// GET /api/daily-quiz?sort=rank|latest|correct_asc|correct_desc&limit=60&offset=0  (published only)
 async function handleDailyQuiz(url, supabase) {
     const sort = url.searchParams.get('sort') || 'rank';
+    const { from, to } = parsePaging(url);
 
     let query = supabase
         .from('quizzes')
         .select('id, slug, title, description, thumbnail_url, play_count, rank, correct_rate, incorrect_rate, game_count, creator_id')
-        .limit(100);
+        .eq('status', 'published')
+        .range(from, to);
 
     if (sort === 'rank') {
         query = query.order('play_count', { ascending: false });
@@ -26,10 +29,11 @@ async function handleDailyQuiz(url, supabase) {
 
     const { data, error } = await query;
     if (error) return errorResponse(error.message);
-    return jsonResponse(data);
+    return jsonResponse((data || []).map((row) => withThumbUrl(row, 'quiz', url.origin)));
 }
 
-// GET /api/quiz-play?id=UUID_OR_SLUG&limit=N - Fetch random questions for a quiz
+// GET /api/quiz-play?id=UUID_OR_SLUG&limit=N - Fetch random questions for a quiz (published only)
+// play_count는 여기서 올리지 않는다 → POST /api/play-start (세션당 하루 1회)
 async function handleQuizPlay(url, supabase) {
     const quizId = url.searchParams.get('id');
     const limit = parseInt(url.searchParams.get('limit')) || 5;
@@ -37,7 +41,7 @@ async function handleQuizPlay(url, supabase) {
     if (!quizId) return errorResponse("Quiz ID is required", 400);
 
     // Fetch quiz info (Try ID first, then slug)
-    let quizQuery = supabase.from('quizzes').select('*');
+    let quizQuery = supabase.from('quizzes').select('*').eq('status', 'published');
 
     if (quizId.length === 36 && quizId.includes('-')) { // Likely UUID
         quizQuery = quizQuery.eq('id', quizId);
@@ -50,11 +54,6 @@ async function handleQuizPlay(url, supabase) {
     if (quizError || !quizInfo) return errorResponse("Quiz not found", 404);
 
     const actualId = quizInfo.id; // Correct UUID for questions lookup
-
-    // Increment play_count
-    await supabase.rpc('increment_play_count', { quiz_id: actualId }).maybeSingle();
-    // Fallback: direct update if rpc fails
-    await supabase.from('quizzes').update({ play_count: (quizInfo.play_count || 0) + 1 }).eq('id', actualId);
 
     // Fetch only embeddable questions for this quiz
     const { data: questions, error: questionsError } = await supabase
@@ -69,7 +68,7 @@ async function handleQuizPlay(url, supabase) {
     const shuffled = questions.sort(() => 0.5 - Math.random());
     const selectedQuestions = shuffled.slice(0, limit);
 
-    return jsonResponse({ quiz: quizInfo, questions: selectedQuestions });
+    return jsonResponse({ quiz: withThumbUrl(quizInfo, 'quiz', url.origin), questions: selectedQuestions });
 }
 
 // POST /api/quiz-result - Save game result and update stats

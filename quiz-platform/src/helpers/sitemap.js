@@ -2,12 +2,12 @@
 
 export async function handleSitemap(supabase) {
     try {
-        const baseUrl = 'https://quizrank.pages.dev';
+        const baseUrl = 'https://quiz-rank.com';
 
-        // Fetch all quizzes and worldcups (use created_at as updated_at is missing)
+        // 공개(published) 콘텐츠만 포함 (use created_at as updated_at is missing)
         const [quizRes, wcRes] = await Promise.all([
-            supabase.from('quizzes').select('id, slug, created_at'),
-            supabase.from('worldcups').select('id, slug, created_at')
+            supabase.from('quizzes').select('id, slug, created_at').eq('status', 'published'),
+            supabase.from('worldcups').select('id, slug, created_at').eq('status', 'published')
         ]);
 
         if (quizRes.error) console.error('Quiz fetch error for sitemap:', quizRes.error);

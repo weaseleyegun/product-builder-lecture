@@ -40,6 +40,7 @@ async function fetchQuizData() {
 
         var data = await response.json();
         quizTitle = data.quiz.title || '노래 맞추기 퀴즈';
+        if (typeof registerPlay === 'function') registerPlay('quiz', data.quiz.id);
 
         // SEO: Update Meta Tags
         if (typeof updateSEOMeta === 'function') {

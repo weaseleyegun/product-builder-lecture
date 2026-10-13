@@ -38,3 +38,33 @@ var WORLDCUP_COLORS = [
     'linear-gradient(135deg, #AE3EC9, #F06595)',
     'linear-gradient(135deg, #5C7CFA, #748FFC)'
 ];
+
+
+// ── 플레이 집계 ────────────────────────────────────────────
+// 같은 브라우저 세션이 같은 콘텐츠를 하루에 여러 번 열어도 서버가 1회만 집계한다 (POST /api/play-start)
+function getPlaySession() {
+    try {
+        var key = 'qr_session';
+        var s = localStorage.getItem(key);
+        if (!s) {
+            s = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : (Date.now().toString(36) + Math.random().toString(36).slice(2));
+            localStorage.setItem(key, s);
+        }
+        return s;
+    } catch (e) {
+        // localStorage 사용 불가(시크릿 모드 등): 페이지 로드마다 새 세션으로 취급
+        return 'anon-' + Date.now().toString(36) + Math.random().toString(36).slice(2);
+    }
+}
+
+function registerPlay(type, id) {
+    if (!id) return;
+    try {
+        fetch(API_BASE_URL + '/api/play-start', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ type: type, id: id, session: getPlaySession() }),
+            keepalive: true
+        }).catch(function () { /* 집계 실패는 게임에 영향 없음 */ });
+    } catch (e) { /* ignore */ }
+}

@@ -2,15 +2,18 @@
 
 import { jsonResponse, errorResponse } from '../helpers/cors.js';
 import { signInAsAdmin } from '../helpers/auth.js';
+import { parsePaging, withThumbUrl } from '../helpers/list.js';
 
-// GET /api/worldcups?sort=rank|latest - Fetch worldcup list for main page
+// GET /api/worldcups?sort=rank|latest&limit=60&offset=0 - Fetch worldcup list (published only)
 async function handleWorldcups(url, supabase) {
     const sort = url.searchParams.get('sort') || 'rank';
+    const { from, to } = parsePaging(url);
 
     let query = supabase
         .from('worldcups')
         .select('id, slug, title, description, thumbnail_url, play_count, created_at, creator_id')
-        .limit(100);
+        .eq('status', 'published')
+        .range(from, to);
 
     if (sort === 'rank') {
         query = query.order('play_count', { ascending: false });
@@ -20,16 +23,17 @@ async function handleWorldcups(url, supabase) {
 
     const { data, error } = await query;
     if (error) return errorResponse(error.message);
-    return jsonResponse(data);
+    return jsonResponse((data || []).map((row) => withThumbUrl(row, 'worldcup', url.origin)));
 }
 
-// GET /api/worldcup-play?id=UUID_OR_SLUG - Fetch worldcup items for gameplay
+// GET /api/worldcup-play?id=UUID_OR_SLUG - Fetch worldcup items for gameplay (published only)
+// play_count는 여기서 올리지 않는다 → POST /api/play-start (세션당 하루 1회)
 async function handleWorldcupPlay(url, supabase) {
     const worldcupId = url.searchParams.get('id');
     if (!worldcupId) return errorResponse("Worldcup ID or Slug is required", 400);
 
     // Fetch worldcup info (Try ID first, then slug)
-    let cupQuery = supabase.from('worldcups').select('*');
+    let cupQuery = supabase.from('worldcups').select('*').eq('status', 'published');
     if (worldcupId.length === 36 && worldcupId.includes('-')) {
         cupQuery = cupQuery.eq('id', worldcupId);
     } else {
@@ -42,11 +46,6 @@ async function handleWorldcupPlay(url, supabase) {
 
     const actualId = cupInfo.id; // Correct UUID for items lookup
 
-    // Increment play_count
-    await supabase.rpc('increment_worldcup_play_count', { wc_id: actualId }).maybeSingle();
-    // Fallback: direct update if rpc fails
-    await supabase.from('worldcups').update({ play_count: (cupInfo.play_count || 0) + 1 }).eq('id', actualId);
-
     // Fetch all items and shuffle
     const { data: items, error: itemsError } = await supabase
         .from('worldcup_items')
@@ -55,8 +54,11 @@ async function handleWorldcupPlay(url, supabase) {
 
     if (itemsError) return errorResponse(itemsError.message);
 
+    // 후보가 2개 미만이면 토너먼트가 성립하지 않는다 (빈 월드컵 노출 방지)
+    if (!items || items.length < 2) return errorResponse("Worldcup not found", 404);
+
     const shuffledItems = items.sort(() => 0.5 - Math.random());
-    return jsonResponse({ worldcup: cupInfo, items: shuffledItems });
+    return jsonResponse({ worldcup: withThumbUrl(cupInfo, 'worldcup', url.origin), items: shuffledItems });
 }
 
 // POST /api/user-created-content - Submit user-created worldcup
