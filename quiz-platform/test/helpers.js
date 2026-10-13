@@ -1,6 +1,7 @@
 // 테스트용 가짜 Supabase 클라이언트: 호출된 쿼리 빌더 연산을 기록하고, 미리 지정한 행을 돌려준다.
 export function makeFake({ rows = {}, rpc = {} } = {}) {
     const log = [];
+    const updates = [];
     function builder(table) {
         const ops = [];
         const q = {
@@ -10,7 +11,7 @@ export function makeFake({ rows = {}, rpc = {} } = {}) {
             order(c) { log.push(`${table}.order:${c}`); return q; },
             limit(n) { log.push(`${table}.limit:${n}`); return q; },
             range(a, b) { log.push(`${table}.range:${a}-${b}`); return q; },
-            update() { log.push(`${table}.update`); return q; },
+            update(payload) { updates.push({ table, payload }); log.push(`${table}.update`); return q; },
             insert() { log.push(`${table}.insert`); return q; },
             single() { const r = result(); return Promise.resolve(r.data.length ? { data: r.data[0], error: null } : { data: null, error: { message: 'not found' } }); },
             maybeSingle() { return Promise.resolve({ data: null, error: null }); },
@@ -28,7 +29,12 @@ export function makeFake({ rows = {}, rpc = {} } = {}) {
     }
     return {
         log,
+        updates,
         client: {
+            auth: {
+                getUser: async () => ({ data: { user: { id: 'admin-id', email: 'agent@quizrank.com' } }, error: null }),
+                signInWithPassword: async () => ({ data: {}, error: null }),
+            },
             from: (t) => builder(t),
             rpc(name, args) {
                 log.push(`rpc:${name}`);

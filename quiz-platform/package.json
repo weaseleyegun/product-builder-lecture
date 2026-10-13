@@ -16,6 +16,8 @@
     "wrangler": "^4.68.1"
   },
   "scripts": {
-    "test": "node --test \"test/*.test.js\""
+    "test": "node --test \"test/*.test.js\"",
+    "deploy:frontend": "node scripts/deploy_frontend.mjs",
+    "deploy:frontend:dry": "node scripts/deploy_frontend.mjs --dry"
   }
 }

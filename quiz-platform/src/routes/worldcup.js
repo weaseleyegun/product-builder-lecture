@@ -2,16 +2,16 @@
 
 import { jsonResponse, errorResponse } from '../helpers/cors.js';
 import { signInAsAdmin } from '../helpers/auth.js';
-import { parsePaging, withThumbUrl } from '../helpers/list.js';
+import { parsePaging, withThumbUrl, childCount, stripKey } from '../helpers/list.js';
 
-// GET /api/worldcups?sort=rank|latest&limit=60&offset=0 - Fetch worldcup list (published only)
+// GET /api/worldcups?sort=rank|latest&limit=100&offset=0 - Fetch worldcup list (published, 후보 2개 이상만)
 async function handleWorldcups(url, supabase) {
     const sort = url.searchParams.get('sort') || 'rank';
     const { from, to } = parsePaging(url);
 
     let query = supabase
         .from('worldcups')
-        .select('id, slug, title, description, thumbnail_url, play_count, created_at, creator_id')
+        .select('id, slug, title, description, thumbnail_url, has_thumbnail_data, play_count, created_at, creator_id, worldcup_items(count)')
         .eq('status', 'published')
         .range(from, to);
 
@@ -21,9 +21,14 @@ async function handleWorldcups(url, supabase) {
         query = query.order('created_at', { ascending: false });
     }
 
+    // 정렬 동점일 때 페이지 사이에서 행이 중복/누락되지 않도록 id를 마지막 정렬 키로 둔다
+    query = query.order('id', { ascending: true });
+
     const { data, error } = await query;
     if (error) return errorResponse(error.message);
-    return jsonResponse((data || []).map((row) => withThumbUrl(row, 'worldcup', url.origin)));
+    // 후보가 2개 미만인 월드컵(생성 도중 실패 등)은 노출하지 않는다
+    const rows = (data || []).filter((row) => childCount(row, 'worldcup_items') >= 2).map((row) => stripKey(row, 'worldcup_items'));
+    return jsonResponse(rows.map((row) => withThumbUrl(row, 'worldcup', url.origin)));
 }
 
 // GET /api/worldcup-play?id=UUID_OR_SLUG - Fetch worldcup items for gameplay (published only)
@@ -33,7 +38,7 @@ async function handleWorldcupPlay(url, supabase) {
     if (!worldcupId) return errorResponse("Worldcup ID or Slug is required", 400);
 
     // Fetch worldcup info (Try ID first, then slug)
-    let cupQuery = supabase.from('worldcups').select('*').eq('status', 'published');
+    let cupQuery = supabase.from('worldcups').select('id, slug, title, description, thumbnail_url, has_thumbnail_data, play_count, created_at, creator_id, status, source').eq('status', 'published');
     if (worldcupId.length === 36 && worldcupId.includes('-')) {
         cupQuery = cupQuery.eq('id', worldcupId);
     } else {

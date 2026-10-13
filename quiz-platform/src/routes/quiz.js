@@ -2,16 +2,16 @@
 
 import { jsonResponse, errorResponse } from '../helpers/cors.js';
 import { signInAsAdmin } from '../helpers/auth.js';
-import { parsePaging, withThumbUrl } from '../helpers/list.js';
+import { parsePaging, withThumbUrl, childCount, stripKey } from '../helpers/list.js';
 
-// GET /api/daily-quiz?sort=rank|latest|correct_asc|correct_desc&limit=60&offset=0  (published only)
+// GET /api/daily-quiz?sort=rank|latest|correct_asc|correct_desc&limit=100&offset=0  (published, 문제가 1개 이상인 퀴즈만)
 async function handleDailyQuiz(url, supabase) {
     const sort = url.searchParams.get('sort') || 'rank';
     const { from, to } = parsePaging(url);
 
     let query = supabase
         .from('quizzes')
-        .select('id, slug, title, description, thumbnail_url, play_count, rank, correct_rate, incorrect_rate, game_count, creator_id')
+        .select('id, slug, title, description, thumbnail_url, has_thumbnail_data, play_count, rank, correct_rate, incorrect_rate, game_count, creator_id, quiz_questions(count)')
         .eq('status', 'published')
         .range(from, to);
 
@@ -27,9 +27,14 @@ async function handleDailyQuiz(url, supabase) {
         query = query.order('play_count', { ascending: false });
     }
 
+    // 정렬 동점일 때 페이지 사이에서 행이 중복/누락되지 않도록 id를 마지막 정렬 키로 둔다
+    query = query.order('id', { ascending: true });
+
     const { data, error } = await query;
     if (error) return errorResponse(error.message);
-    return jsonResponse((data || []).map((row) => withThumbUrl(row, 'quiz', url.origin)));
+    // 문제가 없는 퀴즈는 노출하지 않는다
+    const rows = (data || []).filter((row) => childCount(row, 'quiz_questions') >= 1).map((row) => stripKey(row, 'quiz_questions'));
+    return jsonResponse(rows.map((row) => withThumbUrl(row, 'quiz', url.origin)));
 }
 
 // GET /api/quiz-play?id=UUID_OR_SLUG&limit=N - Fetch random questions for a quiz (published only)
@@ -41,7 +46,8 @@ async function handleQuizPlay(url, supabase) {
     if (!quizId) return errorResponse("Quiz ID is required", 400);
 
     // Fetch quiz info (Try ID first, then slug)
-    let quizQuery = supabase.from('quizzes').select('*').eq('status', 'published');
+    // thumbnail_data(base64)는 읽지 않는다 — 필요하면 /api/thumb 로 따로 받는다
+    let quizQuery = supabase.from('quizzes').select('id, slug, title, description, thumbnail_url, has_thumbnail_data, play_count, rank, correct_rate, incorrect_rate, game_count, correct_count, incorrect_count, creator_id, created_at, status, source').eq('status', 'published');
 
     if (quizId.length === 36 && quizId.includes('-')) { // Likely UUID
         quizQuery = quizQuery.eq('id', quizId);
