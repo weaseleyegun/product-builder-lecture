@@ -14,12 +14,13 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { TEXT_QUIZZES as TEXT_SET } from '../content/text_quizzes.mjs';
 import { YEAR_QUIZZES } from '../content/year_quizzes.mjs';
+import { AUDIENCE_QUIZZES } from '../content/audience_quizzes.mjs';
 import { validateQuizDraft } from '../src/quality/validate.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const dry = process.argv.includes('--dry');
-// --set=year : 발매 연도 맞추기(영상) 퀴즈, 기본값은 텍스트 퀴즈
-const TEXT_QUIZZES = process.argv.includes('--set=year') ? YEAR_QUIZZES : TEXT_SET;
+// --set=year : 발매 연도 맞추기(영상) 퀴즈, --set=audience : 타깃 맞춤 텍스트 퀴즈, 기본값은 기본 텍스트 퀴즈
+const TEXT_QUIZZES = process.argv.includes('--set=year') ? YEAR_QUIZZES : process.argv.includes('--set=audience') ? AUDIENCE_QUIZZES : TEXT_SET;
 const API = process.env.QUIZRANK_API || 'https://quiz-platform-worker.rlaehrjs03.workers.dev';
 
 // 1) 로컬 검증 (서버도 같은 검증기를 쓰지만, 제출 전에 미리 걸러서 원인을 바로 보여 준다)

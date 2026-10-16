@@ -6,7 +6,7 @@
 // - 새 퀴즈를 추가할 때는 사실관계를 한 번 더 확인하고, 설명(description)은 다른 퀴즈와 겹치지 않게 새로 쓴다.
 //   (test/content.test.js 가 검증기 통과·설명 중복 여부를 자동으로 확인한다.)
 
-function build(quizIndex, { title, description, items }) {
+export function build(quizIndex, { title, description, items }) {
     return {
         kind: 'quiz',
         source: 'curated',
