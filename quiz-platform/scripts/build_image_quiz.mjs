@@ -9,6 +9,7 @@
 //     "title": "애니 캐릭터 줌 아웃 퀴즈 — 눈만 보고 맞혀 보세요",    (8~60자)
 //     "description": "...",                                          (300~1200자, 직접 쓴 설명)
 //     "revealMode": "zoom" | "blur" | "mosaic" | "silhouette" | "mask",   퀴즈 기본 공개 방식
+//     "prompt": "이곳은 어디일까요?",        (선택) 문제 문장. 생략하면 '사진을 보고 누군지 맞혀보세요!'. 문제별 "prompt"로 바꿀 수도 있다
 //     "questions": [
 //        { "file": "images/rem.png", "answer": "Rem", "wrongs": ["Emilia", "Ram", "Beatrice"],
 //          "reveal": { "x": 55, "y": 35 } }              // 선택: 줌/가림의 초점(%) 등. 방식을 문제마다 바꿀 수도 있다 ("mode")
@@ -74,6 +75,7 @@ function buildDraft(urls) {
                 videoId: urls[i],
                 startTime: 0, endTime: 15,
                 options: texts.map((text, k) => ({ id: 'ABCD'[k], text, isCorrect: k === pos })),
+                ...((q.prompt || manifest.prompt) ? { questionText: q.prompt || manifest.prompt } : {}),
                 ...(q.explanation ? { explanation: q.explanation } : {}),
                 ...(q.reveal ? { reveal: q.reveal } : {}),
             };

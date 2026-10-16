@@ -334,7 +334,7 @@ function loadQuestion(index) {
     if (ytBox) ytBox.style.display = isText ? 'none' : '';
     document.getElementById('question-title').innerText = isText
         ? question.questionText
-        : (isImage ? '사진을 보고 누군지 맞혀보세요!' : (question.questionText || '노래의 이 부분을 듣고 제목을 맞혀보세요!'));
+        : (isImage ? (question.questionText || '사진을 보고 누군지 맞혀보세요!') : (question.questionText || '노래의 이 부분을 듣고 제목을 맞혀보세요!'));
 
     // SECURITY: Hide song title from Chrome Media Hub / Lock screen to prevent spoilers
     if ('mediaSession' in navigator && !isImage && !isText) {
