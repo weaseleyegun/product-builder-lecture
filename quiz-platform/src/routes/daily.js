@@ -1,6 +1,6 @@
 // daily.js - GET /api/daily-pick : 오늘의 퀴즈 (KST 날짜 기준으로 모두에게 같은 퀴즈)
 //
-// 질문 문장과 해설이 있는 텍스트 퀴즈 중에서 하루에 하나를 고른다. 날짜가 바뀔 때마다 순서대로 돌아가며,
+// 영상 없이 질문 문장과 해설이 있는 텍스트 퀴즈 중에서 하루에 하나를 고른다. 날짜가 바뀔 때마다 순서대로 돌아가며,
 // 후보를 id 순으로 고정해 두므로 같은 날에는 누가, 언제 불러도 같은 결과가 나온다.
 
 import { jsonResponse, errorResponse } from '../helpers/cors.js';
@@ -21,13 +21,9 @@ export function pickDaily(quizzes, dayIndex) {
 }
 
 export async function handleDailyPick(supabase, now = new Date()) {
-    const { data: qs, error: e1 } = await supabase.from('quiz_questions').select('quiz_id').not('question_text', 'is', null);
-    if (e1) return errorResponse(e1.message, 500);
-    const ids = [...new Set((qs || []).map((r) => r.quiz_id).filter(Boolean))];
-    if (!ids.length) return errorResponse('no daily quiz available', 404);
-
-    const { data: quizzes, error: e2 } = await supabase.from('quizzes').select('id, slug, title').eq('status', 'published').in('id', ids);
-    if (e2) return errorResponse(e2.message, 500);
+    // 후보 조회는 DB 함수가 한다 (공개 + 영상 없는 텍스트 문제 보유, id 순). 행 수 제한/URL 길이 문제가 없다.
+    const { data: quizzes, error } = await supabase.rpc('daily_candidates');
+    if (error) return errorResponse(error.message, 500);
 
     const { date, index } = kstDay(now);
     const pick = pickDaily(quizzes, index);

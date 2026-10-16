@@ -29,7 +29,7 @@ export function makeFake({ rows = {}, rpc = {}, user, insertReturns = {}, insert
             range(a, b) { log.push(`${table}.range:${a}-${b}`); return q; },
             update(payload) { mode = 'update'; updates.push({ table, payload }); log.push(`${table}.update`); return q; },
             insert(payload) { mode = 'insert'; inserts.push({ table, payload }); log.push(`${table}.insert`); return q; },
-            single() { const r = result(); return Promise.resolve(r.data.length ? { data: r.data[0], error: null } : { data: null, error: { message: 'not found' } }); },
+            single() { const r = result(); return Promise.resolve(r.data.length ? { data: r.data[0], error: null } : { data: null, error: { message: 'not found', code: 'PGRST116' } }); },
             maybeSingle() { return Promise.resolve({ data: null, error: null }); },
             then(res, rej) { return Promise.resolve(result()).then(res, rej); },
         };

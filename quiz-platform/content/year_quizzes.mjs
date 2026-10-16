@@ -16,7 +16,6 @@ const POP = [
     ['8xg3vE8Ie_E', 73, 78, 'Taylor Swift - Love Story', 2008],
     ['qrO4YZeyl0I', 146, 151, 'Lady Gaga - Bad Romance', 2009],
     ['kffacxfA7G4', 77, 82, 'Justin Bieber - Baby', 2010],
-    ['rYEDA3JcQqw', 99, 104, 'Adele - Rolling in the Deep', 2010],
     ['QGJuMBdaqIw', 108, 113, 'Katy Perry - Firework', 2010],
     ['hLQl3WQQoQ0', 140, 145, 'Adele - Someone Like You', 2011],
     ['tg00YEETFzg', 135, 140, 'Rihanna - We Found Love', 2011],
@@ -32,7 +31,6 @@ const POP = [
     ['JGwWNGJdvx8', 128, 133, 'Ed Sheeran - Shape of You', 2017],
     ['7wtfhZwyrcc', 88, 93, 'Imagine Dragons - Believer', 2017],
     ['DyDfgMOUjCI', 98, 103, 'Billie Eilish - bad guy', 2019],
-    ['r7qovpFAGrQ', 72, 77, 'Lil Nas X - Old Town Road', 2019],
     ['6swmTBVI83k', 88, 93, 'Lil Nas X - MONTERO', 2021],
     ['ZmDBbnmKpqQ', 97, 102, 'Olivia Rodrigo - drivers license', 2021],
     ['G7KNmW9a75Y', 66, 71, 'Miley Cyrus - Flowers', 2023],
@@ -100,7 +98,7 @@ export const YEAR_QUIZZES = [
     build({
         title: '팝송 발매 연도 맞추기 — 이 노래는 몇 년도 곡?',
         description:
-            '익숙한 팝송인데 막상 언제 나온 곡인지는 헷갈릴 때가 많습니다. 이 퀴즈는 1975년 퀸의 보헤미안 랩소디부터 2024년 사브리나 카펜터의 에스프레소까지, 반세기에 걸친 대표 팝송 30곡의 영상 일부를 들려 주고 발매 연도를 맞히는 방식으로 만들었습니다. ' +
+            '익숙한 팝송인데 막상 언제 나온 곡인지는 헷갈릴 때가 많습니다. 이 퀴즈는 1975년 퀸의 보헤미안 랩소디부터 2024년 사브리나 카펜터의 에스프레소까지, 반세기에 걸친 대표 팝송 28곡의 영상 일부를 들려 주고 발매 연도를 맞히는 방식으로 만들었습니다. ' +
             '곡 제목은 영상에 그대로 나오니 제목을 맞히는 게임이 아니라, 노래의 분위기와 소리로 시대를 짐작해 보는 게임입니다. 정답을 고르면 곡의 정확한 발매 연도를 바로 알려 주므로 풀다 보면 시대별 유행의 흐름도 자연스럽게 눈에 들어옵니다. ' +
             '오래된 곡과 최신곡이 섞여 있어 세대가 다른 사람끼리 함께 풀어도 재미있습니다. 몇 개나 맞히는지 가족, 친구와 점수를 비교해 보세요.',
         list: POP,

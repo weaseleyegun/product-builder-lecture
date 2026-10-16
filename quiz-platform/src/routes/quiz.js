@@ -57,7 +57,9 @@ async function handleQuizPlay(url, supabase) {
 
     const { data: quizInfo, error: quizError } = await quizQuery.single();
 
-    if (quizError || !quizInfo) return errorResponse("Quiz not found", 404);
+    // 행이 없을 때만 404 — DB 일시 장애를 404로 돌려주면 검색엔진이 정상 페이지를 noindex 처리한다
+    if (quizError && quizError.code !== 'PGRST116') return errorResponse('Failed to load quiz', 503);
+    if (!quizInfo) return errorResponse("Quiz not found", 404);
 
     const actualId = quizInfo.id; // Correct UUID for questions lookup
 

@@ -3,7 +3,7 @@
 function updateSEOMeta(title, description, thumbnail) {
     if (!title) return;
 
-    const fullTitle = title + ' - Quiz-Rank.com';
+    const fullTitle = title + ' | Quiz-Rank.com';   // 서버(Pages Function)가 넣은 형식과 같게
     const cleanDesc = description ? description.replace(/\[.*?\]/g, '').trim().substring(0, 160) : '재미있는 퀴즈와 이상형 월드컵을 QuizRank에서 즐겨보세요!';
 
     // 1. Update <title>
@@ -22,7 +22,6 @@ function updateSEOMeta(title, description, thumbnail) {
     const ogTags = {
         'og:title': fullTitle,
         'og:description': cleanDesc,
-        'og:url': window.location.href,
         'og:type': 'website'
     };
 
@@ -42,7 +41,6 @@ function updateSEOMeta(title, description, thumbnail) {
 
     // 4. Update Twitter Tags
     const twitterTags = {
-        'twitter:card': 'summary_large_image',
         'twitter:title': fullTitle,
         'twitter:description': cleanDesc
     };

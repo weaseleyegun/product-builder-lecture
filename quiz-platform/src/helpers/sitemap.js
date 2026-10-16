@@ -20,8 +20,11 @@ export async function handleSitemap(supabase) {
             supabase.from('quizzes').select('id, slug, created_at, published_at').eq('status', 'published'),
             supabase.from('worldcups').select('id, slug, title, created_at, published_at').eq('status', 'published'),
         ]);
-        if (quizRes.error) console.error('Quiz fetch error for sitemap:', quizRes.error);
-        if (wcRes.error) console.error('Worldcup fetch error for sitemap:', wcRes.error);
+        if (quizRes.error || wcRes.error) {
+            // 일부만 담긴 sitemap이 캐시되지 않게 오류로 응답한다 (Pages Function이 503으로 바꿔 짧게 재시도하게 한다)
+            console.error('Sitemap fetch error:', quizRes.error || wcRes.error);
+            return new Response('sitemap temporarily unavailable', { status: 503, headers: { 'Retry-After': '300' } });
+        }
 
         const urls = STATIC_PAGES.map(([path, priority]) => `  <url><loc>${BASE}${path}</loc><priority>${priority}</priority></url>`);
         const add = (page, item, priority) => {

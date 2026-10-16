@@ -1,4 +1,4 @@
-﻿﻿// quiz.js - Handle YouTube IFrame API and Quiz game logic
+﻿// quiz.js - Handle YouTube IFrame API and Quiz game logic
 
 // Read quiz ID from URL
 var urlParams = new URLSearchParams(window.location.search);
@@ -93,6 +93,7 @@ async function fetchQuizData() {
                 questionText: q.question_text || null,
                 explanation: q.explanation || null,
                 isText: !q.video_id && !!q.question_text,
+                isYear: !!q.video_id && /^\d{4}$/.test(String(q.answer || '').trim()),
                 startSeconds: q.start_time,
                 endSeconds: q.end_time || (q.start_time + 5),
                 options: options
@@ -195,7 +196,7 @@ function loadQuestion(index) {
     // SECURITY: Hide song title from Chrome Media Hub / Lock screen to prevent spoilers
     if ('mediaSession' in navigator && !isImage && !isText) {
         navigator.mediaSession.metadata = new MediaMetadata({
-            title: '❓ 노래 제목을 맞춰보세요!',
+            title: question.isYear ? '❓ 발매 연도를 맞춰보세요!' : '❓ 노래 제목을 맞춰보세요!',
             artist: 'Quiz-Rank.com',
             album: '힌트를 확인하려면 정답을 선택하세요',
             artwork: [{ src: 'https://quizrank.pages.dev/favicon.ico', sizes: '128x128', type: 'image/x-icon' }]
@@ -259,7 +260,7 @@ function loadQuestion(index) {
         optionsContainer.style.display = 'block';
 
         var inputHtml = '<div style="display: flex; gap: 1rem; max-width: 500px; margin: 0 auto; flex-direction: column;">';
-        inputHtml += '<input type="text" id="subjective-input" placeholder="정식 발매명(한국어)으로 입력해 주세요" style="padding: 1rem; font-size: 1.2rem; border-radius: 12px; border: 2px solid var(--border-color); background: var(--card-bg); color: var(--text-color); outline: none;" onkeydown="if(event.key===\\\'Enter\\\') checkSubjectiveAnswer()">';
+        inputHtml += '<input type="text" id="subjective-input" placeholder="' + (question.isYear ? '발매 연도(예: 2015)를 입력해 주세요' : '정식 발매명(한국어)으로 입력해 주세요') + '" style="padding: 1rem; font-size: 1.2rem; border-radius: 12px; border: 2px solid var(--border-color); background: var(--card-bg); color: var(--text-color); outline: none;" onkeydown="if(event.key===\\\'Enter\\\') checkSubjectiveAnswer()">';
         inputHtml += '<button id="submit-subjective" class="btn-primary large" onclick="checkSubjectiveAnswer()">정답 제출</button>';
         inputHtml += '<p id="subjective-feedback" style="display: none; font-size: 1.2rem; font-weight: 800; margin-top: 1rem;"></p>';
         inputHtml += '</div>';
@@ -491,6 +492,11 @@ window.checkSubjectiveAnswer = function () {
 
     var isCorrect = false;
 
+    // 연도 정답(예: 2012)은 정확히 일치해야 한다 ('20', '12' 같은 부분 입력이 정답 처리되면 안 된다). '2012년'도 허용.
+    var yearAnswer = /^\d{4}$/.test(correctTitle.trim());
+    if (yearAnswer) {
+        isCorrect = userAnswer.trim().replace(/\s*년$/, '') === correctTitle.trim();
+    } else
     // Fuzzy matching logic
     if (normalizedUser === normalizedCorrect) {
         isCorrect = true;

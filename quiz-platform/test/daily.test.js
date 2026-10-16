@@ -16,24 +16,23 @@ test('pickDaily rotates through candidates in a fixed order and never fails on n
     assert.strictEqual(pickDaily([], 5), null);
 });
 
-test('daily-pick returns the same published text quiz for the whole day, ignoring hidden/media-only quizzes', async () => {
-    const f = makeFake({ rows: {
-        quiz_questions: [{ quiz_id: 'q1', question_text: '?' }, { quiz_id: 'q2', question_text: '?' }, { quiz_id: 'q3', question_text: '?' }, { quiz_id: 'q4', question_text: null }],
-        quizzes: [
-            { id: 'q1', slug: 'one', title: 'One', status: 'published' },
-            { id: 'q2', slug: null, title: 'Two', status: 'published' },
-            { id: 'q3', slug: 'three', title: 'Three', status: 'hidden' },
-            { id: 'q4', slug: 'four', title: 'Four', status: 'published' },
-        ] } });
+test('daily-pick returns the same candidate for the whole day and a different one the next day', async () => {
+    const f = makeFake({ rpc: { daily_candidates: () => [{ id: 'q1', slug: 'one', title: 'One' }, { id: 'q2', slug: null, title: 'Two' }] } });
     const morning = await (await handleDailyPick(f.client, new Date('2026-10-16T00:10:00Z'))).json();
     const night = await (await handleDailyPick(f.client, new Date('2026-10-16T13:50:00Z'))).json();
     assert.deepStrictEqual(morning, night);
-    assert(['q1', 'q2'].includes(morning.id));
     const next = await (await handleDailyPick(f.client, new Date('2026-10-17T00:10:00Z'))).json();
     assert.notStrictEqual(next.id, morning.id);
+    assert(f.log.includes('rpc:daily_candidates'));
 });
 
 test('daily-pick is 404 when nothing qualifies', async () => {
-    const f = makeFake({ rows: { quiz_questions: [], quizzes: [] } });
+    const f = makeFake({ rpc: { daily_candidates: () => [] } });
     assert.strictEqual((await handleDailyPick(f.client)).status, 404);
+});
+
+test('daily-pick is a 500 (not a 404) when the database call fails', async () => {
+    const f = makeFake({});
+    f.client.rpc = () => Promise.resolve({ data: null, error: { message: 'db down' } });
+    assert.strictEqual((await handleDailyPick(f.client)).status, 500);
 });

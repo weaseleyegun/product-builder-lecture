@@ -30,6 +30,8 @@ export async function renderPlayPage(context, kind) {
 
     const headers = new Headers(response.headers);
     headers.delete('content-length');
+    headers.delete('etag');                 // 본문이 API 데이터에 따라 바뀐다 → 정적 파일의 ETag/Last-Modified로 재검증(304)되면 안 된다
+    headers.delete('last-modified');
     headers.set('Cache-Control', 'public, max-age=0, s-maxage=300');
 
     const rewriter = new HTMLRewriter();

@@ -25,3 +25,23 @@ test('year questions are video questions whose answer is a plausible year', () =
 test('year quiz descriptions are not near-duplicates', () => {
     assert(jaccard3(normalize(YEAR_QUIZZES[0].draft.description), normalize(YEAR_QUIZZES[1].draft.description)) < 0.3);
 });
+
+import { handleQuizPlay } from '../src/routes/quiz.js';
+import { handleSitemap } from '../src/helpers/sitemap.js';
+import { makeFake } from './helpers.js';
+
+test('quiz-play: missing quiz is 404, but a database error is 503 (so crawlers do not drop good pages)', async () => {
+    const missing = makeFake({ rows: { quizzes: [] } });
+    assert.strictEqual((await handleQuizPlay(new URL('https://api.test/api/quiz-play?id=quiz-abc123'), missing.client)).status, 404);
+    const broken = makeFake({ rows: { quizzes: [] } });
+    const orig = broken.client.from;
+    broken.client.from = (t) => { const q = orig(t); q.single = () => Promise.resolve({ data: null, error: { message: 'connection reset' } }); return q; };
+    assert.strictEqual((await handleQuizPlay(new URL('https://api.test/api/quiz-play?id=quiz-abc123'), broken.client)).status, 503);
+});
+
+test('sitemap: a database error is a 503, never a truncated 200', async () => {
+    const f = makeFake({ rows: { quizzes: [], worldcups: [] } });
+    const orig = f.client.from;
+    f.client.from = (t) => { const q = orig(t); q.then = (res, rej) => Promise.resolve({ data: null, error: { message: 'boom' } }).then(res, rej); return q; };
+    assert.strictEqual((await handleSitemap(f.client)).status, 503);
+});
