@@ -1,0 +1,7 @@
+
+# 이미지 수집 도구의 작업 폴더 (공개·커밋하지 않는다)
+collected/
+images/_incoming/
+images/anime_*
+images/celebrity_*
+images/general_*

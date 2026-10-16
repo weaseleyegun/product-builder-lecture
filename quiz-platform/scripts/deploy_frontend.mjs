@@ -8,7 +8,7 @@
 
 import { cpSync, mkdirSync, rmSync, readdirSync, readFileSync, statSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, resolve, dirname, extname } from 'node:path';
+import { join, resolve, dirname, extname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 
@@ -26,7 +26,9 @@ try {
     for (const f of readdirSync(root)) {
         if (statSync(join(root, f)).isFile() && PUBLIC_ROOT_FILES(f)) cpSync(join(root, f), join(stage, f));
     }
-    for (const d of PUBLIC_DIRS) cpSync(join(root, d), join(stage, d), { recursive: true });
+    // images/ 에는 사이트가 쓰는 파일만 공개한다. 수집 도구가 만든 임시 파일(카테고리_검색어_날짜_번호_해시)과 _incoming/ 은 공개하지 않는다.
+    const SCRAPED = /^(anime_|celebrity_|general_)|^_incoming$/i;
+    for (const d of PUBLIC_DIRS) cpSync(join(root, d), join(stage, d), { recursive: true, filter: (src) => !(d === 'images' && SCRAPED.test(basename(src))) });
 
     const files = [];
     (function walk(dir) {
