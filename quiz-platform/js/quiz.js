@@ -40,6 +40,7 @@ async function fetchQuizData() {
 
         var data = await response.json();
         quizTitle = data.quiz.title || '노래 맞추기 퀴즈';
+        quizId = data.quiz.id || quizId;   // 주소가 slug여도 결과 전송에는 실제 id(UUID)를 쓴다
         if (typeof registerPlay === 'function') registerPlay('quiz', data.quiz.id);
 
         // SEO: Update Meta Tags

@@ -196,7 +196,7 @@ async function submitQuiz() {
         try {
             if (media.includes('youtube.com') || media.includes('youtu.be')) {
                 let url = new URL(media);
-                videoId = url.searchParams.get('v') || url.pathname.slice(1);
+                videoId = url.searchParams.get('v') || url.pathname.replace(/^\/(shorts|embed)\//, '/').slice(1);
                 isYoutube = true;
             }
         } catch (e) { }
@@ -210,7 +210,7 @@ async function submitQuiz() {
         });
     }
 
-    if (questions.length < 6) return alert("공개 검수를 위해 최소 6개 이상의 문제가 필요합니다.");
+    if (questions.length < 6 || questions.length > 30) return alert("문제는 6개 이상 30개 이하여야 합니다. (현재 " + questions.length + "개)");
 
     // Fallback thumbnail: If no thumb, use Question 1
     if (!thumb && questions.length > 0) {

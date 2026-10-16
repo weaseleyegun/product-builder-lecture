@@ -41,7 +41,7 @@ async function verifyOwnerOrAdminToken(request, tableName, itemId, supabase, env
     // Check ownership
     const { data: itemData, error: itemError } = await supabase
         .from(tableName)
-        .select('creator_id')
+        .select('creator_id, status')
         .eq('id', itemId)
         .single();
 
@@ -53,8 +53,11 @@ async function verifyOwnerOrAdminToken(request, tableName, itemId, supabase, env
         return { user: null, err: errorResponse('Access denied: not the owner or admin', 403) };
     }
 
-    return { user: data.user, isAdmin: false, err: null };
+    return { user: data.user, isAdmin: false, status: itemData.status, err: null };
 }
+
+// 공개된 콘텐츠의 제목·설명·썸네일은 운영자만 바꿀 수 있다 (검수를 통과한 내용이 사후에 바뀌지 않게). 작성자는 초안일 때만 수정한다.
+const ownerCannotEdit = (v) => (!v.isAdmin && v.status !== 'draft') ? errorResponse('공개된 콘텐츠는 운영자만 수정할 수 있습니다.', 403) : null;
 // ─────────────────────────────────────────────────────────────────────────────
 
 // PUT /api/admin/quiz/:id
@@ -64,8 +67,10 @@ async function handleUpdateQuiz(request, url, supabase, env) {
     const id = url.pathname.split('/').pop();
     if (!id || id === 'quiz') return errorResponse('Quiz ID is required', 400);
 
-    const { err } = await verifyOwnerOrAdminToken(request, 'quizzes', id, supabase, env);
-    if (err) return err;
+    const verified = await verifyOwnerOrAdminToken(request, 'quizzes', id, supabase, env);
+    if (verified.err) return verified.err;
+    const locked = ownerCannotEdit(verified);
+    if (locked) return locked;
 
     try {
         const body = await request.json();
@@ -92,8 +97,10 @@ async function handleUpdateWorldcup(request, url, supabase, env) {
     const id = url.pathname.split('/').pop();
     if (!id || id === 'worldcup') return errorResponse('Worldcup ID is required', 400);
 
-    const { err } = await verifyOwnerOrAdminToken(request, 'worldcups', id, supabase, env);
-    if (err) return err;
+    const verified = await verifyOwnerOrAdminToken(request, 'worldcups', id, supabase, env);
+    if (verified.err) return verified.err;
+    const locked = ownerCannotEdit(verified);
+    if (locked) return locked;
 
     try {
         const body = await request.json();

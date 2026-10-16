@@ -4,15 +4,14 @@
 //   POST /api/user-created-content  {title, description, items:[{name, image_url}]}
 //
 // - 제출물은 항상 '초안(draft)'으로 저장된다. 관리자가 대시보드에서 검수한 뒤에만 공개된다.
-// - DB 작업은 제출자 본인의 JWT로 수행하므로 RLS가 "그 사용자의 권한"으로 적용된다(관리자 계정으로 우회하지 않는다).
-// - 입력은 길이·개수·형식을 모두 검증하고, 한 사용자가 검수 대기 중인 항목은 3개까지만 허용한다.
+// - DB 작업은 제출자 본인의 JWT로 DB 함수(submit_ugc_quiz / submit_ugc_worldcup)를 호출해 수행한다(관리자 계정으로 우회하지 않는다).
+// - 입력은 길이·개수·형식을 모두 검증하고(서버 + DB 함수 이중), 한 사용자가 검수 대기 중인 항목은 3개까지만 허용한다.
 
 import { createClient } from '@supabase/supabase-js';
 import { jsonResponse, errorResponse } from '../helpers/cors.js';
 import { isBlocked, normalizeText, LIMITS } from '../quality/constants.js';
 
 const MAX_BODY_CHARS = 300 * 1024;
-const MAX_PENDING_PER_USER = 3;
 const TITLE = [2, 60];
 const DESC_MAX = 1200;
 const NAME_MAX = LIMITS.textMax;     // 정답/보기/후보 이름
@@ -30,6 +29,7 @@ export function validateUgcQuiz(b) {
     if (!isStr(b.title) || !between(b.title.trim().length, TITLE)) errors.push(`제목은 ${TITLE[0]}~${TITLE[1]}자여야 합니다.`);
     else if (isBlocked(b.title)) errors.push('제목에 사용할 수 없는 표현이 있습니다.');
     if (b.description !== undefined && (!isStr(b.description) || b.description.length > DESC_MAX)) errors.push(`설명은 ${DESC_MAX}자 이하여야 합니다.`);
+    else if (isStr(b.description) && isBlocked(b.description)) errors.push('설명에 사용할 수 없는 표현이 있습니다.');
     const qs = Array.isArray(b.questions) ? b.questions : null;
     if (!qs || !between(qs.length, QUESTIONS)) { errors.push(`문제는 ${QUESTIONS[0]}~${QUESTIONS[1]}개여야 합니다.`); return errors; }
     qs.forEach((q, i) => {
@@ -52,6 +52,7 @@ export function validateUgcWorldcup(b) {
     if (!isStr(b.title) || !between(b.title.trim().length, TITLE)) errors.push(`제목은 ${TITLE[0]}~${TITLE[1]}자여야 합니다.`);
     else if (isBlocked(b.title)) errors.push('제목에 사용할 수 없는 표현이 있습니다.');
     if (b.description !== undefined && (!isStr(b.description) || b.description.length > DESC_MAX)) errors.push(`설명은 ${DESC_MAX}자 이하여야 합니다.`);
+    else if (isStr(b.description) && isBlocked(b.description)) errors.push('설명에 사용할 수 없는 표현이 있습니다.');
     const items = Array.isArray(b.items) ? b.items : null;
     if (!items || !LIMITS.worldcupSizes.includes(items.length)) { errors.push(`후보는 ${LIMITS.worldcupSizes.join('/')}개 중 하나여야 합니다.`); return errors; }
     items.forEach((it, i) => {
@@ -71,14 +72,26 @@ async function readBody(request) {
     try { return { json: JSON.parse(text) }; } catch { return { err: errorResponse('Invalid JSON', 400) }; }
 }
 
-// 공통: 토큰 확인 → 본문 검증 → 사용자 JWT 클라이언트 → 대기 개수 제한 → 초안 저장
-async function submit(request, supabase, env, deps, { table, child, validate, toChildren, idKey }) {
+// DB 함수(submit_ugc_*)가 던지는 오류 메시지 → HTTP 응답
+const RPC_ERRORS = {
+    pending_limit: [429, '검수 대기 중인 항목이 3개 있습니다. 검수가 끝난 뒤 다시 제출해 주세요.'],
+    not_authenticated: [401, '로그인이 필요합니다.'],
+};
+function rpcErrorResponse(error) {
+    const key = String((error && error.message) || '');
+    if (RPC_ERRORS[key]) return jsonResponse({ error: RPC_ERRORS[key][1] }, RPC_ERRORS[key][0]);
+    if (key.startsWith('invalid_')) return jsonResponse({ error: '입력 내용을 확인해 주세요. (' + key + ')' }, 400);
+    return errorResponse('저장에 실패했습니다.', 500);
+}
+
+// 공통: 토큰 확인 → 본문 검증 → (제출자 JWT로) DB 함수 호출.
+// 저장은 DB 함수 하나가 부모+자식을 한 트랜잭션으로 처리하고, 상태·출처·통계 칼럼을 서버 값으로 고정하며, 대기 개수 상한(3개)을 락 아래에서 센다.
+async function submit(request, supabase, env, deps, { rpcName, validate, toArgs, idKey }) {
     const header = request.headers.get('Authorization') || '';
     const token = header.startsWith('Bearer ') ? header.slice(7).trim() : null;
     if (!token) return errorResponse('로그인이 필요합니다.', 401);
     const { data, error } = await supabase.auth.getUser(token);
     if (error || !data || !data.user) return errorResponse('유효하지 않은 토큰입니다.', 401);
-    const user = data.user;
 
     const parsed = await readBody(request);
     if (parsed.err) return parsed.err;
@@ -90,20 +103,8 @@ async function submit(request, supabase, env, deps, { table, child, validate, to
         global: { headers: { Authorization: `Bearer ${t}` } },
         auth: { persistSession: false, autoRefreshToken: false },
     }));
-    const db = makeDb(token);
-
-    const pending = await db.from(table).select('id').eq('creator_id', user.id).eq('status', 'draft').limit(MAX_PENDING_PER_USER);
-    if (pending.error) return errorResponse('Failed to check pending submissions', 500);
-    if ((pending.data || []).length >= MAX_PENDING_PER_USER) return jsonResponse({ error: `검수 대기 중인 항목이 ${MAX_PENDING_PER_USER}개 있습니다. 검수가 끝난 뒤 다시 제출해 주세요.` }, 429);
-
-    const parent = await db.from(table)
-        .insert([{ title: body.title.trim(), description: isStr(body.description) ? body.description : '', creator_id: user.id, status: 'draft', source: 'ugc' }])
-        .select('id');
-    if (parent.error || !parent.data || !parent.data[0]) return errorResponse('저장에 실패했습니다.', 500);
-    const id = parent.data[0].id;
-
-    const kids = await db.from(child).insert(toChildren(body, id));
-    if (kids.error) return errorResponse('저장에 실패했습니다. 관리자에게 문의해 주세요.', 500);
+    const { data: id, error: rpcError } = await makeDb(token).rpc(rpcName, toArgs(body));
+    if (rpcError || !id) return rpcErrorResponse(rpcError);
 
     return jsonResponse({ success: true, [idKey]: id, status: 'draft', message: '제출되었습니다. 관리자 검수 후 공개됩니다.' }, 201);
 }
@@ -112,28 +113,28 @@ const LETTERS = ['A', 'B', 'C', 'D'];
 
 export function handleUserCreatedQuiz(request, supabase, env, deps = {}) {
     return submit(request, supabase, env, deps, {
-        table: 'quizzes', child: 'quiz_questions', idKey: 'quizId', validate: validateUgcQuiz,
-        toChildren: (b, id) => b.questions.map((q, idx) => {
-            const answer = q.answer.trim();
-            const ordered = q.wrongs.map((w) => w.trim());
-            const pos = idx % 4;                       // 정답 위치는 문제 번호로 정해 고르게 분산한다
-            ordered.splice(pos, 0, answer);
-            return {
-                quiz_id: id,
-                video_id: q.media_id,
-                start_time: 0,
-                end_time: 15,
-                answer,
-                options: ordered.map((text, i) => ({ id: LETTERS[i], text, isCorrect: i === pos })),
-                is_embeddable: true,
-            };
+        rpcName: 'submit_ugc_quiz', idKey: 'quizId', validate: validateUgcQuiz,
+        toArgs: (b) => ({
+            p_title: b.title.trim(),
+            p_description: isStr(b.description) ? b.description : '',
+            p_questions: b.questions.map((q, idx) => {
+                const answer = q.answer.trim();
+                const ordered = q.wrongs.map((w) => w.trim());
+                const pos = idx % 4;                       // 정답 위치는 문제 번호로 정해 고르게 분산한다
+                ordered.splice(pos, 0, answer);
+                return { video_id: q.media_id, answer, options: ordered.map((text, i) => ({ id: LETTERS[i], text, isCorrect: i === pos })) };
+            }),
         }),
     });
 }
 
 export function handleUserCreatedContent(request, supabase, env, deps = {}) {
     return submit(request, supabase, env, deps, {
-        table: 'worldcups', child: 'worldcup_items', idKey: 'worldcupId', validate: validateUgcWorldcup,
-        toChildren: (b, id) => b.items.map((it) => ({ worldcup_id: id, name: it.name.trim(), image_url: it.image_url })),
+        rpcName: 'submit_ugc_worldcup', idKey: 'worldcupId', validate: validateUgcWorldcup,
+        toArgs: (b) => ({
+            p_title: b.title.trim(),
+            p_description: isStr(b.description) ? b.description : '',
+            p_items: b.items.map((it) => ({ name: it.name.trim(), image_url: it.image_url })),
+        }),
     });
 }

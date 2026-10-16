@@ -74,7 +74,8 @@ async function createDraft(request, db, user) {
     const source = body.source === 'curated' ? 'curated' : 'daily';
 
     // 검수 대기열 폭주 방지
-    const pending = await db.from(kind.table).select('id').eq('status', 'draft').limit(MAX_PENDING_DRAFTS);
+    // 회원 제출(ugc)은 사용자별 상한이 따로 있으므로 운영 초안 대기열 계산에서 제외한다 (스팸으로 생성기가 막히지 않게)
+    const pending = await db.from(kind.table).select('id').eq('status', 'draft').neq('source', 'ugc').limit(MAX_PENDING_DRAFTS);
     if (pending.error) return errorResponse(pending.error.message, 500);
     if ((pending.data || []).length >= MAX_PENDING_DRAFTS) return errorResponse('검수 대기 중인 초안이 너무 많습니다. 먼저 처리해 주세요.', 429);
 

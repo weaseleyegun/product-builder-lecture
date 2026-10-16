@@ -141,6 +141,16 @@ window.submitCreation = async function () {
         items: items
     };
 
+    // 파일 업로드(data: 주소)는 서버가 받지 않는다 — 이미지 저장소가 준비되기 전까지 제출할 수 없다
+    if (items.some(function (it) { return /^data:/i.test(it.image_url); })) {
+        alert('이미지 파일 업로드로 만든 월드컵은 아직 제출할 수 없습니다. (이미지 업로드 기능 준비 중)');
+        return;
+    }
+    if ([8, 16, 32, 64].indexOf(items.length) === -1) {
+        alert('후보는 8, 16, 32, 64개 중 하나여야 합니다. (현재 ' + items.length + '개)');
+        return;
+    }
+
     try {
         const token = sessionStorage.getItem('sb_access_token');
         var response = await fetch(API_BASE_URL + '/api/user-created-content', {
@@ -157,7 +167,8 @@ window.submitCreation = async function () {
             window.location.href = 'index.html';
         } else {
             var errorText = await response.text();
-            alert('저장에 실패했습니다. 관리자에게 문의하세요.\n\n오류: ' + errorText);
+            try { errorText = JSON.parse(errorText).error || errorText; } catch (e) { /* 텍스트 그대로 */ }
+            alert('저장에 실패했습니다.\n\n' + errorText);
         }
     } catch (e) {
         console.error('Submission failed', e);

@@ -1,7 +1,7 @@
 // quiz.js - Quiz API route handlers
 
 import { jsonResponse, errorResponse } from '../helpers/cors.js';
-import { parsePaging, withThumbUrl, childCount, stripKey } from '../helpers/list.js';
+import { parsePaging, withThumbUrl, childCount, stripKey, UUID_RE } from '../helpers/list.js';
 
 // GET /api/daily-quiz?sort=rank|latest|correct_asc|correct_desc&limit=100&offset=0  (published, 문제가 1개 이상인 퀴즈만)
 async function handleDailyQuiz(url, supabase) {
@@ -84,7 +84,7 @@ async function handleQuizResult(request, supabase) {
         const body = await request.json();
         const { quizId, correctCount, incorrectCount } = body;
 
-        if (!quizId) return errorResponse("quizId is required", 400);
+        if (typeof quizId !== 'string' || !UUID_RE.test(quizId)) return errorResponse("quizId must be a uuid", 400);
 
         // Fetch current stats
         const { data: quiz, error: fetchErr } = await supabase
@@ -93,7 +93,7 @@ async function handleQuizResult(request, supabase) {
             .eq('id', quizId)
             .single();
 
-        if (fetchErr) return errorResponse(fetchErr.message);
+        if (fetchErr) return fetchErr.code === 'PGRST116' ? errorResponse('Quiz not found', 404) : errorResponse('Failed to load quiz stats', 503);
 
         // Try RPC first for security definitions
         const { error: rpcErr } = await supabase.rpc('update_quiz_stats', {
