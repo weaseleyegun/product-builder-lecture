@@ -22,6 +22,8 @@ export function makeFake({ rows = {}, rpc = {}, user, insertReturns = {}, insert
             select(c) { ops.push(['select', c]); selects.push({ table, columns: c }); log.push(`${table}.select`); return q; },
             eq(c, v) { ops.push(['eq', c, v]); log.push(`${table}.eq:${c}=${v}`); return q; },
             neq(c, v) { ops.push(['neq', c, v]); log.push(`${table}.neq:${c}=${v}`); return q; },
+            not(c, op, v) { ops.push(['not', c, op, v]); log.push(`${table}.not:${c}`); return q; },
+            in(c, vals) { ops.push(['in', c, vals]); log.push(`${table}.in:${c}`); return q; },
             order(c) { log.push(`${table}.order:${c}`); return q; },
             limit(n) { log.push(`${table}.limit:${n}`); return q; },
             range(a, b) { log.push(`${table}.range:${a}-${b}`); return q; },
@@ -38,7 +40,9 @@ export function makeFake({ rows = {}, rpc = {}, user, insertReturns = {}, insert
             }
             if (mode === 'update' && updateErrors[table]) return { data: null, error: updateErrors[table] };
             let data = rows[table] || [];
-            for (const [op, c, v] of ops) {
+            for (const [op, c, v, w] of ops) {
+                if (op === 'not' && v === 'is') data = data.filter((r) => r[c] !== w && r[c] !== undefined);
+                if (op === 'in') data = data.filter((r) => v.includes(r[c]));
                 if (op === 'eq') data = data.filter((r) => r[c] === v);
                 if (op === 'neq') data = data.filter((r) => r[c] !== v);
             }

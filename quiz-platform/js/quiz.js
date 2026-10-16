@@ -1,4 +1,4 @@
-﻿// quiz.js - Handle YouTube IFrame API and Quiz game logic
+﻿﻿// quiz.js - Handle YouTube IFrame API and Quiz game logic
 
 // Read quiz ID from URL
 var urlParams = new URLSearchParams(window.location.search);
@@ -547,6 +547,22 @@ function showResult() {
         }).catch(function (e) { console.warn('결과 전송 실패:', e); });
     }
 }
+
+// 결과 공유: 지원하는 기기에서는 공유 창, 아니면 링크 복사 (퀴즈 주소만 공유한다)
+window.shareResult = function () {
+    var total = correctCount + incorrectCount;
+    var url = location.origin + '/quiz-play?id=' + encodeURIComponent(rawQuizId || '');
+    var text = '「' + quizTitle + '」 ' + total + '문제 중 ' + correctCount + '문제를 맞혔어요! 도전해 보세요.';
+    var feedback = document.getElementById('share-feedback');
+    var done = function (msg) { if (feedback) feedback.textContent = msg; };
+    if (navigator.share) {
+        navigator.share({ title: quizTitle, text: text, url: url }).catch(function () { /* 사용자가 취소 */ });
+    } else if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text + ' ' + url).then(function () { done('결과와 링크를 복사했어요!'); }, function () { done('복사에 실패했어요. 주소창의 링크를 공유해 주세요.'); });
+    } else {
+        done('주소창의 링크를 복사해 공유해 주세요.');
+    }
+};
 
 // Audio controller global functions
 window.playAudio = function () {

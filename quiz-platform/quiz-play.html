@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+﻿﻿<!DOCTYPE html>
 <html lang="ko" data-theme="dark">
 
 <head>
@@ -348,6 +348,10 @@
                         <button class="btn-primary large" onclick="location.reload()">다시 하기</button>
                         <button class="btn-secondary large" onclick="location.href='index.html'">메인으로</button>
                     </div>
+                    <div style="margin-top: 1rem;">
+                        <button id="share-btn" class="btn-secondary large" onclick="shareResult()">📤 결과 공유하기</button>
+                        <p id="share-feedback" style="margin-top: .6rem; font-size: .95rem; color: var(--primary-color);"></p>
+                    </div>
                 </div>
             </div>
             <!-- Right Side Ad -->
@@ -363,7 +367,7 @@
     <script src="js/utils/config.js"></script>
     <script src="js/utils/theme.js"></script>
     <script src="js/multiplayer.js"></script>
-    <script src="js/quiz.js?v=20261016b"></script>
+    <script src="js/quiz.js?v=20261016c"></script>
     <script>
         function setInputMode(mode) {
             if (typeof currentMode !== 'undefined') {

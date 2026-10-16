@@ -9,6 +9,7 @@ import { handleSitemap } from './helpers/sitemap.js';
 import { handlePlayStart } from './routes/play.js';
 import { handleThumbnail } from './routes/thumb.js';
 import { handleDrafts } from './routes/drafts.js';
+import { handleDailyPick } from './routes/daily.js';
 
 export default {
     async fetch(request, env, ctx) {
@@ -45,6 +46,9 @@ export default {
         }
         if (path === '/api/play-start' && method === 'POST') {
             return handlePlayStart(request, supabase);
+        }
+        if (path === '/api/daily-pick' && method === 'GET') {
+            return handleDailyPick(supabase);
         }
         if (path === '/api/daily-quiz' && method === 'GET') {
             return handleDailyQuiz(url, supabase);
