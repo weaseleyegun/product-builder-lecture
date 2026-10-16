@@ -9,7 +9,7 @@
 
     var ZOOM_SCALE = [4, 2.4, 1.5, 1];
     var BLUR_PX = [26, 13, 5, 0];
-    var MOSAIC_CELLS = [8, 16, 32, 0];  // 가로 칸 수 (0 = 원본)
+    var MOSAIC_CELLS = [12, 24, 48, 0]; // 가로 칸 수 (0 = 원본)
     var SILHOUETTE_BRIGHTNESS = [0, 0.2, 0.55, 1];
     var MASK_SCALE = [1, 0.6, 0.3, 0];
 
