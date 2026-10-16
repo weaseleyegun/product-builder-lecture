@@ -105,6 +105,56 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 
+// ── 이미지 업로드 헬퍼 ─────────────────────────────────────
+function userIdFromToken(token) {
+    try {
+        var payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+        return typeof payload.sub === 'string' ? payload.sub : null;
+    } catch (e) { return null; }
+}
+
+// 긴 변이 maxSide 이하가 되도록 줄여 JPEG로 다시 인코딩한다 (용량 제한 1MB, 메타데이터 제거, GIF는 첫 프레임)
+function resizeToJpeg(file, maxSide) {
+    return new Promise(function (resolve, reject) {
+        var url = URL.createObjectURL(file);
+        var img = new Image();
+        img.onload = function () {
+            var scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+            var canvas = document.createElement('canvas');
+            canvas.width = Math.max(1, Math.round(img.width * scale));
+            canvas.height = Math.max(1, Math.round(img.height * scale));
+            var ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            URL.revokeObjectURL(url);
+            canvas.toBlob(function (blob) {
+                if (!blob) return reject(new Error('이미지를 변환하지 못했습니다.'));
+                if (blob.size > 1024 * 1024) return reject(new Error('이미지가 너무 큽니다. 더 작은 이미지를 사용해 주세요.'));
+                resolve(blob);
+            }, 'image/jpeg', 0.85);
+        };
+        img.onerror = function () { URL.revokeObjectURL(url); reject(new Error('이미지를 읽을 수 없습니다.')); };
+        img.src = url;
+    });
+}
+
+// Supabase Storage(ugc-images)에 내 폴더(<user id>/)로 업로드하고 공개 https 주소를 돌려준다
+async function uploadImage(cfg, token, uid, blob) {
+    var name = uid + '/' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10) + '.jpg';
+    var res = await fetch(cfg.SUPABASE_URL + '/storage/v1/object/ugc-images/' + name, {
+        method: 'POST',
+        headers: { apikey: cfg.SUPABASE_ANON_KEY, Authorization: 'Bearer ' + token, 'Content-Type': 'image/jpeg', 'x-upsert': 'false' },
+        body: blob
+    });
+    if (!res.ok) {
+        var msg = '';
+        try { msg = (await res.json()).message || ''; } catch (e) { /* 본문 없음 */ }
+        throw new Error(msg || ('저장소 오류 ' + res.status));
+    }
+    return cfg.SUPABASE_URL + '/storage/v1/object/public/ugc-images/' + name;
+}
+
 // Submit creation to API
 window.submitCreation = async function () {
     var title = document.getElementById('create-title').value;
@@ -122,7 +172,8 @@ window.submitCreation = async function () {
 
         return {
             name: itemName,
-            image_url: item.url
+            image_url: item.url,
+            _file: item.file
         };
     });
 
@@ -141,15 +192,39 @@ window.submitCreation = async function () {
         items: items
     };
 
-    // 파일 업로드(data: 주소)는 서버가 받지 않는다 — 이미지 저장소가 준비되기 전까지 제출할 수 없다
-    if (items.some(function (it) { return /^data:/i.test(it.image_url); })) {
-        alert('이미지 파일 업로드로 만든 월드컵은 아직 제출할 수 없습니다. (이미지 업로드 기능 준비 중)');
-        return;
-    }
     if ([8, 16, 32, 64].indexOf(items.length) === -1) {
         alert('후보는 8, 16, 32, 64개 중 하나여야 합니다. (현재 ' + items.length + '개)');
         return;
     }
+
+    // 이미지 파일은 먼저 이미지 저장소(Supabase Storage)에 올리고, 서버에는 https 주소만 보낸다
+    var submitBtn = document.querySelector('[onclick="submitCreation()"]');
+    var originalLabel = submitBtn ? submitBtn.textContent : '';
+    var setProgress = function (text) { if (submitBtn) { submitBtn.textContent = text; submitBtn.disabled = !!text; } };
+    try {
+        var needUpload = items.some(function (it) { return /^data:/i.test(it.image_url); });
+        if (needUpload) {
+            var token0 = sessionStorage.getItem('sb_access_token');
+            if (!token0) { alert('로그인이 필요합니다.'); return; }
+            var cfg = await (await fetch(API_BASE_URL + '/api/config')).json();
+            var uid = userIdFromToken(token0);
+            if (!uid) { alert('로그인 정보가 올바르지 않습니다. 다시 로그인해 주세요.'); return; }
+            for (var i = 0; i < items.length; i++) {
+                if (!/^data:/i.test(items[i].image_url)) continue;
+                setProgress('이미지 업로드 중... (' + (i + 1) + '/' + items.length + ')');
+                var blob = await resizeToJpeg(items[i]._file, 1000);
+                items[i].image_url = await uploadImage(cfg, token0, uid, blob);
+            }
+        }
+    } catch (e) {
+        setProgress('');
+        if (submitBtn) submitBtn.textContent = originalLabel;
+        alert('이미지 업로드에 실패했습니다: ' + (e && e.message ? e.message : e));
+        return;
+    }
+    setProgress('');
+    if (submitBtn) submitBtn.textContent = originalLabel;
+    items = items.map(function (it) { return { name: it.name, image_url: it.image_url }; });
 
     try {
         const token = sessionStorage.getItem('sb_access_token');
