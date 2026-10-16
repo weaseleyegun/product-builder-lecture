@@ -13,3 +13,16 @@ create policy "ugc images: upload to own folder" on storage.objects for insert t
     and (select count(*) from storage.objects o
           where o.bucket_id = 'ugc-images' and (storage.foldername(o.name))[1] = (select auth.uid())::text) < 130
   );
+
+-- (2026-10-17) 관리자는 사용자당 130개 상한에서 제외 — 관리자가 이미지 퀴즈 이미지를 많이 올린다
+drop policy if exists "ugc images: upload to own folder" on storage.objects;
+create policy "ugc images: upload to own folder" on storage.objects for insert to authenticated
+  with check (
+    bucket_id = 'ugc-images'
+    and (storage.foldername(name))[1] = (select auth.uid())::text
+    and (
+      (select auth.email()) = 'agent@quizrank.com'
+      or (select count(*) from storage.objects o
+            where o.bucket_id = 'ugc-images' and (storage.foldername(o.name))[1] = (select auth.uid())::text) < 130
+    )
+  );

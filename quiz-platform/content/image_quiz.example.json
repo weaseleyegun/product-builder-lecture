@@ -1,0 +1,13 @@
+{
+  "title": "애니 캐릭터 줌 아웃 퀴즈 — 눈만 보고 맞혀 보세요",
+  "description": "여기에 직접 쓴 설명을 300자 이상 1200자 이하로 적습니다. 어떤 방식으로 문제가 공개되는지(처음에는 사진의 일부만 크게 확대되어 보이고, 힌트를 볼 때마다 점점 전체가 보이며 힌트를 쓸수록 점수가 줄어드는 방식), 어떤 작품과 캐릭터를 다루는지, 몇 문제로 구성되어 있는지 같은 내용을 사실대로 씁니다. 다른 퀴즈의 설명을 복사하지 말고 이 퀴즈에만 해당하는 내용으로 새로 작성해 주세요. 이 예시 문장은 형식을 보여 주기 위한 것이라 그대로 제출하지 않습니다.",
+  "revealMode": "zoom",
+  "questions": [
+    { "file": "images/character-01.png", "answer": "캐릭터 이름 1", "wrongs": ["보기 A", "보기 B", "보기 C"], "reveal": { "x": 55, "y": 35 } },
+    { "file": "images/character-02.png", "answer": "캐릭터 이름 2", "reveal": { "mode": "mosaic" } },
+    { "file": "images/character-03.png", "answer": "캐릭터 이름 3", "reveal": { "mode": "mask", "x": 50, "y": 40, "w": 60, "h": 20 } },
+    { "url": "https://upload.wikimedia.org/예시/이미지주소.jpg", "answer": "캐릭터 이름 4" },
+    { "file": "images/character-05.png", "answer": "캐릭터 이름 5" },
+    { "file": "images/character-06.png", "answer": "캐릭터 이름 6" }
+  ]
+}

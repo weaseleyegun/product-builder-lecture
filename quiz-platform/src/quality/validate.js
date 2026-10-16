@@ -7,7 +7,7 @@
 //
 // 모든 필드는 신뢰하지 않는다: 타입·길이·범위를 먼저 확인하고, 금지어는 NFKC 정규화(자모 분해/제로폭 문자 회피 방지) 후 검사한다.
 
-import { normalizeText, isBlocked, GENERIC_WORDS, ALLOWED_IMAGE_HOSTS, LIMITS } from './constants.js';
+import { normalizeText, isBlocked, GENERIC_WORDS, ALLOWED_IMAGE_HOSTS, LIMITS, REVEAL_MODES } from './constants.js';
 
 export const normalize = normalizeText;
 
@@ -46,10 +46,22 @@ function checkText(d, ctx, errors) {
     }
 }
 
+// 문제별 공개 설정: { mode?, x?, y?, w?, h? } — 모두 0~100(%) 숫자, 정해진 키만 허용
+function checkReveal(r, tag, errors) {
+    if (r === undefined || r === null) return;
+    if (typeof r !== 'object' || Array.isArray(r)) { errors.push(`${tag} reveal: 객체여야 함`); return; }
+    for (const [k, v] of Object.entries(r)) {
+        if (k === 'mode') { if (!REVEAL_MODES.includes(v)) errors.push(`${tag} reveal.mode: ${REVEAL_MODES.join('/')} 중 하나`); }
+        else if (['x', 'y', 'w', 'h'].includes(k)) { if (typeof v !== 'number' || !(v >= 0 && v <= 100)) errors.push(`${tag} reveal.${k}: 0~100 숫자`); }
+        else errors.push(`${tag} reveal: 알 수 없는 키 ${k}`);
+    }
+}
+
 export function validateQuizDraft(d, ctx = {}) {
     const errors = [], warnings = [];
     if (!d || typeof d !== 'object') return { ok: false, errors: ['draft: 객체가 아님'], warnings };
     checkText(d, ctx, errors);
+    if (d.revealMode !== undefined && d.revealMode !== null && !REVEAL_MODES.includes(d.revealMode)) errors.push(`revealMode: ${REVEAL_MODES.join('/')} 중 하나`);
 
     const qs = Array.isArray(d.questions) ? d.questions : [];
     if (!between(qs.length, LIMITS.questions)) errors.push(`questions: ${LIMITS.questions[0]}~${LIMITS.questions[1]}개`);
@@ -96,6 +108,9 @@ export function validateQuizDraft(d, ctx = {}) {
                 }
             }
         }
+
+        checkReveal(q.reveal, tag, errors);
+        if (q.reveal && !hasMedia) errors.push(`${tag} reveal: 이미지 문제에만 쓸 수 있음`);
 
         // 질문 문장 / 해설
         if (q.questionText !== undefined && q.questionText !== null) {

@@ -94,7 +94,7 @@ async function createDraft(request, db, user) {
 
     const d = body.draft;
     const parent = await db.from(kind.table)
-        .insert([{ title: d.title, description: d.description, creator_id: user.id, status: 'draft', source }])
+        .insert([{ title: d.title, description: d.description, creator_id: user.id, status: 'draft', source, ...(kindName === 'quiz' && d.revealMode ? { reveal_mode: d.revealMode } : {}) }])
         .select('id');
     if (parent.error || !parent.data || !parent.data[0]) return errorResponse('DB insert failed: ' + (parent.error ? parent.error.message : 'no row'), 500);
     const id = parent.data[0].id;
@@ -112,6 +112,7 @@ async function createDraft(request, db, user) {
                 question_text: typeof q.questionText === 'string' && q.questionText.trim() ? q.questionText.trim() : null,
                 explanation: typeof q.explanation === 'string' && q.explanation.trim() ? q.explanation.trim() : null,
                 is_embeddable: true,
+                ...(q.reveal && media ? { reveal: q.reveal } : {}),
             };
         })
         : d.items.map((it) => ({ worldcup_id: id, name: it.name, image_url: d.textOnly === true ? null : it.image_url }));

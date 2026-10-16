@@ -31,10 +31,14 @@ const GENERIC_LIST = [
 ];
 export const GENERIC_WORDS = new Set(GENERIC_LIST.map(normalizeText));
 
+// 이미지 퀴즈의 단계별 공개 방식 (js/utils/reveal.js 와 같은 목록)
+export const REVEAL_MODES = ['zoom', 'blur', 'mosaic', 'silhouette', 'mask'];
+
 // 이미지로 허용하는 호스트. 새 출처를 쓰려면 라이선스/핫링크 허용 여부를 확인한 뒤 추가한다.
 export const ALLOWED_IMAGE_HOSTS = [
     'i.ytimg.com', 'upload.wikimedia.org', 'images.unsplash.com', 'images.dog.ceo',
     'cdn.myanimelist.net', 'myanimelist.net',
+    'rdpdwtkhqizlcpeergrz.supabase.co',   // 우리 이미지 저장소(ugc-images) — 관리자가 올린 이미지
 ];
 
 export const LIMITS = {

@@ -41,6 +41,7 @@ async function fetchQuizData() {
         var data = await response.json();
         quizTitle = data.quiz.title || '노래 맞추기 퀴즈';
         quizId = data.quiz.id || quizId;   // 주소가 slug여도 결과 전송에는 실제 id(UUID)를 쓴다
+        quizRevealMode = data.quiz.reveal_mode || null;   // 이미지 퀴즈 기본 공개 방식(줌/블러/모자이크/실루엣/가림)
         if (typeof registerPlay === 'function') registerPlay('quiz', data.quiz.id);
 
         // SEO: Update Meta Tags
@@ -93,6 +94,7 @@ async function fetchQuizData() {
                 videoId: q.video_id || null,
                 questionText: q.question_text || null,
                 explanation: q.explanation || null,
+                reveal: q.reveal || null,
                 isText: !q.video_id && !!q.question_text,
                 isYear: !!q.video_id && /^\d{4}$/.test(String(q.answer || '').trim()),
                 startSeconds: q.start_time,
@@ -170,6 +172,146 @@ window.onYouTubeIframeAPIReady = function () {
     console.log('YouTube API Ready');
 };
 
+// ── 이미지 퀴즈 단계별 공개 (줌·블러·모자이크·실루엣·일부 가림) ─────────────────
+var quizRevealMode = null;
+var revealCfg = null;
+var revealStage = 0;
+
+function ensureRevealFrame(imagePlayer) {
+    var frame = document.getElementById('image-frame');
+    if (!frame) {
+        frame = document.createElement('div');
+        frame.id = 'image-frame';
+        frame.style.cssText = 'position: relative; overflow: hidden; border-radius: 12px; margin: 0 auto; width: 100%; max-width: 100%; display: none;';
+        imagePlayer.parentNode.insertBefore(frame, imagePlayer);
+        frame.appendChild(imagePlayer);
+        var mask = document.createElement('div');
+        mask.id = 'image-mask';
+        mask.style.cssText = 'position: absolute; background: #000; display: none; pointer-events: none; border-radius: 6px;';
+        frame.appendChild(mask);
+        var canvas = document.createElement('canvas');
+        canvas.id = 'image-mosaic';
+        canvas.style.cssText = 'display: none; width: 100%; max-height: 400px; object-fit: contain; margin: 0 auto;';
+        frame.appendChild(canvas);
+    }
+    return frame;
+}
+
+function drawMosaic(canvas, img, cells) {
+    var w = img.naturalWidth, h = img.naturalHeight;
+    if (!w || !h) return false;
+    var cw = 600, ch = Math.max(1, Math.round(600 * h / w));
+    canvas.width = cw;
+    canvas.height = ch;
+    var small = document.createElement('canvas');
+    small.width = cells;
+    small.height = Math.max(1, Math.round(cells * h / w));
+    small.getContext('2d').drawImage(img, 0, 0, small.width, small.height);
+    var ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(small, 0, 0, small.width, small.height, 0, 0, cw, ch);
+    return true;
+}
+
+function applyRevealStage() {
+    var img = document.getElementById('image-player');
+    var mask = document.getElementById('image-mask');
+    var canvas = document.getElementById('image-mosaic');
+    if (!img || !mask || !canvas) return;
+    var st = Reveal.styleFor(revealCfg, revealStage);
+    img.style.transition = 'transform 0.5s ease, filter 0.5s ease';
+    img.style.transformOrigin = st.transformOrigin;
+    img.style.transform = st.transform;
+    img.style.filter = st.filter;
+    if (st.mask) {
+        mask.style.display = 'block';
+        mask.style.left = (st.mask.x - st.mask.w / 2) + '%';
+        mask.style.top = (st.mask.y - st.mask.h / 2) + '%';
+        mask.style.width = st.mask.w + '%';
+        mask.style.height = st.mask.h + '%';
+    } else {
+        mask.style.display = 'none';
+    }
+    if (st.mosaicCells > 0 && drawMosaic(canvas, img, st.mosaicCells)) {
+        canvas.style.display = 'block';
+        img.style.display = 'none';
+    } else {
+        canvas.style.display = 'none';
+        if (img.dataset.active === '1') img.style.display = 'block';
+    }
+}
+
+function updateHintButton() {
+    var btn = document.getElementById('hint-btn');
+    if (!btn) return;
+    var cost = Reveal.nextHintCost(revealStage);
+    btn.textContent = cost > 0 ? '💡 힌트 보기 (-' + cost + '점)' : '힌트를 모두 사용했어요';
+    btn.disabled = cost === 0;
+}
+
+function ensureHintButton() {
+    var btn = document.getElementById('hint-btn');
+    if (!btn) {
+        btn = document.createElement('button');
+        btn.id = 'hint-btn';
+        btn.className = 'btn-secondary';
+        btn.style.cssText = 'display: none; margin: 0.8rem auto 0; padding: 0.5rem 1.5rem;';
+        btn.onclick = function () {
+            if (!revealCfg || Reveal.nextHintCost(revealStage) === 0) return;
+            revealStage++;
+            applyRevealStage();
+            updateHintButton();
+        };
+        var options = document.getElementById('options-container');
+        options.parentNode.insertBefore(btn, options);
+    }
+    return btn;
+}
+
+function resetRevealUI() {
+    revealCfg = null;
+    revealStage = 0;
+    var frame = document.getElementById('image-frame');
+    if (frame) {
+        frame.style.display = 'none';
+        document.getElementById('image-mask').style.display = 'none';
+        document.getElementById('image-mosaic').style.display = 'none';
+    }
+    var img = document.getElementById('image-player');
+    if (img) { img.style.transform = 'none'; img.style.filter = 'none'; img.dataset.active = '0'; }
+    var btn = document.getElementById('hint-btn');
+    if (btn) btn.style.display = 'none';
+}
+
+function setupImageQuestion(imagePlayer, question) {
+    imagePlayer.style.display = 'block';
+    imagePlayer.dataset.active = '1';
+    imagePlayer.onload = function () { if (revealCfg && revealStage < Reveal.FULL) applyRevealStage(); };
+    imagePlayer.src = question.videoId;
+    var frame = ensureRevealFrame(imagePlayer);
+    frame.style.display = 'block';
+    revealCfg = (typeof Reveal !== 'undefined') ? Reveal.normalize(quizRevealMode, question.reveal) : null;
+    revealStage = 0;
+    var btn = ensureHintButton();
+    if (revealCfg) {
+        applyRevealStage();
+        btn.style.display = 'block';
+        updateHintButton();
+    } else {
+        imagePlayer.style.filter = 'none';
+        btn.style.display = 'none';
+    }
+}
+
+// 정답을 고른 뒤: 완전 공개, 힌트 버튼 숨김
+function finishReveal() {
+    if (!revealCfg) return;
+    revealStage = Reveal.FULL;
+    applyRevealStage();
+    var btn = document.getElementById('hint-btn');
+    if (btn) btn.style.display = 'none';
+}
+
 // Display a quiz question and set up the YouTube player
 function loadQuestion(index) {
     if (typeof resetMultiplayerRound === 'function') resetMultiplayerRound();
@@ -210,6 +352,7 @@ function loadQuestion(index) {
     var mediaControls = document.querySelector('.media-controls');
 
     if (playerDiv) {
+        resetRevealUI();
         if (!imagePlayer) {
             imagePlayer = document.createElement('img');
             imagePlayer.id = 'image-player';
@@ -224,9 +367,7 @@ function loadQuestion(index) {
         } else if (isImage) {
             playerDiv.style.display = 'none';
             imagePlayer.style.display = 'block';
-            imagePlayer.src = question.videoId;
-            imagePlayer.style.filter = 'none'; // Blur removed at user request
-            imagePlayer.style.transition = 'filter 0.5s ease';
+            setupImageQuestion(imagePlayer, question);
             if (mediaControls) mediaControls.style.display = 'none';
         } else {
             playerDiv.style.display = 'block';
@@ -269,7 +410,7 @@ function loadQuestion(index) {
     }
 
     // Load or cue YouTube video (텍스트 문제는 재생할 미디어가 없다)
-    if (isText) {
+    if (isText || isImage) {   // 텍스트·이미지 문제에는 YouTube 플레이어를 만들거나 불러오지 않는다
         if (player && typeof player.stopVideo === 'function') player.stopVideo();
         clearTimeout(playTimer);
     } else if (!player) {
@@ -343,7 +484,7 @@ function onPlayerStateChange(event) {
 // Common logic after user answers (either multiple choice or subjective)
 function showAnswerResult(isCorrect) {
     if (isCorrect) {
-        score += 100;
+        score += revealCfg ? Reveal.pointsFor(revealStage) : 100;
         document.getElementById('score-display').innerText = 'Score: ' + score;
     }
 
@@ -358,6 +499,7 @@ function showAnswerResult(isCorrect) {
 
     if (isImage && imagePlayer) {
         imagePlayer.style.filter = 'none';
+        finishReveal();
     } else if (playerDiv && !isText) {
         playerDiv.style.opacity = '1';
         playerDiv.style.filter = 'none';

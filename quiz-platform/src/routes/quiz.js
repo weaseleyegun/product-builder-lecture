@@ -46,7 +46,7 @@ async function handleQuizPlay(url, supabase) {
 
     // Fetch quiz info (Try ID first, then slug)
     // thumbnail_data(base64)는 읽지 않는다 — 필요하면 /api/thumb 로 따로 받는다
-    let quizQuery = supabase.from('quizzes').select('id, slug, title, description, thumbnail_url, has_thumbnail_data, play_count, rank, correct_rate, incorrect_rate, game_count, correct_count, incorrect_count, creator_id, created_at, status, source').eq('status', 'published');
+    let quizQuery = supabase.from('quizzes').select('id, slug, title, description, thumbnail_url, has_thumbnail_data, play_count, rank, correct_rate, incorrect_rate, game_count, correct_count, incorrect_count, creator_id, created_at, status, source, reveal_mode').eq('status', 'published');
 
     if (quizId.length === 36 && quizId.includes('-')) { // Likely UUID
         quizQuery = quizQuery.eq('id', quizId);
@@ -65,7 +65,7 @@ async function handleQuizPlay(url, supabase) {
     // Fetch only embeddable questions for this quiz
     const { data: questions, error: questionsError } = await supabase
         .from('quiz_questions')
-        .select('id, video_id, start_time, end_time, answer, options, question_text, explanation')
+        .select('id, video_id, start_time, end_time, answer, options, question_text, explanation, reveal')
         .eq('quiz_id', actualId)
         .neq('is_embeddable', false);
 
