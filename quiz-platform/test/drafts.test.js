@@ -221,7 +221,7 @@ test('draft list includes review samples: quiz clips and worldcup images', async
     };
     const { drafts } = await (await run('GET', '/api/admin/drafts', undefined, { db: { rows } })).res.json();
     const quiz = drafts.find((d) => d.kind === 'quiz'), wc = drafts.find((d) => d.kind === 'worldcup');
-    assert.deepStrictEqual(quiz.samples[0], { answer: 'a', videoId: 'dQw4w9WgXcQ', startTime: 5 });
+    assert.deepStrictEqual(quiz.samples[0], { answer: 'a', videoId: 'dQw4w9WgXcQ', startTime: 5, reveal: null });
     assert.deepStrictEqual(wc.samples[0], { name: 'n1', image_url: 'https://i.ytimg.com/a.jpg' });
     assert.deepStrictEqual(quiz.preview, ['a', 'b']);
 });
@@ -258,11 +258,20 @@ test('media question still stores its clip and a null question_text', async () =
 test('draft list samples include question text for text questions', async () => {
     const rows = { quizzes: [{ id: QID, status: 'draft', title: 'Q', description: 'd', source: 'curated', created_at: 'x', quiz_questions: [{ answer: '오는', video_id: null, start_time: 0, question_text: '가는 말이 고와야 ( ) 말이 곱다' }] }] };
     const { drafts } = await (await run('GET', '/api/admin/drafts', undefined, { db: { rows } })).res.json();
-    assert.deepStrictEqual(drafts[0].samples[0], { answer: '오는', videoId: null, startTime: 0, questionText: '가는 말이 고와야 ( ) 말이 곱다' });
+    assert.deepStrictEqual(drafts[0].samples[0], { answer: '오는', videoId: null, startTime: 0, questionText: '가는 말이 고와야 ( ) 말이 곱다', reveal: null });
 });
 
 test('quiz draft listing asks the DB for the new columns', async () => {
     const { db } = await run('GET', '/api/admin/drafts', undefined, { db: { rows: {} } });
     const sel = db.selects.find((x) => x.table === 'quizzes').columns;
     assert(sel.includes('question_text'), sel);
+});
+
+test('image quiz draft list sends all image questions with reveal config and the quiz reveal mode', async () => {
+    const kids = Array.from({ length: 12 }, (_, i) => ({ answer: `a${i}`, video_id: `https://rdpdwtkhqizlcpeergrz.supabase.co/storage/v1/object/public/ugc-images/u/${i}.jpg`, start_time: 0, question_text: null, reveal: i === 0 ? { x: 30, y: 40 } : null }));
+    const rows = { quizzes: [{ id: QID, status: 'draft', title: 'Q', description: 'd', source: 'curated', created_at: 'x', reveal_mode: 'zoom', quiz_questions: kids }], worldcups: [] };
+    const { drafts } = await (await run('GET', '/api/admin/drafts', undefined, { db: { rows } })).res.json();
+    assert.strictEqual(drafts[0].revealMode, 'zoom');
+    assert.strictEqual(drafts[0].samples.length, 12);                       // 이미지 퀴즈는 3개로 자르지 않는다
+    assert.deepStrictEqual(drafts[0].samples[0].reveal, { x: 30, y: 40 });
 });

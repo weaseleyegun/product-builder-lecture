@@ -17,8 +17,11 @@ import { LIMITS } from '../quality/constants.js';
 const KINDS = {
     quiz: {
         table: 'quizzes', child: 'quiz_questions', validate: validateQuizDraft, previewKey: 'answer',
-        childSelect: 'answer, video_id, start_time, question_text',
-        samples: (kids) => kids.slice(0, 3).map((k) => ({ answer: k.answer, videoId: k.video_id, startTime: k.start_time, questionText: k.question_text })),
+        parentExtra: ', reveal_mode',
+        childSelect: 'answer, video_id, start_time, question_text, reveal',
+        // 이미지 퀴즈는 검수자가 모든 문제의 이미지와 공개 방식을 볼 수 있게 한다
+        samples: (kids) => kids.slice(0, kids.length && kids.every((k) => typeof k.video_id === 'string' && k.video_id.startsWith('https://')) ? 30 : 3)
+            .map((k) => ({ answer: k.answer, videoId: k.video_id, startTime: k.start_time, questionText: k.question_text, reveal: k.reveal || null })),
         enough: (n) => n >= LIMITS.questions[0],
     },
     worldcup: {
@@ -131,7 +134,7 @@ async function listDrafts(db) {
     const drafts = [];
     for (const [name, kind] of Object.entries(KINDS)) {
         const { data, error } = await db.from(kind.table)
-            .select(`id, title, description, source, created_at, ${kind.child}(${kind.childSelect})`)
+            .select(`id, title, description, source, created_at${kind.parentExtra || ''}, ${kind.child}(${kind.childSelect})`)
             .eq('status', 'draft')
             .order('created_at', { ascending: true });
         if (error) return errorResponse(error.message, 500);
@@ -139,7 +142,7 @@ async function listDrafts(db) {
             const kids = Array.isArray(row[kind.child]) ? row[kind.child] : [];
             drafts.push({
                 kind: name, id: row.id, title: row.title, description: row.description,
-                source: row.source, created_at: row.created_at,
+                source: row.source, created_at: row.created_at, revealMode: row.reveal_mode || null,
                 count: kids.length,
                 preview: kids.slice(0, PREVIEW_ROWS).map((k) => k[kind.previewKey]),
                 samples: kind.samples(kids),

@@ -36,6 +36,72 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // 이미지 문제 미리보기: 카드를 클릭하면 플레이어와 같은 순서(힌트 0 → 1 → 2 → 전체)로 공개 단계가 넘어간다
+    function initRevealCards(root) {
+        root.querySelectorAll('.reveal-card').forEach(function (card) {
+            if (card.dataset.ready) return;
+            card.dataset.ready = '1';
+            const url = card.dataset.url;
+            if (url.indexOf('https://') !== 0) return;
+            const hasReveal = typeof Reveal !== 'undefined';
+            const cfg = hasReveal ? Reveal.normalize(card.dataset.mode || null, {
+                mode: card.dataset.mode || undefined,
+                x: card.dataset.x === '' ? undefined : card.dataset.x, y: card.dataset.y === '' ? undefined : card.dataset.y,
+                w: card.dataset.w === '' ? undefined : card.dataset.w, h: card.dataset.h === '' ? undefined : card.dataset.h
+            }) : null;
+            let stage = cfg ? 0 : (hasReveal ? Reveal.FULL : 0);
+
+            card.style.cssText = 'display: inline-block; width: 150px; margin: 4px; vertical-align: top; cursor: pointer; text-align: center;';
+            const frame = document.createElement('div');
+            frame.style.cssText = 'position: relative; width: 150px; height: 110px; overflow: hidden; border-radius: 8px; background: #222;';
+            const img = document.createElement('img');
+            img.referrerPolicy = 'no-referrer';
+            img.loading = 'lazy';
+            img.alt = card.dataset.answer;
+            img.style.cssText = 'width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s, filter 0.3s;';
+            const canvas = document.createElement('canvas');
+            canvas.style.cssText = 'display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;';
+            const mask = document.createElement('div');
+            mask.style.cssText = 'position: absolute; background: #000; display: none; pointer-events: none;';
+            const cap = document.createElement('div');
+            cap.style.cssText = 'font-size: 0.75rem; margin-top: 2px;';
+            frame.appendChild(img); frame.appendChild(canvas); frame.appendChild(mask);
+            card.appendChild(frame); card.appendChild(cap);
+
+            function apply() {
+                const st = hasReveal ? Reveal.styleFor(cfg, stage) : { transform: 'none', transformOrigin: '50% 50%', filter: 'none', mosaicCells: 0, mask: null };
+                img.style.transformOrigin = st.transformOrigin; img.style.transform = st.transform; img.style.filter = st.filter;
+                if (st.mask) {
+                    mask.style.display = 'block';
+                    mask.style.left = (st.mask.x - st.mask.w / 2) + '%'; mask.style.top = (st.mask.y - st.mask.h / 2) + '%';
+                    mask.style.width = st.mask.w + '%'; mask.style.height = st.mask.h + '%';
+                } else { mask.style.display = 'none'; }
+                let mosaic = false;
+                if (st.mosaicCells > 0 && img.naturalWidth) {
+                    const small = document.createElement('canvas');
+                    small.width = st.mosaicCells; small.height = Math.max(1, Math.round(st.mosaicCells * img.naturalHeight / img.naturalWidth));
+                    small.getContext('2d').drawImage(img, 0, 0, small.width, small.height);
+                    canvas.width = 300; canvas.height = Math.max(1, Math.round(300 * img.naturalHeight / img.naturalWidth));
+                    const ctx = canvas.getContext('2d'); ctx.imageSmoothingEnabled = false;
+                    ctx.drawImage(small, 0, 0, small.width, small.height, 0, 0, canvas.width, canvas.height);
+                    mosaic = true;
+                }
+                canvas.style.display = mosaic ? 'block' : 'none';
+                img.style.visibility = mosaic ? 'hidden' : 'visible';
+                const label = !cfg ? '일반 이미지' : (stage >= Reveal.FULL ? '전체 공개' : '힌트 ' + stage + '단계');
+                cap.textContent = card.dataset.answer + ' · ' + (cfg ? cfg.mode : '') + ' · ' + label;
+            }
+            img.addEventListener('load', apply);
+            img.src = url;
+            card.addEventListener('click', function () {
+                if (!cfg) { window.open(url, '_blank', 'noopener'); return; }
+                stage = stage >= Reveal.FULL ? 0 : stage + 1;
+                apply();
+            });
+            apply();
+        });
+    }
+
     // 검수자가 실제로 승인하는 대상을 볼 수 있게 한다: 퀴즈는 YouTube 클립 링크, 월드컵은 후보 이미지(모두 이스케이프)
     function renderSamples(d) {
         const samples = Array.isArray(d.samples) ? d.samples : [];
@@ -51,7 +117,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     return '<a href="https://www.youtube.com/watch?v=' + escHtml(smp.videoId) + '&t=' + t + 's" target="_blank" rel="noopener noreferrer" style="margin-right: 0.8rem;">▶ ' + label + '</a>';
                 }
                 if (String(smp.videoId || '').indexOf('https://') === 0) {
-                    return '<a href="' + escHtml(smp.videoId) + '" target="_blank" rel="noopener noreferrer" style="margin-right: 0.8rem;">🖼 ' + label + '</a>';
+                    const rv = smp.reveal && typeof smp.reveal === 'object' ? smp.reveal : {};
+                    return '<div class="reveal-card" data-url="' + escHtml(smp.videoId) + '" data-answer="' + label + '" data-mode="' + escHtml(rv.mode || d.revealMode || '') + '" data-x="' + escHtml(rv.x) + '" data-y="' + escHtml(rv.y) + '" data-w="' + escHtml(rv.w) + '" data-h="' + escHtml(rv.h) + '"></div>';
                 }
                 return '<span style="margin-right: 0.8rem;">' + label + '</span>';
             }).join('');
@@ -100,6 +167,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         '<button class="btn-secondary" data-act="reject" data-kind="' + escHtml(d.kind) + '" data-id="' + escHtml(d.id) + '">반려</button>' +
                         '</div>';
                 }).join('');
+                initRevealCards(listEl);
             } catch (e) {
                 listEl.innerHTML = '<p style="color: #ff6b6b;">초안을 불러오지 못했습니다: ' + escHtml(e.message) + '</p>';
             }
