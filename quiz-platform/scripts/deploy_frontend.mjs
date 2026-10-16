@@ -4,7 +4,7 @@
 // 프로젝트 폴더를 통째로 올리면 .dev.vars·docs/private·sql 같은 비공개 파일이 함께 공개될 수 있으므로,
 // 공개해도 되는 파일만 임시 폴더에 복사하고 비밀 문자열이 섞였는지 검사한 뒤에만 배포한다.
 //
-// 사용: node scripts/deploy_frontend.mjs [--dry]   (--dry: 검사만 하고 배포하지 않음)
+// 사용: node scripts/deploy_frontend.mjs [--dry] [--keep]   (--dry: 검사만 하고 배포하지 않음, --keep: 임시 폴더 유지)
 
 import { cpSync, mkdirSync, rmSync, readdirSync, readFileSync, statSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -14,8 +14,9 @@ import { spawnSync } from 'node:child_process';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const dry = process.argv.includes('--dry');
+const keep = process.argv.includes('--keep');   // 검사를 통과한 공개 복사본을 지우지 않고 경로를 알려 준다 (wrangler pages dev 로 로컬 확인용)
 
-const PUBLIC_ROOT_FILES = (f) => /\.(html|css)$/.test(f) || f === 'app.js' || f === 'ads.txt';
+const PUBLIC_ROOT_FILES = (f) => /\.(html|css)$/.test(f) || f === 'app.js' || f === 'ads.txt' || f === 'robots.txt';
 const PUBLIC_DIRS = ['js', 'images'];
 const FORBIDDEN_NAMES = /(^|[\\/])(\.dev\.vars|\.env.*|wrangler\.toml|package(-lock)?\.json|.*\.sql|.*\.md)$/i;
 const SECRET_PATTERNS = [/ADMIN_PASSWORD/, /AGENT_PASSWORD/, /service_role/, /sb_secret_/, /BEGIN (RSA |EC )?PRIVATE KEY/];
@@ -60,5 +61,6 @@ try {
         }
     }
 } finally {
-    rmSync(stage, { recursive: true, force: true });
+    if (keep) console.log(`KEPT_STAGE=${stage}`);
+    else rmSync(stage, { recursive: true, force: true });
 }

@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# 사이트맵은 퀴즈/월드컵이 추가될 때마다 자동으로 갱신된다 (Pages Function → /api/sitemap)
+Sitemap: https://quiz-rank.com/sitemap.xml

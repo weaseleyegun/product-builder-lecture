@@ -642,3 +642,8 @@ footer {
     border-color: #ef4444 !important;
     color: #ffffff !important;
 }
+
+/* ad-placeholder hidden: 실제 광고 단위(<ins class="adsbygoogle">)를 넣기 전까지는 빈 점선 박스를 보여 주지 않는다 */
+.ad-placeholder {
+    display: none !important;
+}
