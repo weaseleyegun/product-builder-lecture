@@ -6,7 +6,7 @@
 const BASE = 'https://quiz-rank.com';
 const STATIC_PAGES = [
     ['/', '1.0'], ['/quiz-list', '0.8'], ['/worldcup-list', '0.8'],
-    ['/about', '0.5'], ['/terms', '0.3'], ['/privacy', '0.3'],
+    ['/about', '0.5'], ['/terms', '0.3'], ['/privacy', '0.3'], ['/copyright', '0.3'],
 ];
 // 클라이언트(app.js)가 티어 리스트로 분류하는 기준과 같다
 const TIER_LIKE = /티어|등급|랭킹|리스트/;
