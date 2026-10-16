@@ -17,7 +17,7 @@ async function handleWorldcups(url, supabase) {
     if (sort === 'rank') {
         query = query.order('play_count', { ascending: false });
     } else if (sort === 'latest') {
-        query = query.order('created_at', { ascending: false });
+        query = query.order('published_at', { ascending: false, nullsFirst: false }).order('created_at', { ascending: false });
     }
 
     // 정렬 동점일 때 페이지 사이에서 행이 중복/누락되지 않도록 id를 마지막 정렬 키로 둔다

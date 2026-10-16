@@ -113,6 +113,19 @@
                     <span style="font-weight:800;white-space:nowrap;">도전하기 →</span>
                 </a>
 
+                <!-- 새로 나온 퀴즈 (최근 공개 순) -->
+                <section id="new-quizzes" class="category-section">
+                    <div class="section-header">
+                        <div style="display: flex; align-items: center; gap: 0.85rem;">
+                            <h2>🆕 새로 나온 퀴즈</h2>
+                        </div>
+                        <a href="quiz-list.html" class="view-all">전체보기 <span class="arrow">&rarr;</span></a>
+                    </div>
+                    <div class="card-grid" id="new-quiz-grid">
+                        <p style="color: var(--text-muted); padding: 1rem;">퀴즈 데이터를 불러오는 중입니다...</p>
+                    </div>
+                </section>
+
                 <!-- Section 1: 오늘의 AI 퀴즈 -->
                 <section id="quiz" class="category-section">
                     <div class="section-header">
@@ -148,7 +161,7 @@
                                     <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
                                     <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
                                     <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
-                                </svg></span> 인기 월드컵</h2>
+                                </svg></span> 월드컵</h2>
                         <div style="display: flex; gap: 1rem; align-items: center;">
                             <button class="btn-create worldcup" onclick="location.href='worldcup-create.html'">+ 월드컵
                                 만들기</button>
@@ -213,7 +226,7 @@
 
     <script src="js/utils/config.js"></script>
     <script src="js/utils/theme.js"></script>
-    <script src="app.js"></script>
+    <script src="app.js?v=20261017"></script>
 </body>
 
 </html>

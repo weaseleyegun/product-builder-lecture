@@ -17,7 +17,8 @@ async function handleDailyQuiz(url, supabase) {
     if (sort === 'rank') {
         query = query.order('play_count', { ascending: false });
     } else if (sort === 'latest') {
-        query = query.order('created_at', { ascending: false });
+        // 공개한 시점이 최근인 순 (검수 승인으로 늦게 공개된 콘텐츠가 위로 온다). 공개 시각이 없는 예전 콘텐츠는 생성 시각으로.
+        query = query.order('published_at', { ascending: false, nullsFirst: false }).order('created_at', { ascending: false });
     } else if (sort === 'correct_asc') {
         query = query.order('correct_rate', { ascending: true });
     } else if (sort === 'correct_desc') {

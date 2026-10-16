@@ -36,3 +36,16 @@ test('daily-pick is a 500 (not a 404) when the database call fails', async () =>
     f.client.rpc = () => Promise.resolve({ data: null, error: { message: 'db down' } });
     assert.strictEqual((await handleDailyPick(f.client)).status, 500);
 });
+
+// ── 목록 정렬: 최신순은 공개 시각 기준 ──
+import { handleDailyQuiz } from '../src/routes/quiz.js';
+import { handleWorldcups } from '../src/routes/worldcup.js';
+
+test('sort=latest orders by publish time (then creation time) for quizzes and worldcups', async () => {
+    for (const [handler, table] of [[handleDailyQuiz, 'quizzes'], [handleWorldcups, 'worldcups']]) {
+        const f = makeFake({ rows: { [table]: [] } });
+        await handler(new URL('https://api.test/x?sort=latest&limit=5'), f.client);
+        const orders = f.log.filter((l) => l.includes('.order:')).map((l) => l.split('.order:')[1]);
+        assert.deepStrictEqual(orders.slice(0, 2), ['published_at', 'created_at'], table);
+    }
+});

@@ -30,6 +30,21 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    // 홈 전용: 가장 최근에 공개된 퀴즈 5개 ("새로 나온 퀴즈" 영역) — 플레이 수가 적은 새 콘텐츠도 첫 화면에서 보이게 한다
+    async function fetchNewQuizzes() {
+        var grid = document.getElementById('new-quiz-grid');
+        if (!grid) return;
+        try {
+            var response = await fetch(API_BASE_URL + '/api/daily-quiz?sort=latest&limit=5');
+            if (!response.ok) { grid.innerHTML = ''; return; }
+            var latest = (await response.json()).slice(0, 5);
+            renderQuizzes(grid, latest, true);
+        } catch (error) {
+            console.error('Error fetching new quizzes:', error);
+            grid.innerHTML = '';
+        }
+    }
+
     // Fetch worldcup list from API and render cards
     async function fetchWorldcups(sort) {
         var wcGrid = document.getElementById('worldcup-grid');
@@ -229,8 +244,14 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     // Initialize
-    fetchDailyQuizzes('rank');
-    fetchWorldcups('rank');
+    // 홈은 인기순 5개 + 새로 나온 퀴즈 5개 + 최신 월드컵. 목록 페이지는 새 콘텐츠가 묻히지 않도록 기본이 최신순이다.
+    var path = window.location.pathname;
+    var isHome = path.endsWith('index.html') || path === '/';
+    var isQuizList = path.indexOf('quiz-list') !== -1;
+    var isWorldcupList = path.indexOf('worldcup-list') !== -1;
+    if (isQuizList && typeof applySortQuiz === 'function') applySortQuiz('latest'); else fetchDailyQuizzes('rank');
+    if (isWorldcupList && typeof applySortWorldcup === 'function') applySortWorldcup('latest'); else fetchWorldcups(isHome ? 'latest' : 'rank');
+    fetchNewQuizzes();
 
     // 글로벌 검색 기능 구현
     var globalSearchInput = document.getElementById('global-search');
