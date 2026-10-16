@@ -6,7 +6,21 @@
 // - 새 퀴즈를 추가할 때는 사실관계를 한 번 더 확인하고, 설명(description)은 다른 퀴즈와 겹치지 않게 새로 쓴다.
 //   (test/content.test.js 가 검증기 통과·설명 중복 여부를 자동으로 확인한다.)
 
+// 정답 위치(0~3) 순열: 4문제씩 한 묶음으로 [0,1,2,3]을 섞는다. 시드는 quizIndex와 묶음 번호라 다시 빌드해도 같은 결과다.
+export function answerPositions(quizIndex, count) {
+    const out = [];
+    for (let block = 0; out.length < count; block++) {
+        let seed = (quizIndex * 7919 + block * 104729 + 12345) >>> 0;
+        const rnd = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
+        const perm = [0, 1, 2, 3];
+        for (let k = 3; k > 0; k--) { const j = Math.floor(rnd() * (k + 1)); [perm[k], perm[j]] = [perm[j], perm[k]]; }
+        out.push(...perm);
+    }
+    return out.slice(0, count);
+}
+
 export function build(quizIndex, { title, description, items }) {
+    const positions = answerPositions(quizIndex, items.length);
     return {
         kind: 'quiz',
         source: 'curated',
@@ -14,7 +28,7 @@ export function build(quizIndex, { title, description, items }) {
             title,
             description,
             questions: items.map(([questionText, answer, wrongs, explanation], i) => {
-                const pos = (i + quizIndex) % 4;                      // 정답 위치 (0~3)
+                const pos = positions[i];                              // 정답 위치 (0~3)
                 const texts = [...wrongs];
                 texts.splice(pos, 0, answer);
                 return {

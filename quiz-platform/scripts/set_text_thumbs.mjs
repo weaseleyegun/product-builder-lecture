@@ -33,13 +33,17 @@ if (le) { console.error('관리자 로그인 실패'); process.exit(1); }
 const dir = mkdtempSync(join(tmpdir(), 'thumbs-'));
 for (const [i, w] of TEXT_WORLDCUPS.entries()) {
     const title = w.draft.title;
-    const { data: rows, error } = await sb.from('worldcups').select('id, has_thumbnail_data, thumbnail_url').eq('title', title);
+    const { data: rows, error } = await sb.from('worldcups').select('id, has_thumbnail_data, thumbnail_url').eq('title', title).neq('status', 'hidden');
     if (error || !rows || rows.length !== 1) { console.log('건너뜀(월드컵을 찾지 못함/중복):', title); continue; }
-    if (rows[0].has_thumbnail_data) { console.log('이미 있음:', title); continue; }
+    if (rows[0].has_thumbnail_data || rows[0].thumbnail_url) { console.log('이미 있음:', title); continue; }
     const htmlPath = join(dir, `card-${i}.html`), pngPath = join(dir, `card-${i}.png`);
     writeFileSync(htmlPath, html(title.replace(/ — .*/, '')), 'utf8');
-    spawnSync(CHROME, ['--headless=new', '--disable-gpu', '--hide-scrollbars', '--window-size=600,400', `--screenshot=${pngPath}`, pathToFileURL(htmlPath).href], { stdio: 'ignore' });
-    const b64 = readFileSync(pngPath).toString('base64');
+    // 이미 켜져 있는 Chrome과 프로필이 섞여 스크린샷 없이 끝나지 않도록 임시 프로필을 따로 쓴다
+    const profile = mkdtempSync(join(tmpdir(), 'thumbs-profile-'));
+    const run = spawnSync(CHROME, ['--headless=new', '--disable-gpu', '--hide-scrollbars', `--user-data-dir=${profile}`, '--window-size=600,400', `--screenshot=${pngPath}`, pathToFileURL(htmlPath).href], { stdio: 'ignore', timeout: 60000 });
+    const png = existsSync(pngPath) ? readFileSync(pngPath) : null;
+    if (run.status !== 0 || !png || png.length < 1000 || png.subarray(0, 8).toString('hex') !== '89504e470d0a1a0a') { console.log('실패(스크린샷 생성 안 됨):', title); continue; }
+    const b64 = png.toString('base64');
     const { error: ue } = await sb.from('worldcups').update({ thumbnail_data: `data:image/png;base64,${b64}` }).eq('id', rows[0].id);
     console.log(ue ? `실패: ${title} ${ue.message}` : `썸네일 저장: ${title} (${Math.round(b64.length / 1024)}KB)`);
 }

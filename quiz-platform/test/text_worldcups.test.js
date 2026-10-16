@@ -62,3 +62,29 @@ test('drafts route stores text-only worldcup candidates with image_url = null', 
     assert.strictEqual(items.length, 16);
     assert(items.every((it) => it.image_url === null && typeof it.name === 'string'));
 });
+
+// ── 리뷰 반영: 이름 문자 검증, 정답 위치 분포 ──
+import { answerPositions } from '../content/text_quizzes.mjs';
+
+test('worldcup candidate names reject control characters and broken surrogates', () => {
+    const bad = (name) => ({ ...cups[0], items: cups[0].items.map((it, i) => (i === 0 ? { name } : it)) });
+    assert(validateWorldcupDraft(bad('이름\u0001')).errors.some((e) => e.includes('제어 문자')));
+    assert(validateWorldcupDraft(bad('x\ud800')).errors.some((e) => e.includes('제어 문자')));
+    assert.deepStrictEqual(validateWorldcupDraft(bad('정상 이름 😀')).errors.filter((e) => e.includes('제어 문자')), []);
+});
+
+test('answer positions are balanced per block of 4 and do not repeat with a period of 4', () => {
+    for (const qi of [0, 6, 13, 20]) {
+        const p = answerPositions(qi, 10);
+        assert.strictEqual(p.length, 10);
+        assert.deepStrictEqual([...p.slice(0, 4)].sort(), [0, 1, 2, 3]);
+        assert.deepStrictEqual([...p.slice(4, 8)].sort(), [0, 1, 2, 3]);
+        assert(!p.slice(4, 8).every((v, i) => v === p[i]) || !p.slice(8).every((v, i) => v === p[i]), `periodic: ${p}`);
+        assert.deepStrictEqual(answerPositions(qi, 10), p);   // 같은 입력은 같은 결과 (재빌드 안정)
+    }
+});
+
+test('worldcup validation message for textOnly:"true" is specifically about image_url', () => {
+    const r = validateWorldcupDraft({ ...cups[0], textOnly: 'true' });
+    assert(r.errors.some((e) => e.includes('image_url')));
+});

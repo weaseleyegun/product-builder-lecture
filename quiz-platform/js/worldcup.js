@@ -89,6 +89,7 @@ window.startGame = function () {
 
 // 이미지가 없는 후보(이름만 있는 월드컵)를 보여 줄 텍스트 카드. SVG를 data URI로 만들어 <img>에 넣는다 (<img>의 SVG는 스크립트가 실행되지 않는다).
 function textCardUri(name) {
+    name = String(name).replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\ufffe\uffff]/g, '');   // XML에서 허용되지 않는 제어 문자 제거
     var esc = function (s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); };
     var words = String(name).split(/\s+/).filter(Boolean);
     var lines = [];
@@ -105,14 +106,19 @@ function textCardUri(name) {
     });
     if (line) lines.push(line);
     lines = lines.slice(0, 4);
-    var size = lines.length <= 2 ? 60 : 46;
+    var widest = lines.reduce(function (m, l) { return Math.max(m, Array.from(l).length); }, 0);
+    var size = widest >= 9 ? 40 : (lines.length <= 2 ? 60 : 46);   // 긴 줄은 카드 폭(잘림)을 넘지 않게 줄인다
     var gap = size * 1.3;
     var startY = 200 - ((lines.length - 1) * gap) / 2 + size * 0.35;
     var text = lines.map(function (l, i) {
         return '<text x="300" y="' + (startY + i * gap) + '" font-size="' + size + '" font-weight="800" fill="#fff" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif">' + esc(l) + '</text>';
     }).join('');
     var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2a1f55"/><stop offset="1" stop-color="#4527a0"/></linearGradient></defs><rect width="600" height="400" fill="url(#g)"/>' + text + '</svg>';
-    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    try {
+        return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    } catch (e) {   // 깨진 서러게이트 등 인코딩 불가 → 이름 없는 기본 카드
+        return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400"><rect width="600" height="400" fill="#2a1f55"/></svg>');
+    }
 }
 
 function showContender(imgEl, item) {

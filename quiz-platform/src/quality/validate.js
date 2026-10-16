@@ -146,6 +146,7 @@ export function validateWorldcupDraft(d, ctx = {}) {
         const tag = `item${i + 1}`;
         if (!x || typeof x !== 'object' || !isStr(x.name)) { errors.push(`${tag} name: 문자열이어야 함`); return; }
         if (x.name.length > LIMITS.textMax) errors.push(`${tag} length: 이름 ${LIMITS.textMax}자 초과`);
+        if (new RegExp('[\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ufffe\\uffff]').test(x.name) || (typeof x.name.isWellFormed === 'function' && !x.name.isWellFormed())) errors.push(`${tag} name: 제어 문자/깨진 문자 불가`);
         const nm = normalizeText(x.name);
         if (!nm || GENERIC_WORDS.has(nm)) errors.push(`${tag} generic_name`);
         if (isBlocked(x.name)) errors.push(`${tag} blocked: 이름에 제외어 포함`);

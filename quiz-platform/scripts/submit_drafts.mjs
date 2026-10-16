@@ -25,7 +25,11 @@ const dry = process.argv.includes('--dry');
 // --set=year | audience | audience2 | audience3 | worldcups : 콘텐츠 묶음 선택, 기본값은 기본 텍스트 퀴즈
 const SETS = { year: YEAR_QUIZZES, audience: AUDIENCE_QUIZZES, audience2: AUDIENCE_QUIZZES_B, audience3: AUDIENCE_QUIZZES_C, worldcups: TEXT_WORLDCUPS };
 const setArg = process.argv.find((a) => a.startsWith('--set='));
-const TEXT_QUIZZES = setArg && SETS[setArg.slice(6)] ? SETS[setArg.slice(6)] : TEXT_SET;
+if (setArg && !Object.prototype.hasOwnProperty.call(SETS, setArg.slice(6))) {
+    console.error(`알 수 없는 묶음: ${setArg.slice(6)} (사용 가능: ${Object.keys(SETS).join(', ')})`);
+    process.exit(1);
+}
+const TEXT_QUIZZES = setArg ? SETS[setArg.slice(6)] : TEXT_SET;
 const API = process.env.QUIZRANK_API || 'https://quiz-platform-worker.rlaehrjs03.workers.dev';
 
 // 1) 로컬 검증 (서버도 같은 검증기를 쓰지만, 제출 전에 미리 걸러서 원인을 바로 보여 준다)
