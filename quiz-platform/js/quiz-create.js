@@ -210,7 +210,7 @@ async function submitQuiz() {
         });
     }
 
-    if (questions.length === 0) return alert("최소 1개 이상의 문제를 추가하세요.");
+    if (questions.length < 6) return alert("공개 검수를 위해 최소 6개 이상의 문제가 필요합니다.");
 
     // Fallback thumbnail: If no thumb, use Question 1
     if (!thumb && questions.length > 0) {
@@ -244,8 +244,9 @@ async function submitQuiz() {
         const data = await res.json();
 
         if (data.success) {
-            alert('성공적으로 퀴즈가 생성되었습니다!');
-            location.href = 'quiz-play.html?id=' + (data.quizId || data.mockId);
+            // 제출물은 관리자 검수 후에 공개된다 (바로 플레이할 수 없다)
+            alert('퀴즈가 제출되었습니다! 관리자 검수 후 공개됩니다.');
+            location.href = 'index.html';
         } else {
             alert('오류 발생: ' + data.error);
         }

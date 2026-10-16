@@ -2,8 +2,9 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { handleOptions, jsonResponse, errorResponse, corsHeaders } from './helpers/cors.js';
-import { handleDailyQuiz, handleQuizPlay, handleQuizResult, handleUserCreatedQuiz } from './routes/quiz.js';
-import { handleWorldcups, handleWorldcupPlay, handleUserCreatedContent } from './routes/worldcup.js';
+import { handleDailyQuiz, handleQuizPlay, handleQuizResult } from './routes/quiz.js';
+import { handleWorldcups, handleWorldcupPlay } from './routes/worldcup.js';
+import { handleUserCreatedQuiz, handleUserCreatedContent } from './routes/ugc.js';
 import { handleUpdateQuiz, handleUpdateWorldcup, handleDeleteQuiz, handleDeleteWorldcup } from './routes/admin.js';
 import { handleSitemap } from './helpers/sitemap.js';
 import { handlePlayStart } from './routes/play.js';

@@ -153,7 +153,7 @@ window.submitCreation = async function () {
         });
 
         if (response.ok) {
-            alert('성공적으로 만들어졌습니다!');
+            alert('제출되었습니다! 관리자 검수 후 공개됩니다.');
             window.location.href = 'index.html';
         } else {
             var errorText = await response.text();

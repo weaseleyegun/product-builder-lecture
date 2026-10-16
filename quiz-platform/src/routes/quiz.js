@@ -1,7 +1,6 @@
 // quiz.js - Quiz API route handlers
 
 import { jsonResponse, errorResponse } from '../helpers/cors.js';
-import { signInAsAdmin } from '../helpers/auth.js';
 import { parsePaging, withThumbUrl, childCount, stripKey } from '../helpers/list.js';
 
 // GET /api/daily-quiz?sort=rank|latest|correct_asc|correct_desc&limit=100&offset=0  (published, 문제가 1개 이상인 퀴즈만)
@@ -147,71 +146,4 @@ async function handleQuizResult(request, supabase) {
     }
 }
 
-// POST /api/user-created-quiz - Submit user-created quiz
-async function handleUserCreatedQuiz(request, supabase, env) {
-    try {
-        const body = await request.json();
-        const { title, description, questions } = body;
-
-        if (!title || !questions || questions.length === 0) {
-            return errorResponse("Title and questions are required.", 400);
-        }
-
-        // Verify Token
-        const authHeader = request.headers.get('Authorization') || '';
-        const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : null;
-        if (!token) return errorResponse("로그인이 필요합니다.", 401);
-
-        const { data: userData, error: userError } = await supabase.auth.getUser(token);
-        if (userError || !userData?.user) return errorResponse("유효하지 않은 토큰입니다.", 401);
-
-        const creatorId = userData.user.id;
-
-        // Authenticate as Admin to bypass RLS (since RLS policies for INSERT are strict in current setup)
-        await signInAsAdmin(supabase, env);
-
-        // Insert quiz
-        const { data: quizData, error: quizError } = await supabase
-            .from('quizzes')
-            .insert([{ title, description: description || '', creator_id: creatorId }])
-            .select();
-
-        if (quizError) {
-            console.error("Supabase Error:", quizError.message);
-            return errorResponse("DB Insert failed: " + quizError.message, 500);
-        }
-
-        const quizId = quizData[0].id;
-
-        // Insert questions
-        const questionsToInsert = questions.map((q, idx) => {
-            const letters = ['A', 'B', 'C', 'D'];
-            const allOpts = [q.answer, ...q.wrongs].sort(() => Math.random() - 0.5);
-            const options = allOpts.map((text, i) => ({
-                id: letters[i], text, isCorrect: text === q.answer
-            }));
-
-            return {
-                quiz_id: quizId,
-                video_id: q.media_id,
-                start_time: 0,
-                end_time: 15,
-                answer: q.answer,
-                options: options,
-                is_embeddable: true
-            };
-        });
-
-        const { error: questionsError } = await supabase
-            .from('quiz_questions')
-            .insert(questionsToInsert);
-
-        if (questionsError) return errorResponse(questionsError.message);
-
-        return jsonResponse({ success: true, quizId });
-    } catch (err) {
-        return errorResponse(err.message || "Internal Server Error.");
-    }
-}
-
-export { handleDailyQuiz, handleQuizPlay, handleQuizResult, handleUserCreatedQuiz };
+export { handleDailyQuiz, handleQuizPlay, handleQuizResult };
