@@ -87,6 +87,44 @@ window.startGame = function () {
     renderMatch();
 };
 
+// 이미지가 없는 후보(이름만 있는 월드컵)를 보여 줄 텍스트 카드. SVG를 data URI로 만들어 <img>에 넣는다 (<img>의 SVG는 스크립트가 실행되지 않는다).
+function textCardUri(name) {
+    var esc = function (s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); };
+    var words = String(name).split(/\s+/).filter(Boolean);
+    var lines = [];
+    var line = '';
+    words.forEach(function (w) {
+        while (Array.from(w).length > 11) { // 아주 긴 단어는 강제로 나눈다
+            if (line) { lines.push(line); line = ''; }
+            var chars = Array.from(w);
+            lines.push(chars.slice(0, 11).join(''));
+            w = chars.slice(11).join('');
+        }
+        if (Array.from((line ? line + ' ' : '') + w).length > 11 && line) { lines.push(line); line = w; }
+        else { line = line ? line + ' ' + w : w; }
+    });
+    if (line) lines.push(line);
+    lines = lines.slice(0, 4);
+    var size = lines.length <= 2 ? 60 : 46;
+    var gap = size * 1.3;
+    var startY = 200 - ((lines.length - 1) * gap) / 2 + size * 0.35;
+    var text = lines.map(function (l, i) {
+        return '<text x="300" y="' + (startY + i * gap) + '" font-size="' + size + '" font-weight="800" fill="#fff" text-anchor="middle" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif">' + esc(l) + '</text>';
+    }).join('');
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2a1f55"/><stop offset="1" stop-color="#4527a0"/></linearGradient></defs><rect width="600" height="400" fill="url(#g)"/>' + text + '</svg>';
+    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+}
+
+function showContender(imgEl, item) {
+    if (item.img) {
+        if (window.SafeImageLoader) SafeImageLoader.load(imgEl, item.img, item.name);
+        else imgEl.src = item.img;
+    } else {
+        imgEl.src = textCardUri(item.name);
+        imgEl.style.opacity = '1';
+    }
+}
+
 // Display the current match
 function renderMatch() {
     var totalMatches = currentRound.length / 2;
@@ -99,15 +137,8 @@ function renderMatch() {
     var left = currentRound[currentMatchIndex];
     var right = currentRound[currentMatchIndex + 1];
 
-    if (window.SafeImageLoader) {
-        SafeImageLoader.load(document.getElementById('img-left'), left.img, left.name);
-        SafeImageLoader.load(document.getElementById('img-right'), right.img, right.name);
-    } else {
-        document.getElementById('img-left').src = left.img;
-        document.getElementById('name-left').innerText = left.name;
-        document.getElementById('img-right').src = right.img;
-        document.getElementById('name-right').innerText = right.name;
-    }
+    showContender(document.getElementById('img-left'), left);
+    showContender(document.getElementById('img-right'), right);
 
     document.getElementById('name-left').innerText = left.name;
     document.getElementById('name-right').innerText = right.name;
@@ -140,11 +171,7 @@ window.selectContender = function (selectedIndex) {
 function showWinner(winner) {
     document.getElementById('game-screen').style.display = 'none';
     document.getElementById('setup-screen').style.display = 'none';
-    if (window.SafeImageLoader) {
-        SafeImageLoader.load(document.getElementById('winner-img'), winner.img, winner.name);
-    } else {
-        document.getElementById('winner-img').src = winner.img;
-    }
+    showContender(document.getElementById('winner-img'), winner);
     document.getElementById('winner-name').innerText = winner.name;
     document.getElementById('result-screen').style.display = 'block';
 }

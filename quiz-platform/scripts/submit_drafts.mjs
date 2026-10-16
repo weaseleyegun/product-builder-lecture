@@ -15,20 +15,27 @@ import { dirname, join } from 'node:path';
 import { TEXT_QUIZZES as TEXT_SET } from '../content/text_quizzes.mjs';
 import { YEAR_QUIZZES } from '../content/year_quizzes.mjs';
 import { AUDIENCE_QUIZZES } from '../content/audience_quizzes.mjs';
-import { validateQuizDraft } from '../src/quality/validate.js';
+import { AUDIENCE_QUIZZES_B } from '../content/audience_quizzes_b.mjs';
+import { AUDIENCE_QUIZZES_C } from '../content/audience_quizzes_c.mjs';
+import { TEXT_WORLDCUPS } from '../content/text_worldcups.mjs';
+import { validateQuizDraft, validateWorldcupDraft } from '../src/quality/validate.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const dry = process.argv.includes('--dry');
-// --set=year : 발매 연도 맞추기(영상) 퀴즈, --set=audience : 타깃 맞춤 텍스트 퀴즈, 기본값은 기본 텍스트 퀴즈
-const TEXT_QUIZZES = process.argv.includes('--set=year') ? YEAR_QUIZZES : process.argv.includes('--set=audience') ? AUDIENCE_QUIZZES : TEXT_SET;
+// --set=year | audience | audience2 | audience3 | worldcups : 콘텐츠 묶음 선택, 기본값은 기본 텍스트 퀴즈
+const SETS = { year: YEAR_QUIZZES, audience: AUDIENCE_QUIZZES, audience2: AUDIENCE_QUIZZES_B, audience3: AUDIENCE_QUIZZES_C, worldcups: TEXT_WORLDCUPS };
+const setArg = process.argv.find((a) => a.startsWith('--set='));
+const TEXT_QUIZZES = setArg && SETS[setArg.slice(6)] ? SETS[setArg.slice(6)] : TEXT_SET;
 const API = process.env.QUIZRANK_API || 'https://quiz-platform-worker.rlaehrjs03.workers.dev';
 
 // 1) 로컬 검증 (서버도 같은 검증기를 쓰지만, 제출 전에 미리 걸러서 원인을 바로 보여 준다)
 let localFailed = false;
 TEXT_QUIZZES.forEach((quiz, i) => {
     const others = TEXT_QUIZZES.filter((_, j) => j !== i).map((o) => o.draft);
-    const r = validateQuizDraft(quiz.draft, { existingTitles: others.map((o) => o.title), existingDescriptions: others.map((o) => o.description) });
-    console.log(`${r.ok ? '✅' : '❌'} [${i + 1}/${TEXT_QUIZZES.length}] ${quiz.draft.title}  (문제 ${quiz.draft.questions.length}개, 설명 ${quiz.draft.description.length}자)`);
+    const validate = quiz.kind === 'worldcup' ? validateWorldcupDraft : validateQuizDraft;
+    const r = validate(quiz.draft, { existingTitles: others.map((o) => o.title), existingDescriptions: others.map((o) => o.description) });
+    const count = quiz.kind === 'worldcup' ? `후보 ${quiz.draft.items.length}개` : `문제 ${quiz.draft.questions.length}개`;
+    console.log(`${r.ok ? '✅' : '❌'} [${i + 1}/${TEXT_QUIZZES.length}] ${quiz.draft.title}  (${count}, 설명 ${quiz.draft.description.length}자)`);
     if (!r.ok) { localFailed = true; r.errors.forEach((e) => console.log('     - ' + e)); }
 });
 if (localFailed) { console.error('\n로컬 검증 실패 — 제출하지 않습니다.'); process.exit(1); }

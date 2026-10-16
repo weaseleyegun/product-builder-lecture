@@ -1,14 +1,17 @@
 import test from 'node:test';
 import assert from 'node:assert';
-import { AUDIENCE_QUIZZES } from '../content/audience_quizzes.mjs';
+import { AUDIENCE_QUIZZES as FIRST } from '../content/audience_quizzes.mjs';
+import { AUDIENCE_QUIZZES_B } from '../content/audience_quizzes_b.mjs';
+
+const AUDIENCE_QUIZZES = [...FIRST, ...AUDIENCE_QUIZZES_B];
 import { TEXT_QUIZZES } from '../content/text_quizzes.mjs';
 import { YEAR_QUIZZES } from '../content/year_quizzes.mjs';
 import { validateQuizDraft, jaccard3, normalize } from '../src/quality/validate.js';
 
 const all = [...TEXT_QUIZZES, ...YEAR_QUIZZES, ...AUDIENCE_QUIZZES];
 
-test('audience quizzes: 7 quizzes of 10 text questions with explanations and one correct option', () => {
-    assert.strictEqual(AUDIENCE_QUIZZES.length, 7);
+test('audience quizzes: 13 quizzes of 10 text questions with explanations and one correct option', () => {
+    assert.strictEqual(AUDIENCE_QUIZZES.length, 13);
     for (const { draft } of AUDIENCE_QUIZZES) {
         assert.strictEqual(draft.questions.length, 10, draft.title);
         for (const q of draft.questions) {

@@ -56,7 +56,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 return '<span style="margin-right: 0.8rem;">' + label + '</span>';
             }).join('');
         }
-        return samples.filter(function (smp) { return String(smp.image_url || '').indexOf('https://') === 0; }).map(function (smp) {
+        var textChips = samples.filter(function (smp) { return !smp.image_url && smp.name; }).map(function (smp) {
+            return '<span style="display: inline-block; padding: 4px 10px; margin: 2px; border-radius: 12px; background: rgba(255,255,255,0.1); font-size: 0.85rem;">' + escHtml(smp.name) + '</span>';
+        }).join('');
+        return textChips + samples.filter(function (smp) { return String(smp.image_url || '').indexOf('https://') === 0; }).map(function (smp) {
             return '<img src="' + escHtml(smp.image_url) + '" title="' + escHtml(smp.name) + '" alt="' + escHtml(smp.name) + '" loading="lazy" referrerpolicy="no-referrer" style="width: 56px; height: 56px; object-fit: cover; border-radius: 8px; margin: 2px;">';
         }).join('');
     }

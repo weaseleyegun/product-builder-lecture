@@ -149,7 +149,9 @@ export function validateWorldcupDraft(d, ctx = {}) {
         const nm = normalizeText(x.name);
         if (!nm || GENERIC_WORDS.has(nm)) errors.push(`${tag} generic_name`);
         if (isBlocked(x.name)) errors.push(`${tag} blocked: 이름에 제외어 포함`);
-        if (!allowedHttpsUrl(x.image_url)) errors.push(`${tag} image_url: https + 허용 도메인 + ${LIMITS.urlMax}자 이하만`);
+        if (d.textOnly === true) {
+            if (x.image_url !== undefined && x.image_url !== null && x.image_url !== '') errors.push(`${tag} image_url: 이름만으로 구성한 월드컵에는 이미지를 넣을 수 없음`);
+        } else if (!allowedHttpsUrl(x.image_url)) errors.push(`${tag} image_url: https + 허용 도메인 + ${LIMITS.urlMax}자 이하만`);
     });
 
     return { ok: errors.length === 0, errors, warnings };

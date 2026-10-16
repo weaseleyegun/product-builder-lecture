@@ -24,7 +24,8 @@ const KINDS = {
     worldcup: {
         table: 'worldcups', child: 'worldcup_items', validate: validateWorldcupDraft, previewKey: 'name',
         childSelect: 'name, image_url',
-        samples: (kids) => kids.slice(0, 8).map((k) => ({ name: k.name, image_url: k.image_url })),
+        // 이미지 없이 이름만으로 만든 월드컵은 검수자가 후보를 전부 볼 수 있게 한다
+        samples: (kids) => kids.slice(0, kids.every((k) => !k.image_url) ? 64 : 8).map((k) => ({ name: k.name, image_url: k.image_url })),
         enough: (n) => LIMITS.worldcupSizes.includes(n),
     },
 };
@@ -113,7 +114,7 @@ async function createDraft(request, db, user) {
                 is_embeddable: true,
             };
         })
-        : d.items.map((it) => ({ worldcup_id: id, name: it.name, image_url: it.image_url }));
+        : d.items.map((it) => ({ worldcup_id: id, name: it.name, image_url: d.textOnly === true ? null : it.image_url }));
 
     const kids = await db.from(kind.child).insert(children);
     if (kids.error) {
