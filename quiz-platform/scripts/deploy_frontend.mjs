@@ -16,7 +16,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const dry = process.argv.includes('--dry');
 const keep = process.argv.includes('--keep');   // 검사를 통과한 공개 복사본을 지우지 않고 경로를 알려 준다 (wrangler pages dev 로 로컬 확인용)
 
-const PUBLIC_ROOT_FILES = (f) => /\.(html|css)$/.test(f) || f === 'app.js' || f === 'ads.txt' || f === 'robots.txt';
+const PUBLIC_ROOT_FILES = (f) => /\.(html|css)$/.test(f) || f === 'app.js' || f === 'ads.txt' || f === 'robots.txt' || f === 'og-image.png';
 const PUBLIC_DIRS = ['js', 'images'];
 const FORBIDDEN_NAMES = /(^|[\\/])(\.dev\.vars|\.env.*|wrangler\.toml|package(-lock)?\.json|.*\.sql|.*\.md)$/i;
 const SECRET_PATTERNS = [/ADMIN_PASSWORD/, /AGENT_PASSWORD/, /service_role/, /sb_secret_/, /BEGIN (RSA |EC )?PRIVATE KEY/];

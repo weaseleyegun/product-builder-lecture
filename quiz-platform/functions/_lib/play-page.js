@@ -50,12 +50,10 @@ export async function renderPlayPage(context, kind) {
     set('meta[property="og:url"]', 'content', m.canonical);
     set('meta[name="twitter:title"]', 'content', m.title);
     set('meta[name="twitter:description"]', 'content', m.description);
-    if (m.image) {
-        set('meta[name="twitter:card"]', 'content', 'summary_large_image');
-        rewriter.on('head', { element(e) {
-            const img = escapeAttr(m.image);
-            e.append(`<meta property="og:image" content="${img}"><meta name="twitter:image" content="${img}">`, { html: true });
-        } });
+    if (m.image) {                       // 퀴즈 썸네일이 있으면 정적 페이지의 기본 브랜드 이미지 대신 쓴다
+        set('meta[property="og:image"]', 'content', m.image);
+        set('meta[name="twitter:image"]', 'content', m.image);
+        rewriter.on('meta[property="og:image:width"], meta[property="og:image:height"]', { element(e) { e.remove(); } });
     }
     return rewriter.transform(new Response(response.body, { status: response.status, headers }));
 }
