@@ -74,6 +74,12 @@ document.addEventListener('DOMContentLoaded', function () {
             listEl.innerHTML = '<p style="color: var(--text-muted);">초안을 불러오는 중...</p>';
             try {
                 const res = await fetch(API_BASE_URL + '/api/admin/drafts', { headers: { Authorization: 'Bearer ' + token } });
+                if (res.status === 401) {
+                    // 로그인 세션(토큰)은 약 1시간 뒤 만료된다 — 오류 코드 대신 다시 로그인하라고 안내한다
+                    sessionStorage.removeItem('sb_access_token');
+                    listEl.innerHTML = '<p style="color: #ff6b6b;">로그인 세션이 만료되었습니다. 다시 로그인해 주세요.</p><a href="login.html" class="btn-primary" style="display: inline-block; padding: 0.5rem 1.2rem; margin-top: 0.5rem; text-decoration: none;">다시 로그인</a>';
+                    return;
+                }
                 if (!res.ok) throw new Error('HTTP ' + res.status);
                 const drafts = (await res.json()).drafts || [];
                 countEl.textContent = '(' + drafts.length + '개)';
@@ -118,6 +124,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
                     body: body
                 });
+                if (res.status === 401) { alert('로그인 세션이 만료되었습니다. 다시 로그인해 주세요.'); sessionStorage.removeItem('sb_access_token'); location.href = 'login.html'; return; }
                 if (!res.ok) throw new Error((await res.json().catch(function () { return {}; })).error || ('HTTP ' + res.status));
                 await load();
             } catch (e) {
