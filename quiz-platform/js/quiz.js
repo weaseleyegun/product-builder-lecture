@@ -231,9 +231,10 @@ function loadQuestion(index) {
             imagePlayer.style.display = 'none';
             if (mediaControls) mediaControls.style.display = 'flex';
 
-            playerDiv.style.filter = 'blur(100px) brightness(0)';
+            // YouTube 정책: 임베드 플레이어를 가리거나 흐리게 하지 않는다 (영상은 항상 그대로 보인다)
+            playerDiv.style.filter = 'none';
             playerDiv.style.opacity = '1';
-            playerDiv.style.pointerEvents = 'none';
+            playerDiv.style.pointerEvents = 'auto';
         }
 
         var existingLink = document.querySelector('.youtube-link-reveal');
@@ -276,7 +277,7 @@ function loadQuestion(index) {
             videoId: question.videoId,
             playerVars: {
                 'playsinline': 1,
-                'controls': 0,
+                'controls': 1,
                 'disablekb': 1,
                 'fs': 0,
                 'rel': 0,
@@ -420,10 +421,6 @@ function showAnswerResult(isCorrect) {
                     multiplayerSendNext(currentQuestionIndex + 1);
                 }
 
-                if (playerDiv) {
-                    playerDiv.style.opacity = '0';
-                    playerDiv.style.pointerEvents = 'none';
-                }
                 var lDiv = document.querySelector('.youtube-link-reveal');
                 if (lDiv && lDiv.parentNode) {
                     lDiv.parentNode.removeChild(lDiv);
